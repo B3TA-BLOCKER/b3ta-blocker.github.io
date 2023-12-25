@@ -2,7 +2,7 @@
   --bg--color: #001f33; /* Dark Blue */
   --second-bg-color:  #00ff00; /* Neon Green */ 
   --text-color:  #00ff00; /* Neon Green */ 
-  --main-color: #dc0e00;
+  --main-color: #FFFF00
 }
   
   @media (max-width: 1200px) {
