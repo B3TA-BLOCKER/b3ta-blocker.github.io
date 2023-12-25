@@ -1,8 +1,8 @@
 :root {
-  --bg--color: #ffffff;
-  --second-bg-color: #dc0e00;
-  --text-color: #000000;
-  --main-color: #dc0e00;
+  --bg--color: #001f33; /* Dark Blue */
+  --second-bg-color: #00ff00; /* Neon Green */
+  --text-color: #00ff00; /* Neon Green */
+  --main-color:#FFFF00;
 }
   
   @media (max-width: 1200px) {
