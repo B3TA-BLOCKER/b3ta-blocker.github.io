@@ -12,10 +12,10 @@
 }
 
 :root {
-  --bg--color: #ffffff;
-  --second-bg-color: #dc0e00;
-  --text-color: #000000;
-  --main-color: #dc0e00;
+    --bg--color: #212121; /* Dark Gray */
+    --second-bg-color: #2a2a2a; /* Slightly Lighter Dark Gray */
+    --text-color: #ffffff; /* White */
+    --main-color: #dc0e00; /* Hack The Box Red */
 }
 
 html {
