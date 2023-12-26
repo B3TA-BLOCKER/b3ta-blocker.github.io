@@ -1,8 +1,8 @@
 :root {
   --bg-color: #001f33;
-  --second-bg-color: #dc0e00;
+  --second-bg-color:  #00ff00;
   --text-color: #000000;
-  --main-color: #ffffff;
+  --main-color: #00ff00;
 }
 
 @media (max-width: 1200px) {
