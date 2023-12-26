@@ -1,18 +1,18 @@
 :root {
-  --bg--color: #FFFF00; /* Yellow */
-  --second-bg-color:  #00ff00; /* Neon Green */ 
-  --text-color:  #00ff00; /* Neon Green */ 
-  --main-color: #FFFF00;
+    --bg--color: #FFFF00; /* Yellow */
+    --second-bg-color: #00ff00; /* Neon Green */
+    --text-color: #00ff00; /* Neon Green */
+    --main-color: #FFFF00;
 }
-  
-  @media (max-width: 1200px) {
+
+@media (max-width: 1200px) {
     html {
-      font-size: 55%;
+        font-size: 55%;
     }
-    .about{
-      min-height: auto;
+    .about {
+        min-height: auto;
     }
-  }
+}
   
   @media (max-width: 925px) {
     .home-image {
