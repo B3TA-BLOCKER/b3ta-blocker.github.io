@@ -323,6 +323,7 @@ section {
     background: var(--secong-bg-color);
     padding-bottom: 5rem;
     min-height: 100vh;
+    color: #40E0D0;
 }
 
 .heading {
