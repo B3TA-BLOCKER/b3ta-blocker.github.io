@@ -1,0 +1,106 @@
+baseURL = "https://b3ta-blocker.github.io/"
+languageCode = "en-us"
+title = "Bukhari's Archive"
+theme = "mana"
+enableRobotsTXT = true
+enableEmoji = true
+
+# Search index
+[outputs]
+  home = ["HTML", "JSON"]
+
+[params.avatar]
+url = "/images/me.png"
+
+# Pagination
+[pagination]
+  pageSize = 10
+
+# ---------------- SITE PARAMS ----------------
+
+[params]
+  description = "Cybersecurity writeups, HTB machines, THM rooms, and CTF challenges."
+
+  custom404Message = "This page doesn't exist. Maybe I haven't rooted it yet."
+
+
+  [params.social]
+    github = "https://github.com/B3TA-BLOCKER"
+    linkedin = "https://www.linkedin.com/in/hassaan-ali-bukhari/"
+    email = "yourmail@example.com"
+    twitter = "https://x.com/B3TA_BLOCKER"
+
+# ---------------- MARKUP ----------------
+
+[markup]
+  [markup.highlight]
+    codeFences = true
+    guessSyntax = true
+    noClasses = false
+    style = "catppuccin-macchiato"
+
+  [markup.tableOfContents]
+    startLevel = 1
+    endLevel = 6
+    ordered = false
+
+  [markup.goldmark]
+    [markup.goldmark.parser]
+      [markup.goldmark.parser.attribute]
+        block = true
+        title = true
+
+[params.codeHighlight]
+  darkTheme = "catppuccin-macchiato"
+  lightTheme = "catppuccin-frappe"
+
+# ---------------- MENU ----------------
+
+[[menus.main]]
+  name = "Home"
+  pageRef = "/"
+  weight = 10
+
+[[menus.main]]
+  name = "Machines"
+  pageRef = "/machines"
+  weight = 20
+
+
+[[menus.main]]
+  name = "Challenges"
+  pageRef = "/challenges"
+  weight = 30
+
+[[menus.main]]
+  name = "Tags"
+  pageRef = "/tags"
+  weight = 40
+
+[[menus.main]]
+  name = "About"
+  pageRef = "/about"
+  weight = 50
+
+# ---------------- TAXONOMIES ----------------
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
+
+# ---------------- ANALYTICS ----------------
+
+[params.umami]
+  websiteId = ""
+
+# ---------------- SUPPORT ----------------
+
+[params.buyMeACoffee]
+  enabled = false
+  id = ""
+  description = "Support my research"
+  message = ""
+  color = "#BD5FFF"
+  position = "Right"
+  x_margin = "18"
+  y_margin = "18"

