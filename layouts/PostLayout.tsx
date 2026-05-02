@@ -1,16 +1,14 @@
 import { ReactNode } from 'react'
 import { CoreContent } from 'pliny/utils/contentlayer'
 import type { Blog, Authors } from 'contentlayer/generated'
-import Comments from '@/components/Comments'
 import Link from '@/components/Link'
 import PageTitle from '@/components/PageTitle'
 import SectionContainer from '@/components/SectionContainer'
-import Image from '@/components/Image'
+import Image from 'next/image'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 
-const editUrl = (path) => `${siteMetadata.siteRepo}/blob/main/data/${path}`
 const discussUrl = (path) =>
   `https://mobile.twitter.com/search?q=${encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)}`
 
@@ -24,13 +22,13 @@ const postDateTemplate: Intl.DateTimeFormatOptions = {
 interface LayoutProps {
   content: CoreContent<Blog>
   authorDetails: CoreContent<Authors>[]
-  next?: { path: string; title: string }
-  prev?: { path: string; title: string }
+  next?: { path: string; title: string; images?: string[] }
+  prev?: { path: string; title: string; images?: string[] }
   children: ReactNode
 }
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { filePath, path, slug, date, title, tags } = content
+  const { path, date, title, tags } = content
   const basePath = path.split('/')[0]
 
   return (
@@ -99,17 +97,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                 <Link href={discussUrl(path)} rel="nofollow">
                   Discuss on Twitter
                 </Link>
-                {` • `}
-                <Link href={editUrl(filePath)}>View on GitHub</Link>
               </div>
-              {siteMetadata.comments && (
-                <div
-                  className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300"
-                  id="comment"
-                >
-                  <Comments slug={slug} />
-                </div>
-              )}
             </div>
             <footer>
               <div className="divide-gray-200 text-sm leading-5 font-medium xl:col-start-1 xl:row-start-2 xl:divide-y dark:divide-gray-700">
@@ -126,25 +114,53 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                   </div>
                 )}
                 {(next || prev) && (
-                  <div className="flex justify-between py-4 xl:block xl:space-y-8 xl:py-8">
+                  <div className="flex flex-col gap-4 py-4 xl:py-8">
                     {prev && prev.path && (
                       <div>
-                        <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                        <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400 mb-2">
                           Previous Article
                         </h2>
-                        <div className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400">
-                          <Link href={`/${prev.path}`}>{prev.title}</Link>
-                        </div>
+                        <Link href={`/${prev.path}`}>
+                          <div className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                            {prev.images?.[0] && (
+                              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+                                <Image
+                                  src={prev.images[0]}
+                                  alt={prev.title}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            )}
+                            <span className="text-primary-500 text-sm font-medium line-clamp-2">
+                              {prev.title}
+                            </span>
+                          </div>
+                        </Link>
                       </div>
                     )}
                     {next && next.path && (
                       <div>
-                        <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                        <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400 mb-2">
                           Next Article
                         </h2>
-                        <div className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400">
-                          <Link href={`/${next.path}`}>{next.title}</Link>
-                        </div>
+                        <Link href={`/${next.path}`}>
+                          <div className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                            {next.images?.[0] && (
+                              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+                                <Image
+                                  src={next.images[0]}
+                                  alt={next.title}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            )}
+                            <span className="text-primary-500 text-sm font-medium line-clamp-2">
+                              {next.title}
+                            </span>
+                          </div>
+                        </Link>
                       </div>
                     )}
                   </div>
