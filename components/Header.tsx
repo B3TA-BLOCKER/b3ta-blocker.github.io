@@ -4,7 +4,7 @@ import Logo from '@/data/logo.svg'
 import Link from './Link'
 import MobileNav from './MobileNav'
 import ThemeSwitch from './ThemeSwitch'
-import SearchButton from './SearchButton'
+import CustomSearch from './CustomSearch'
 
 const Header = () => {
   let headerClass = 'flex items-center w-full bg-white dark:bg-gray-950 justify-between py-10'
@@ -42,7 +42,7 @@ const Header = () => {
               </Link>
             ))}
         </div>
-        <SearchButton />
+        <CustomSearch />
         <ThemeSwitch />
         <MobileNav />
       </div>
