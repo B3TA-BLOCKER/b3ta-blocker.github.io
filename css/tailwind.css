@@ -57,6 +57,10 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+  html {
+    font-size: 20px;
+  }
+
   *,
   ::after,
   ::before,
@@ -97,7 +101,7 @@
       font-weight: 600;
     }
     & :where(code):not(pre code) {
-      color: var(--color-indigo-500);
+      color: oklch(0.696 0.219 142.5);
     }
   }
 
