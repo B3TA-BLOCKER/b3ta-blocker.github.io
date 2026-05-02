@@ -8,6 +8,7 @@ import type { Blog } from 'contentlayer/generated'
 import Link from '@/components/Link'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
+import Image from 'next/image'
 
 interface PaginationProps {
   totalPages: number
@@ -22,12 +23,10 @@ interface ListLayoutProps {
 
 function Pagination({ totalPages, currentPage }: PaginationProps) {
   const pathname = usePathname()
-  const segments = pathname.split('/')
-  const lastSegment = segments[segments.length - 1]
   const basePath = pathname
-    .replace(/^\//, '') // Remove leading slash
-    .replace(/\/page\/\d+\/?$/, '') // Remove any trailing /page
-    .replace(/\/$/, '') // Remove trailing slash
+    .replace(/^\//, '')
+    .replace(/\/page\/\d+\/?$/, '')
+    .replace(/\/$/, '')
   const prevPage = currentPage - 1 > 0
   const nextPage = currentPage + 1 <= totalPages
 
@@ -77,7 +76,6 @@ export default function ListLayout({
     return searchContent.toLowerCase().includes(searchValue.toLowerCase())
   })
 
-  // If initialDisplayPosts exist, display it if no searchValue is specified
   const displayPosts =
     initialDisplayPosts.length > 0 && !searchValue ? initialDisplayPosts : filteredBlogPosts
 
@@ -116,32 +114,61 @@ export default function ListLayout({
           </div>
         </div>
         <ul>
-          {!filteredBlogPosts.length && 'No posts found.'}
+          {!filteredBlogPosts.length && (
+            <p className="py-8 text-gray-500 dark:text-gray-400">No posts found.</p>
+          )}
           {displayPosts.map((post) => {
-            const { path, date, title, summary, tags } = post
+            const { path, date, title, summary, tags, images } = post
             return (
               <li key={path} className="py-4">
-                <article className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
-                  <dl>
-                    <dt className="sr-only">Published on</dt>
-                    <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
+                <article className="flex gap-4 items-start xl:grid xl:grid-cols-4 xl:items-baseline xl:gap-8">
+                  <div className="hidden xl:block">
+                    <dl>
+                      <dt className="sr-only">Published on</dt>
+                      <dd className="text-sm leading-6 font-medium text-gray-500 dark:text-gray-400">
+                        <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                      </dd>
+                    </dl>
+                  </div>
+                  {images?.[0] && (
+                    <div className="shrink-0">
+                      <Link href={`/${path}`}>
+                        <div className="relative h-16 w-16 overflow-hidden rounded-full">
+                          <Image
+                            src={images[0]}
+                            alt={title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      </Link>
+                    </div>
+                  )}
+                  <div className="xl:col-span-3 space-y-2">
+                    <div className="xl:hidden text-sm font-medium text-gray-500 dark:text-gray-400">
                       <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
-                    </dd>
-                  </dl>
-                  <div className="space-y-3 xl:col-span-3">
+                    </div>
                     <div>
-                      <h3 className="text-2xl leading-8 font-bold tracking-tight">
-                        <Link href={`/${path}`} className="text-gray-900 dark:text-gray-100">
+                      <h2 className="text-xl leading-8 font-bold tracking-tight">
+                        <Link
+                          href={`/${path}`}
+                          className="text-gray-900 dark:text-gray-100 hover:text-primary-500 dark:hover:text-primary-400"
+                        >
                           {title}
                         </Link>
-                      </h3>
-                      <div className="flex flex-wrap">
+                      </h2>
+                      <div className="flex flex-wrap gap-2 mt-1">
                         {tags?.map((tag) => <Tag key={tag} text={tag} />)}
                       </div>
                     </div>
-                    <div className="prose max-w-none text-gray-500 dark:text-gray-400">
-                      {summary}
-                    </div>
+                    <p className="prose max-w-none text-gray-500 dark:text-gray-400">{summary}</p>
+                    <Link
+                      href={`/${path}`}
+                      className="text-sm font-medium text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                      aria-label={`Read more: "${title}"`}
+                    >
+                      Read more &rarr;
+                    </Link>
                   </div>
                 </article>
               </li>
