@@ -4,40 +4,47 @@
 @source '../node_modules/pliny';
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Core theme configuration */
+/* =========================================
+     RED / DARK CYBER THEME
+   ========================================= */
+
 @theme {
   /* Font families */
-  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-  /* =========================
-     HACKER GREEN COLOR PALETTE
-     ========================= */
+  /* =========================================
+     DEEP RED CYBER COLOR SYSTEM
+     ========================================= */
 
-  --color-primary-50: oklch(0.98 0.02 145);
-  --color-primary-100: oklch(0.95 0.04 145);
-  --color-primary-200: oklch(0.9 0.08 145);
-  --color-primary-300: oklch(0.84 0.13 145);
-  --color-primary-400: oklch(0.76 0.18 145);
-  --color-primary-500: oklch(0.7 0.22 145);
-  --color-primary-600: oklch(0.62 0.2 145);
-  --color-primary-700: oklch(0.52 0.17 145);
-  --color-primary-800: oklch(0.42 0.14 145);
-  --color-primary-900: oklch(0.32 0.1 145);
-  --color-primary-950: oklch(0.22 0.07 145);
+  --color-primary-50: oklch(0.97 0.015 17);
+  --color-primary-100: oklch(0.93 0.04 18);
+  --color-primary-200: oklch(0.87 0.08 20);
+  --color-primary-300: oklch(0.78 0.14 22);
+  --color-primary-400: oklch(0.7 0.2 24);
 
-  /* Gray scale */
+  /* Main accent */
+  --color-primary-500: oklch(0.64 0.24 26);
+
+  /* Hover / active */
+  --color-primary-600: oklch(0.58 0.24 28);
+  --color-primary-700: oklch(0.5 0.21 28);
+  --color-primary-800: oklch(0.42 0.17 27);
+  --color-primary-900: oklch(0.33 0.13 26);
+  --color-primary-950: oklch(0.22 0.08 24);
+
+  /* Neutral dark palette */
   --color-gray-50: oklch(0.985 0.002 247.839);
-  --color-gray-100: oklch(0.967 0.003 264.542);
-  --color-gray-200: oklch(0.928 0.006 264.531);
-  --color-gray-300: oklch(0.872 0.01 258.338);
-  --color-gray-400: oklch(0.707 0.022 261.325);
-  --color-gray-500: oklch(0.551 0.027 264.364);
-  --color-gray-600: oklch(0.446 0.03 256.802);
-  --color-gray-700: oklch(0.373 0.034 259.733);
-  --color-gray-800: oklch(0.278 0.033 256.848);
-  --color-gray-900: oklch(0.21 0.034 264.665);
-  --color-gray-950: oklch(0.13 0.028 261.692);
+  --color-gray-100: oklch(0.95 0.003 264.542);
+  --color-gray-200: oklch(0.9 0.006 264.531);
+  --color-gray-300: oklch(0.82 0.01 258.338);
+  --color-gray-400: oklch(0.68 0.022 261.325);
+  --color-gray-500: oklch(0.52 0.027 264.364);
+  --color-gray-600: oklch(0.42 0.03 256.802);
+  --color-gray-700: oklch(0.31 0.034 259.733);
+  --color-gray-800: oklch(0.22 0.033 256.848);
+  --color-gray-900: oklch(0.15 0.03 264.665);
+  --color-gray-950: oklch(0.1 0.02 261.692);
 
   /* Line heights */
   --line-height-11: 2.75rem;
@@ -45,23 +52,27 @@
   --line-height-13: 3.25rem;
   --line-height-14: 3.5rem;
 
-  /* Z-index values */
+  /* Z-index */
   --z-60: 60;
   --z-70: 70;
   --z-80: 80;
 }
 
-/*
-  Tailwind CSS v4 border compatibility
-*/
+/* =========================================
+   BASE LAYER
+   ========================================= */
+
 @layer base {
   html {
     font-size: 16px;
-    background-color: #020617;
+    background-color: #020203;
   }
 
   body {
-    background-color: #020617;
+    background:
+      radial-gradient(circle at top, rgba(120, 0, 0, 0.15), transparent 40%),
+      #020203;
+
     color: var(--color-gray-100);
   }
 
@@ -70,7 +81,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--color-gray-700, currentColor);
   }
 
   a,
@@ -86,19 +97,29 @@
   }
 
   ::selection {
-    background-color: oklch(0.7 0.22 145 / 0.3);
+    background-color: rgba(255, 0, 60, 0.3);
     color: white;
   }
 }
 
+/* =========================================
+   TYPOGRAPHY / PROSE
+   ========================================= */
+
 @layer utilities {
   .prose {
+    color: var(--color-gray-200);
+
     & a {
       color: var(--color-primary-500);
+      font-weight: 600;
+      transition: all 0.2s ease;
 
       &:hover {
         color: var(--color-primary-400);
-        text-shadow: 0 0 8px oklch(0.7 0.22 145 / 0.8);
+        text-shadow:
+          0 0 6px rgba(255, 0, 80, 0.7),
+          0 0 14px rgba(255, 0, 80, 0.4);
       }
 
       & code {
@@ -107,26 +128,33 @@
     }
 
     & :where(h1, h2) {
-      font-weight: 700;
-      letter-spacing: var(--tracking-tight);
+      font-weight: 800;
+      letter-spacing: -0.04em;
     }
 
     & h3 {
-      font-weight: 600;
+      font-weight: 700;
     }
 
     & :where(code):not(pre code) {
-      color: oklch(0.74 0.21 145);
+      color: var(--color-primary-400);
+      background: rgba(255, 0, 70, 0.08);
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.3rem;
     }
   }
 
   .prose-invert {
+    color: var(--color-gray-200);
+
     & a {
       color: var(--color-primary-500);
 
       &:hover {
         color: var(--color-primary-400);
-        text-shadow: 0 0 10px oklch(0.7 0.22 145 / 0.9);
+        text-shadow:
+          0 0 8px rgba(255, 0, 80, 0.75),
+          0 0 18px rgba(255, 0, 80, 0.45);
       }
 
       & code {
@@ -135,23 +163,36 @@
     }
 
     & :where(h1, h2, h3, h4, h5, h6) {
-      color: var(--color-gray-100);
+      color: white;
     }
   }
 
-  /* Optional subtle hacker glow */
-  .green-glow {
+  /* =========================================
+     OPTIONAL CYBER EFFECTS
+     ========================================= */
+
+  .red-glow {
     text-shadow:
-      0 0 5px rgba(0, 255, 120, 0.5),
-      0 0 10px rgba(0, 255, 120, 0.3);
+      0 0 5px rgba(255, 0, 80, 0.8),
+      0 0 15px rgba(255, 0, 80, 0.5);
   }
 
-  .border-glow {
+  .red-border-glow {
     box-shadow:
-      0 0 10px rgba(0, 255, 120, 0.15),
-      0 0 20px rgba(0, 255, 120, 0.08);
+      0 0 10px rgba(255, 0, 80, 0.15),
+      0 0 30px rgba(255, 0, 80, 0.08);
+  }
+
+  .cyber-card {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 0, 70, 0.08);
+    backdrop-filter: blur(10px);
   }
 }
+
+/* =========================================
+   MISC
+   ========================================= */
 
 .task-list-item::before {
   @apply hidden;
@@ -162,7 +203,7 @@
 }
 
 .footnotes {
-  @apply mt-12 border-t border-gray-200 pt-8 dark:border-gray-700;
+  @apply mt-12 border-t border-gray-700 pt-8;
 }
 
 .data-footnote-backref {
@@ -182,7 +223,7 @@
   scrollbar-width: none;
 }
 
-/* Prevent ugly autofill background */
+/* Prevent ugly autofill styles */
 input:-webkit-autofill,
 input:-webkit-autofill:focus {
   transition:
