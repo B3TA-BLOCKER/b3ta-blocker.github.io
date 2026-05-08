@@ -1,3 +1,4 @@
+```css
 @import 'tailwindcss';
 @plugin "@tailwindcss/forms";
 @plugin '@tailwindcss/typography';
@@ -10,8 +11,7 @@
   --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-  /* Colors */
-  /* Copied from https://tailwindcss.com/docs/theme#default-theme-variable-reference */
+  /* Red hacker-style primary colors */
   --color-primary-50: oklch(0.971 0.014 27);
   --color-primary-100: oklch(0.948 0.028 27);
   --color-primary-200: oklch(0.899 0.061 27);
@@ -24,6 +24,7 @@
   --color-primary-900: oklch(0.299 0.128 27);
   --color-primary-950: oklch(0.217 0.094 27);
 
+  /* Neutral grays */
   --color-gray-50: oklch(0.985 0.002 247.839);
   --color-gray-100: oklch(0.967 0.003 264.542);
   --color-gray-200: oklch(0.928 0.006 264.531);
@@ -49,16 +50,22 @@
 }
 
 /*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
+  Tailwind v4 compatibility fixes
 */
 @layer base {
   html {
-    font-size: 20px;
+    /* FIXED WEBSITE ZOOM ISSUE */
+    font-size: 16px;
+
+    /* smoother rendering */
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-black text-gray-200;
+    overflow-x: hidden;
   }
 
   *,
@@ -66,12 +73,28 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--color-gray-800, currentColor);
+    box-sizing: border-box;
+  }
+
+  ::selection {
+    background: oklch(0.628 0.258 27 / 0.35);
+    color: white;
   }
 
   a,
   button {
     outline-color: var(--color-primary-500);
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  a:hover,
+  button:hover {
+    transform: translateY(-1px);
   }
 
   a:focus-visible,
@@ -80,44 +103,108 @@
     border-radius: var(--radius-sm);
     outline-color: var(--color-primary-500);
   }
+
+  /* Global headings */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold tracking-tight text-white;
+  }
+
+  /* Cyberpunk scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #050505;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.463 0.196 27);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.545 0.229 27);
+  }
 }
 
 @layer utilities {
   .prose {
+    @apply text-gray-300;
+
     & a {
       color: var(--color-primary-500);
+      text-decoration: none;
+
       &:hover {
-        color: var(--color-primary-600);
+        color: var(--color-primary-400);
+        text-shadow: 0 0 8px rgba(255, 60, 60, 0.45);
       }
+
       & code {
         color: var(--color-primary-400);
       }
     }
+
     & :where(h1, h2) {
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: var(--tracking-tight);
     }
+
     & h3 {
-      font-weight: 600;
+      font-weight: 700;
     }
+
     & :where(code):not(pre code) {
-      color: oklch(0.696 0.219 142.5);
+      color: oklch(0.696 0.219 27);
+      background: rgba(255, 0, 0, 0.08);
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.3rem;
+    }
+
+    & pre {
+      background: #080808;
+      border: 1px solid rgba(255, 0, 0, 0.15);
+      border-radius: 1rem;
     }
   }
 
   .prose-invert {
     & a {
       color: var(--color-primary-500);
+
       &:hover {
-        color: var(--color-primary-400);
+        color: var(--color-primary-300);
       }
+
       & code {
         color: var(--color-primary-400);
       }
     }
+
     & :where(h1, h2, h3, h4, h5, h6) {
       color: var(--color-gray-100);
     }
+  }
+
+  /* Glow utility */
+  .red-glow {
+    box-shadow:
+      0 0 10px rgba(255, 0, 0, 0.25),
+      0 0 25px rgba(255, 0, 0, 0.15);
+  }
+
+  /* Glass effect */
+  .glass {
+    background: rgba(10, 10, 10, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 0, 0, 0.1);
   }
 }
 
@@ -130,7 +217,7 @@
 }
 
 .footnotes {
-  @apply mt-12 border-t border-gray-200 pt-8 dark:border-gray-700;
+  @apply mt-12 border-t border-gray-800 pt-8;
 }
 
 .data-footnote-backref {
@@ -146,11 +233,11 @@
 }
 
 .no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* https://stackoverflow.com/questions/61083813/how-to-avoid-internal-autofill-selected-style-to-be-applied */
+/* Prevent ugly autofill styles */
 input:-webkit-autofill,
 input:-webkit-autofill:focus {
   transition:
@@ -166,6 +253,7 @@ input:-webkit-autofill:focus {
   opacity: 0;
   margin-left: -24px;
   padding-right: 4px;
+  transition: opacity 0.2s ease;
 }
 
 .content-header:hover .content-header-link,
@@ -177,3 +265,4 @@ input:-webkit-autofill:focus {
   display: inline-block;
   vertical-align: middle;
 }
+```
