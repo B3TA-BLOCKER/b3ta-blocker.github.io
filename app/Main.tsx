@@ -10,14 +10,41 @@ export default function Home({ posts }) {
   return (
     <>
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
-        <div className="space-y-2 pt-6 pb-8 md:space-y-5">
-          <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
-            Latest
+        <div className="relative overflow-hidden pt-10 pb-8">
+
+          {/* Grid background */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
+            }}
+          />
+
+          {/* Live badge */}
+          <div className="mb-5 inline-flex items-center gap-2 rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+            LIVE — writeups dropping regularly
+          </div>
+
+          {/* Title */}
+          <h1 className="mb-4 font-sans text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">
+            Bukhari's
+            <br />
+            <span className="text-red-500">Archive</span>
+            <span className="ml-1 inline-block h-[1em] w-[3px] animate-[blink_1s_step-end_infinite] bg-red-500 align-middle" />
           </h1>
-          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            {siteMetadata.description}
+
+          {/* Terminal subtitle */}
+          <p className="mb-6 font-mono text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+            <span className="mr-2 text-red-500">$</span>cat about.txt
+            <br />
+            CTF writeups · Pentesting labs · Machines rooted, methods documented.
           </p>
+
         </div>
+
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           {!posts.length && 'No posts found.'}
           {posts.slice(0, MAX_DISPLAY).map((post) => {
@@ -48,7 +75,10 @@ export default function Home({ posts }) {
                     <div className="space-y-3 flex-1">
                       <div>
                         <h2 className="text-2xl leading-8 font-bold tracking-tight">
-                          <Link href={`/blog/${slug}`} className="text-gray-900 dark:text-gray-100">
+                          <Link
+                            href={`/blog/${slug}`}
+                            className="text-gray-900 dark:text-gray-100"
+                          >
                             {title}
                           </Link>
                         </h2>
@@ -78,6 +108,7 @@ export default function Home({ posts }) {
           })}
         </ul>
       </div>
+
       {posts.length > MAX_DISPLAY && (
         <div className="flex justify-end text-base leading-6 font-medium">
           <Link
