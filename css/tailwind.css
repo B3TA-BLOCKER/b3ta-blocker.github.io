@@ -169,7 +169,6 @@ input:-webkit-autofill:focus {
   50% { opacity: 0; }
 }
 
-
 @keyframes scanline {
   0% { top: -10%; }
   100% { top: 110%; }
