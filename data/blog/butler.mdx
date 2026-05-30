@@ -11,7 +11,7 @@ images: ["/static/images/butler/preview.png"]
 
 Both the machine are on a NAT Network.
 
-![buttler](/static/images/buttler/image.png)
+![butler](/static/images/butler/image.png)
 
 ---
 
@@ -85,7 +85,7 @@ Based on these findings, further enumeration was focused on the **`web applicat
 ## **Port 8080: Web Application (Jenkins)**
 
 
-![buttler](/static/images/buttler/image%201.png)
+![butler](/static/images/butler/image%201.png)
 
 Accessing the web service on **`port 8080`** revealed a **`Jenkins login interface`**, indicating the presence of a Jenkins automation server exposed to the network.
 
@@ -95,7 +95,7 @@ Based on this discovery, further enumeration was focused on **`Jenkins authenti
 
 ### **Jenkins Authentication Bypass (Brute Force)**
 
-![buttler](/static/images/buttler/image%202.png)
+![butler](/static/images/butler/image%202.png)
 
  
 
@@ -110,7 +110,7 @@ This confirmed that Jenkins was exposed with **weak/default credentials**, gran
 
 ### **Post-Authentication Access**
 
-![buttler](/static/images/buttler/image%203.png)
+![butler](/static/images/butler/image%203.png)
 
 After successfully logging in, I gained access to the Jenkins dashboard. While reviewing the available features, I identified functionality that allows **script execution**, indicating a clear path to **remote code execution**.
 Given Jenkins’ ability to execute scripts and jobs with elevated privileges, this presented an opportunity to obtain a **reverse shell** and establish an initial foothold on the target system.
@@ -121,7 +121,7 @@ Given Jenkins’ ability to execute scripts and jobs with elevated privileges, t
 
 After gaining access to the Jenkins dashboard, I searched for a **`Groovy-based reverse shell payload`** suitable for execution through Jenkins’ script functionality. I found a publicly available Groovy reverse shell script and adapted it to my listener configuration.
 
-![buttler](/static/images/buttler/image%204.png)
+![butler](/static/images/butler/image%204.png)
 
 I executed the script through Jenkins, which resulted in a successful callback to my machine.
 
@@ -194,7 +194,7 @@ CertUtil: -URLCache command completed successfully.
 
 During local enumeration with **`winPEAS`**, I identified a vulnerable Windows service named **`WiseBootAssistant`** (Wise Care 365). The service was running with elevated privileges and had an **`unquoted executable path containing spaces`**, making it susceptible to an unquoted service path attack.
 
-![buttler](/static/images/buttler/image%205.png)
+![butler](/static/images/butler/image%205.png)
 
 ### **Payload Generation**
 
@@ -274,4 +274,4 @@ sc start WiseBootAssistant
 
 got the shell (but not Administrator)
 
-![buttler](/static/images/buttler/image%206.png)
+![butler](/static/images/butler/image%206.png)
