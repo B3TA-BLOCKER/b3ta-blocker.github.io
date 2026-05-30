@@ -36,7 +36,7 @@ export default function Home({ posts }) {
             Bukhari's <span className="text-red-500">Archive</span>
             <span
               className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
-              style={{ height: '0.75em', animation: 'blink 1s step-end infinite' }}
+              style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
             />
           </h1>
 
