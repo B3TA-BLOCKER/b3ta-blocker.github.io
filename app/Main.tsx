@@ -22,6 +22,16 @@ export default function Home({ posts }) {
             }}
           />
 
+          {/* Scanline effect */}
+          <div
+            className="pointer-events-none absolute left-0 right-0"
+            style={{
+              height: '60px',
+              background: 'linear-gradient(to bottom, transparent, rgba(229,62,62,0.04), transparent)',
+              animation: 'scanline 4s linear infinite',
+            }}
+          />
+
           {/* Live badge */}
           <div className="mb-5 inline-flex items-center gap-2 rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
