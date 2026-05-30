@@ -34,7 +34,7 @@ export default function AuthorLayout({ children, content }: Props) {
               className="h-1.5 w-1.5 rounded-full bg-red-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
-            Cybersecurity Graduate
+            Cybersecurity Graduate — Open to Work
           </div>
 
           <div className="flex items-center gap-10">
@@ -71,7 +71,7 @@ export default function AuthorLayout({ children, content }: Props) {
                 Hassaan Ali <span className="text-red-500">Bukhari</span>
                 <span
                   className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
-                  style={{ height: '0.85em', animation: 'blink 1s step-end infinite' }}
+                  style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
                 />
               </h1>
 
@@ -102,7 +102,7 @@ export default function AuthorLayout({ children, content }: Props) {
                   <span className="mr-2 text-red-500">$</span>
                   <span
                     className="inline-block w-[3px] bg-red-500 align-middle"
-                    style={{ height: '0.85em', animation: 'blink 1s step-end infinite' }}
+                    style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
                   />
                 </p>
               </div>
