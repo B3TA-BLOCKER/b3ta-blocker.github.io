@@ -30,9 +30,9 @@ export default function Home({ posts }) {
 
           {/* Title */}
           <h1 className="mb-4 font-sans text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">
-            Bukhari's
+            Pen <span className="text-red-500">Testing</span>
             <br />
-            <span className="text-red-500">Archive</span>
+            Diaries
             <span className="ml-1 inline-block h-[1em] w-[3px] animate-[blink_1s_step-end_infinite] bg-red-500 align-middle" />
           </h1>
 
@@ -40,7 +40,7 @@ export default function Home({ posts }) {
           <p className="mb-6 font-mono text-sm leading-relaxed text-gray-500 dark:text-gray-400">
             <span className="mr-2 text-red-500">$</span>cat about.txt
             <br />
-            CTF writeups · Pentesting labs · Machines rooted, methods documented.
+            My journey through CTFs, labs, and everything in between.
           </p>
 
         </div>
