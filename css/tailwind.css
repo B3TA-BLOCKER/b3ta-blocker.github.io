@@ -169,7 +169,7 @@ input:-webkit-autofill:focus {
   50% { opacity: 0; }
 }
 
-@keyframes scanline {
-  0% { top: -10%; }
-  100% { top: 110%; }
+@keyframes dotglow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px 2px rgba(229,62,62,0.8); }
+  50% { opacity: 0.2; box-shadow: none; }
 }
