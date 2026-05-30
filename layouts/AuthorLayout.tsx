@@ -48,10 +48,10 @@ export default function AuthorLayout({ children, content }: Props) {
                     alt="avatar"
                     width={190}
                     height={190}
-                    className="h-[190px] w-[190px] rounded-full border-2 border-red-500/30"
+                    className="h-[190px] w-[190px] rounded-full border-2 border-green-500/30"
                   />
                   <div
-                    className="absolute inset-[-5px] rounded-full border border-red-500/20"
+                    className="absolute inset-[-5px] rounded-full border border-green-500/40"
                     style={{ animation: 'blink 3s ease infinite' }}
                   />
                 </div>
