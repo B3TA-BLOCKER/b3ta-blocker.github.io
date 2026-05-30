@@ -3,11 +3,11 @@ title: "Eternal Blue"
 date: "2025-11-13"
 draft: false
 tags: ["Machine", "Windows", "Easy"]
-summary: "The target machine was identified as **Windows 7 SP1** with SMB services exposed on port *445*, making it vulnerable to *EternalBlue (MS17-010)*. Using Metasploit, the vulnerability was successfully exploited, resulting in a Meterpreter session and full system access. Password hashes were then extracted from the target. A manual exploitation attempt using AutoBlue-MS17-010 triggered the vulnerability but caused a BSOD crash. This demonstrated how EternalBlue can lead to remote code execution and complete system compromise on unpatched systems."
+summary: "The target machine was identified as Windows 7 SP1 with SMB services exposed on port 445, making it vulnerable to EternalBlue (MS17-010). Using Metasploit, the vulnerability was successfully exploited, resulting in a Meterpreter session and full system access. Password hashes were then extracted from the target. A manual exploitation attempt using AutoBlue-MS17-010 triggered the vulnerability but caused a BSOD crash. This demonstrated how EternalBlue can lead to remote code execution and complete system compromise on unpatched systems."
 images: ["/static/images/blue/preview.png"]
 ---
 
-# Exploiting MS17-010 (EternalBlue) on Windows 7
+# Exploiting MS17-010 on Windows 7
 
 ---
 
@@ -15,11 +15,11 @@ images: ["/static/images/blue/preview.png"]
 
 ## Kali Linux
 
-![Blue](/static/images/Blue/image.png)
+![Blue](/static/images/blue/image.png)
 
 ## Windows
 
-![Blue](/static/images/Blue/image%201.png)
+![Blue](/static/images/blue/image%201.png)
 
 ---
 
@@ -161,7 +161,7 @@ msf6 exploit(windows/smb/ms17_010_eternalblue) >
 
 ## Exploit
 
-![Blue](/static/images/Blue/image%202.png)
+![Blue](/static/images/blue/image%202.png)
 
 It worked and I got the **`meterpreter shell`**  
 
@@ -369,4 +369,4 @@ good response status: INVALID_PARAMETER
 
 The exploit crashed the target machine, resulting in the Blue screen:
 
-![Blue](/static/images/Blue/image%203.png)
+![Blue](/static/images/blue/image%203.png)
