@@ -26,8 +26,9 @@ export default function Home({ posts }) {
           <div
             className="pointer-events-none absolute left-0 right-0"
             style={{
+              top: 0,
               height: '60px',
-              background: 'linear-gradient(to bottom, transparent, rgba(229,62,62,0.04), transparent)',
+              background: 'linear-gradient(to bottom, transparent, rgba(229,62,62,0.08), transparent)',
               animation: 'scanline 4s linear infinite',
             }}
           />
