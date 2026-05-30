@@ -28,30 +28,53 @@ export default function AuthorLayout({ children, content }: Props) {
             }}
           />
 
-          <div className="relative flex items-start justify-between gap-8">
+          {/* Badge */}
+          <div className="mb-5 inline-flex items-center gap-2 rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-red-500"
+              style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
+            />
+            Cybersecurity Graduate — Open to Work
+          </div>
 
-            {/* Left — text content */}
-            <div className="flex-1">
+          <div className="flex items-center gap-10">
 
-              {/* Badge */}
-              <div className="mb-5 inline-flex items-center gap-2 rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-red-500"
-                  style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
-                />
-                Cybersecurity Graduate — Open to Work
+            {/* Left — avatar + socials */}
+            <div className="flex shrink-0 flex-col items-center gap-4">
+              {avatar && (
+                <div className="relative">
+                  <Image
+                    src={avatar}
+                    alt="avatar"
+                    width={190}
+                    height={190}
+                    className="h-[190px] w-[190px] rounded-full border-2 border-red-500/30"
+                  />
+                  <div
+                    className="absolute inset-[-5px] rounded-full border border-red-500/20"
+                    style={{ animation: 'blink 3s ease infinite' }}
+                  />
+                </div>
+              )}
+              <div className="flex space-x-3">
+                <SocialIcon kind="mail" href={`mailto:${email}`} />
+                <SocialIcon kind="github" href={github} />
+                <SocialIcon kind="linkedin" href={linkedin} />
+                <SocialIcon kind="x" href={twitter} />
+                <SocialIcon kind="bluesky" href={bluesky} />
               </div>
+            </div>
 
-              {/* Title */}
+            {/* Right — text */}
+            <div className="flex-1">
               <h1 className="mb-5 font-sans text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">
                 Hassaan Ali <span className="text-red-500">Bukhari</span>
                 <span
                   className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
-                  style={{ height: '0.75em', animation: 'blink 1s step-end infinite' }}
+                  style={{ height: '0.85em', animation: 'blink 1s step-end infinite' }}
                 />
               </h1>
 
-              {/* Terminal block */}
               <div className="font-mono text-sm leading-loose text-gray-500 dark:text-gray-400">
                 <p className="opacity-60"># B3TA-BLOCKER</p>
                 <p className="mt-1">
@@ -79,42 +102,9 @@ export default function AuthorLayout({ children, content }: Props) {
                   <span className="mr-2 text-red-500">$</span>
                   <span
                     className="inline-block w-[3px] bg-red-500 align-middle"
-                    style={{ height: '0.75em', animation: 'blink 1s step-end infinite' }}
+                    style={{ height: '0.85em', animation: 'blink 1s step-end infinite' }}
                   />
                 </p>
-              </div>
-
-            </div>
-
-            {/* Right — avatar + info */}
-            <div className="flex flex-col items-center gap-3 pt-2 shrink-0">
-              {avatar && (
-                <div className="relative">
-                  <Image
-                    src={avatar}
-                    alt="avatar"
-                    width={160}
-                    height={160}
-                    className="h-40 w-40 rounded-full border-2 border-red-500/30"
-                  />
-                  <div
-                    className="absolute inset-[-5px] rounded-full border border-red-500/20"
-                    style={{ animation: 'blink 3s ease infinite' }}
-                  />
-                </div>
-              )}
-              <h3 className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                {name}
-              </h3>
-              <div className="font-mono text-[11px] tracking-widest text-red-500">
-                // {occupation}
-              </div>
-              <div className="flex space-x-3 pt-2">
-                <SocialIcon kind="mail" href={`mailto:${email}`} />
-                <SocialIcon kind="github" href={github} />
-                <SocialIcon kind="linkedin" href={linkedin} />
-                <SocialIcon kind="x" href={twitter} />
-                <SocialIcon kind="bluesky" href={bluesky} />
               </div>
             </div>
 
