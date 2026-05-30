@@ -9,7 +9,7 @@ images: ["/static/images/soulmate/preview.png"]
 
 # Soulmate Machine (HackTheBox) — Step-by-Step Walkthrough
 
-![image.png](image.png)
+![soulmate](/static/images/soulmate/image.png)
 
 # Machine info:
 
@@ -66,7 +66,7 @@ Two ports were open. With no credentials provided, I focused on the web service 
 [sudo] password for kali: 
 ```
 
-![image.png](image%201.png)
+![soulmate](/static/images/soulmate/image%201.png)
 
 # Web Enumeration:
 
@@ -129,11 +129,11 @@ Task Completed
 
 ### index.php:
 
-![image.png](image%202.png)
+![soulmate](/static/images/soulmate/image%202.png)
 
 I browsed to `http://soulmate.htb`. The site presented a signup/login page. I created a new account, signed up successfully, and then logged in to access the main application area.
 
-![image.png](image%203.png)
+![soulmate](/static/images/soulmate/image%203.png)
 
 This yielded nothing useful, so I moved on to subdomain enumeration.
 
@@ -177,7 +177,7 @@ I added `ftp.soulmate.htb` in my /etc/hosts file against the machine ip.
 
 I visited the **`http://ftp.soulmate.htb`**
 
-![image.png](image%204.png)
+![soulmate](/static/images/soulmate/image%204.png)
 
 I tried loggin with the common default creds as well as the creds set on the [**`http://soulmate.htb`](http://soulmate.htb)** but it didn’t worked.
 
@@ -193,7 +193,7 @@ Version : **`11.W.657-2025_03_08_07_52`**
 
 I searched for the exploit for the specific version
 
-![image.png](image%205.png)
+![soulmate](/static/images/soulmate/image%205.png)
 
 I looked for a public CVE exploit and found a relevant GitHub repository.
 
@@ -257,19 +257,21 @@ Login Creds = **`b3ta-blocker : hello_World`**
 
 Successful Login:
 
-![Screenshot 2025-09-20 184300.png](Screenshot_2025-09-20_184300.png)
+![soulmate](/static/images/soulmate/Screenshot_2025-09-20_184300.png)
 
 I opened **`User Manager`**, saw I could change any user’s password, changed **ben**’s password, and then login into **`ben**’s` account with the new credentials.
 
-![image.pngScreenshot 2025-09-20 185401.png](Screenshot_2025-09-20_184300%201.png)
+
+![soulmate](/static/images/soulmate/Screenshot_2025-09-20_184300%201.png)
 
 I Logedin the ben user account 
 
-![image.png](image%206.png)
+![soulmate](/static/images/soulmate/image%206.png)
 
 While exploring Ben’s account, I noticed an option to **`upload files into the WebProb directory**.`
 
-![image.png](image%207.png)
+![soulmate](/static/images/soulmate/image%207.png)
+
 
 I used the GitHub repo to prepare a `shell.php` reverse shell, uploaded it to the **`WebProb**` directory, started a listener on my machine, then accessed the uploaded `shell.php` to get a reverse shell.
 
@@ -296,19 +298,22 @@ CHANGELOG    COPYING.PHP-REVERSE-SHELL  php-reverse-shell.php
 COPYING.GPL  LICENSE                    README.md
 ```
 
-![image.png](image%208.png)
+![soulmate](/static/images/soulmate/image%208.png)
+
 
 Before uploading, open the php file and replace the placeholder LHOST/LPORT with your machine's IP and listener port.
 
 ### **File Upload:**
 
-![image.png](image%209.png)
+![soulmate](/static/images/soulmate/image%209.png)
 
-![image.png](image%2010.png)
+
+![soulmate](/static/images/soulmate/image%2010.png)
+
 
 Before running `curl`, make sure your listener is started and actively listening for connections.
 
-![image.png](image%2011.png)
+![soulmate](/static/images/soulmate/image%2011.png)
 
 Got the reverse Shell.
 
@@ -332,13 +337,13 @@ I didn’t have `sudo` access (so `sudo -l` wasn’t available) and there were n
 
 I then downloaded `linpeas.sh` into `/tmp`.
 
-![image.png](image%2012.png)
+![soulmate](/static/images/soulmate/image%2012.png)
 
 ### Linpeas Findings
 
-![image.png](image%2013.png)
+![soulmate](/static/images/soulmate/image%2013.png)
 
-![image.png](image%2014.png)
+![soulmate](/static/images/soulmate/image%2014.png)
 
 ```bash
 www-data@soulmate:~/soulmate.htb/config$ cd /var/www/soulmate.htb/data/
@@ -366,7 +371,7 @@ sqlite> select * from users;
 sqlite> 
 ```
 
-![image.png](image%2015.png)
+![soulmate](/static/images/soulmate/image%2015.png)
 
 I tried logging into the website with those credentials, but the login failed.
 
@@ -376,7 +381,7 @@ I tried logging into the website with those credentials, but the login failed.
 cat /usr/local/lib/erlang_login/start.escript
 ```
 
-![image.png](image%2016.png)
+![soulmate](/static/images/soulmate/image%2016.png)
 
 username: ben
 password: HouseH0ldings998
@@ -417,11 +422,11 @@ Sorry, user ben may not run sudo on soulmate.
 
 Found nothing useful so far, so I decided to run `linpeas.sh`
 
-![image.png](image%2017.png)
+![soulmate](/static/images/soulmate/image%2017.png)
 
 ### Active ports
 
-![image.png](image%2018.png)
+![soulmate](/static/images/soulmate/image%2018.png)
 
 Nmap showed only two *standard* open ports (80 and 22), but I also found these extra ports:
 
