@@ -27,8 +27,8 @@ export default function Home({ posts }) {
             className="pointer-events-none absolute left-0 right-0"
             style={{
               top: 0,
-              height: '2px',
-              background: 'rgba(229,62,62,0.6)',
+              height: '8px',
+              background: 'linear-gradient(to bottom, transparent, rgba(229,62,62,0.15), rgba(229,62,62,0.5), rgba(229,62,62,0.15), transparent)',
               animation: 'scanline 3s linear infinite',
             }}
           />
