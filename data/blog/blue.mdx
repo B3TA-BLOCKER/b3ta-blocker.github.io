@@ -13,6 +13,8 @@ images: ["/static/images/blue/preview.png"]
 
 # Lab Setup
 
+Both machines are configured on a NAT network.
+
 ## Kali Linux
 
 ![Blue](/static/images/blue/image.png)
@@ -36,6 +38,8 @@ PING 10.0.2.5 (10.0.2.5) 56(84) bytes of data.
 2 packets transmitted, 2 received, 0% packet loss, time 1002ms
 rtt min/avg/max/mdev = 1.950/8.082/14.215/6.132 ms
 ```
+
+Verified connectivity by pinging the target from the Kali host to confirm the device was reachable.
 
 # Nmap Scan:
 
@@ -102,7 +106,7 @@ The target 10.0.2.5 is up and identified as **Windows 7 Ultimate (6.1.7601 SP1)*
 
 # Exploitation using Metasploit
 
-## Searched for **`eternalblue`**
+Searched for 'ernalblue' on msfconsole
 
 ```bash
 msf6 > search eternalblue
@@ -147,7 +151,7 @@ Interact with a module by name or index. For example info 29, use 29 or use expl
 After interacting with a module you can manually set a TARGET with set TARGET 'Neutralize implant'
 ```
 
-I am going to use **`“windows/smb/ms17_010_eternalblue”`** 
+The exploitation was performed using the Metasploit module 'exploit/windows/smb/ms17_010_eternalblue'
 
 ## Set options
 
