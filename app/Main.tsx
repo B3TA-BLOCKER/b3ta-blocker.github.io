@@ -29,19 +29,47 @@ export default function Home({ posts }) {
           </div>
 
           {/* Title */}
-          <h1 className="mb-4 font-sans text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">
+          <h1 className="mb-5 font-sans text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">
             Pen <span className="text-red-500">Testing</span>
             <br />
             Diaries
-            <span className="ml-1 inline-block h-[1em] w-[3px] animate-[blink_1s_step-end_infinite] bg-red-500 align-middle" />
+            <span
+              className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
+              style={{
+                height: '0.75em',
+                animation: 'blink 1s step-end infinite',
+              }}
+            />
           </h1>
 
-          {/* Terminal subtitle */}
-          <p className="mb-6 font-mono text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-            <span className="mr-2 text-red-500">$</span>cat about.txt
-            <br />
-            My journey through CTFs, labs, and everything in between.
-          </p>
+          {/* Terminal block */}
+          <div className="font-mono text-sm leading-loose text-gray-500 dark:text-gray-400">
+            <p className="opacity-60">
+              # My journey through CTFs, labs, and everything in between.
+            </p>
+            <p className="mt-1">
+              <span className="mr-2 text-red-500">$</span>
+              <span className="text-gray-900 dark:text-gray-100">ls -la ~/archive</span>
+            </p>
+            <div className="mt-0.5 ml-4 grid grid-cols-3 gap-x-6 gap-y-0.5 text-green-500 dark:text-green-400">
+              <span>htb-machines/</span>
+              <span>tcm-machines/</span>
+              <span>tryhackme/</span>
+              <span>challenges/</span>
+              <span>dev-notes/</span>
+              <span>ctf-writeups/</span>
+            </div>
+            <p className="mt-1">
+              <span className="mr-2 text-red-500">$</span>
+              <span
+                className="inline-block w-[3px] bg-red-500 align-middle"
+                style={{
+                  height: '0.75em',
+                  animation: 'blink 1s step-end infinite',
+                }}
+              />
+            </p>
+          </div>
 
         </div>
 
