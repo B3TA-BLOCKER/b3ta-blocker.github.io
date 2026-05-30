@@ -34,7 +34,7 @@ export default function AuthorLayout({ children, content }: Props) {
               className="h-1.5 w-1.5 rounded-full bg-red-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
-            Cybersecurity Graduate — Open to Work
+            Cybersecurity Graduate.
           </div>
 
           <div className="flex items-center gap-10">
