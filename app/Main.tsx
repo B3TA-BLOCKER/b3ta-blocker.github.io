@@ -33,15 +33,10 @@ export default function Home({ posts }) {
 
           {/* Title */}
           <h1 className="mb-5 font-sans text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">
-            Pen <span className="text-red-500">Testing</span>
-            <br />
-            Diaries
+            Bukhari's <span className="text-red-500">Archive</span>
             <span
               className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
-              style={{
-                height: '0.75em',
-                animation: 'blink 1s step-end infinite',
-              }}
+              style={{ height: '0.75em', animation: 'blink 1s step-end infinite' }}
             />
           </h1>
 
