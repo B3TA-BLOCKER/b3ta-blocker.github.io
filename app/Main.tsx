@@ -22,27 +22,13 @@ export default function Home({ posts }) {
             }}
           />
 
-          {/* Badges */}
-          <div className="mb-5 flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
-              <span
-                className="h-1.5 w-1.5 rounded-full bg-red-500"
-                style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
-              />
-              LIVE — writeups dropping regularly
-            </div>
-            {posts[0] && (() => {
-              const days = Math.floor((Date.now() - new Date(posts[0].date).getTime()) / (1000 * 60 * 60 * 24))
-              return (
-                <div className="inline-flex items-center gap-2 rounded border border-green-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-green-500">
-                  <span
-                    className="h-1.5 w-1.5 rounded-full bg-green-500"
-                    style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
-                  />
-                  Latest post — {days === 0 ? 'today' : `${days}d ago`}
-                </div>
-              )
-            })()}
+          {/* Live badge */}
+          <div className="mb-5 inline-flex items-center gap-2 rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-red-500"
+              style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
+            />
+            LIVE — writeups dropping regularly
           </div>
 
           {/* Title */}
@@ -75,10 +61,7 @@ export default function Home({ posts }) {
               <span className="mr-2 text-red-500">$</span>
               <span
                 className="inline-block w-[3px] bg-red-500 align-middle"
-                style={{
-                  height: '1em',
-                  animation: 'blink 1s step-end infinite',
-                }}
+                style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
               />
             </p>
           </div>
