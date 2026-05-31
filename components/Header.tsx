@@ -41,19 +41,17 @@ const Header = () => {
               siteMetadata.headerTitle
             )
           )}
+          {isHome && days !== null && (
+            <div className="inline-flex items-center gap-2 rounded border border-green-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-green-500">
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-green-500"
+                style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
+              />
+              Latest post — {days === 0 ? 'today' : `${days}d ago`}
+            </div>
+          )}
         </div>
       </Link>
-
-      {/* Green badge — homepage only, sits where site title was */}
-      {isHome && days !== null && (
-        <div className="inline-flex items-center gap-2 rounded border border-green-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-green-500">
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-green-500"
-            style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
-          />
-          Latest post — {days === 0 ? 'today' : `${days}d ago`}
-        </div>
-      )}
 
       <div className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6">
         <div className="no-scrollbar hidden max-w-40 items-center gap-x-4 overflow-x-auto sm:flex md:max-w-72 lg:max-w-96">
