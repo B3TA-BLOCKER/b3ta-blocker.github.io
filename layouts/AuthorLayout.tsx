@@ -29,12 +29,12 @@ export default function AuthorLayout({ children, content }: Props) {
           />
 
           {/* Badge */}
-          <div className="mb-5 inline-flex items-center gap-3 rounded-md border border-red-500/30 px-6 py-3 font-mono text-base tracking-widest text-red-500">
+          <div className="mb-5 inline-flex items-center gap-2 rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
             <span
-              className="h-3 w-3 rounded-full bg-red-500"
+              className="h-1.5 w-1.5 rounded-full bg-red-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
-            Cybersecurity Graduate.
+            Cybersecurity Graduate — Open to Work
           </div>
 
           <div className="flex items-center gap-10">
