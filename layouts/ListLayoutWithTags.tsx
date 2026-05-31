@@ -35,7 +35,7 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
     <div className="space-y-2 pt-6 pb-8 md:space-y-5">
       <nav className="flex justify-between">
         {!prevPage && (
-          <button className="cursor-auto disabled:opacity-50" disabled={!prevPage}>
+          <button className="cursor-auto opacity-50" disabled={!prevPage}>
             Previous
           </button>
         )}
@@ -43,20 +43,25 @@ function Pagination({ totalPages, currentPage }: PaginationProps) {
           <Link
             href={currentPage - 1 === 1 ? `/${basePath}/` : `/${basePath}/page/${currentPage - 1}`}
             rel="prev"
+            className="hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200"
           >
             Previous
           </Link>
         )}
-        <span>
+        <span className="font-mono text-sm text-gray-500 dark:text-gray-400">
           {currentPage} of {totalPages}
         </span>
         {!nextPage && (
-          <button className="cursor-auto disabled:opacity-50" disabled={!nextPage}>
+          <button className="cursor-auto opacity-50" disabled={!nextPage}>
             Next
           </button>
         )}
         {nextPage && (
-          <Link href={`/${basePath}/page/${currentPage + 1}`} rel="next">
+          <Link
+            href={`/${basePath}/page/${currentPage + 1}`}
+            rel="next"
+            className="hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200"
+          >
             Next
           </Link>
         )}
