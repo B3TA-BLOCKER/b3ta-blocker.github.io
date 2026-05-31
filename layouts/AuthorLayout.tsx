@@ -90,7 +90,7 @@ export default function AuthorLayout({ children, content }: Props) {
                   <p>
                     <span className="text-green-500 dark:text-green-400">status</span>
                     <span className="mx-2">:</span>
-                    Self-taught · Graduated · Job hunting
+                    Self-taught · Graduated 
                   </p>
                   <p>
                     <span className="text-green-500 dark:text-green-400">passion</span>
