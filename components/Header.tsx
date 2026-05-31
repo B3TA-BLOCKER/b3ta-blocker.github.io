@@ -28,9 +28,9 @@ const Header = () => {
   return (
     <header className={headerClass}>
       {isHome ? (
-        <div className="inline-flex items-center gap-2 rounded border border-green-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-green-500">
+        <div className="inline-flex items-center gap-2 rounded border border-green-500/30 px-4 py-2 font-mono text-[13px] tracking-widest text-green-500">
           <span
-            className="h-1.5 w-1.5 rounded-full bg-green-500"
+            className="h-2 w-2 rounded-full bg-green-500"
             style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
           />
           Latest post — {days === 0 ? 'today' : `${days}d ago`}
