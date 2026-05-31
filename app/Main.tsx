@@ -28,7 +28,7 @@ export default function Home({ posts }) {
               className="h-1.5 w-1.5 rounded-full bg-red-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
-            LIVE — writeups dropping regularly
+             Hack · Learn · Repeat
           </div>
 
           {/* Title */}
