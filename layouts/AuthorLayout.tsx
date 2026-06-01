@@ -2,6 +2,9 @@ import { ReactNode } from 'react'
 import type { Authors } from 'contentlayer/generated'
 import SocialIcon from '@/components/social-icons'
 import Image from '@/components/Image'
+import dynamic from 'next/dynamic'
+
+const Terminal = dynamic(() => import('@/components/Terminal'), { ssr: false })
 
 interface Props {
   children: ReactNode
@@ -90,7 +93,7 @@ export default function AuthorLayout({ children, content }: Props) {
                   <p>
                     <span className="text-green-500 dark:text-green-400">status</span>
                     <span className="mx-2">:</span>
-                    Self-taught · Graduated 
+                    Self-taught · Graduated
                   </p>
                   <p>
                     <span className="text-green-500 dark:text-green-400">passion</span>
@@ -114,6 +117,14 @@ export default function AuthorLayout({ children, content }: Props) {
         {/* Content below */}
         <div className="prose dark:prose-invert max-w-none pt-8 pb-8">
           {children}
+        </div>
+
+        {/* Terminal */}
+        <div className="not-prose pt-8 pb-8">
+          <h2 className="mb-4 font-mono text-sm uppercase tracking-widest text-red-500">
+            — Terminal
+          </h2>
+          <Terminal />
         </div>
 
       </div>
