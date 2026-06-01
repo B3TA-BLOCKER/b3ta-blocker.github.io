@@ -122,7 +122,7 @@ export default function AuthorLayout({ children, content }: Props) {
           <h2 className="mb-4 font-mono text-sm uppercase tracking-widest text-red-500">
             — Terminal
           </h2>
-          <Terminal />
+          <TerminalWrapper />
         </div>
 
       </div>
