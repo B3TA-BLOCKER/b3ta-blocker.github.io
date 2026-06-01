@@ -8,8 +8,9 @@ linkedin: https://www.linkedin.com/in/hassaan-ali-bukhari/
 github: https://github.com/B3TA-BLOCKER
 ---
 
+import dynamic from 'next/dynamic'
 
-import Terminal from '@/components/Terminal'
+const Terminal = dynamic(() => import('@/components/Terminal'), { ssr: false })
 
 # I'm B3TA-BLOCKER
 
