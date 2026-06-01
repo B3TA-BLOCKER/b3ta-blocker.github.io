@@ -21,7 +21,7 @@ function highlight(text: string, query: string) {
   const parts = text.split(regex)
   return parts.map((part, i) =>
     regex.test(part) ? (
-      <mark key={i} className="bg-primary-500/30 text-primary-400 rounded px-0.5">
+      <mark key={i} className="bg-red-500/20 text-red-400 rounded px-0.5">
         {part}
       </mark>
     ) : (
@@ -102,110 +102,138 @@ export default function CustomSearch() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm pt-24 px-4"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm pt-24 px-4"
       onClick={() => setIsOpen(false)}
     >
       <div
-        className="w-full max-w-lg rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+        className="w-full max-w-xl overflow-hidden"
+        style={{
+          background: '#0d1117',
+          border: '1px solid #30363d',
+          borderRadius: '8px',
+          fontFamily: 'var(--font-mono)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Title bar */}
+        <div style={{
+          background: '#161b22',
+          padding: '10px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          borderBottom: '1px solid #30363d',
+        }}>
+          <div style={{width:'12px',height:'12px',borderRadius:'50%',background:'#ff5f56'}}></div>
+          <div style={{width:'12px',height:'12px',borderRadius:'50%',background:'#ffbd2e'}}></div>
+          <div style={{width:'12px',height:'12px',borderRadius:'50%',background:'#27c93f'}}></div>
+          <span style={{color:'#8b949e',fontSize:'12px',flex:1,textAlign:'center'}}>b3ta-blocker@archive — search</span>
+        </div>
+
         {/* Search Input */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="h-5 w-5 text-gray-400 shrink-0"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-            />
-          </svg>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '12px 16px',
+          borderBottom: '1px solid #30363d',
+        }}>
+          <span style={{color:'#e53e3e',fontSize:'13px'}}>$</span>
+          <span style={{color:'#8b949e',fontSize:'13px'}}>grep -r</span>
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search articles, tags..."
-            className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none text-base"
+            placeholder="search articles, tags..."
+            style={{
+              flex: 1,
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              color: '#c9d1d9',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '13px',
+              caretColor: '#e53e3e',
+            }}
           />
-          <kbd className="text-xs text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1 font-mono">
-            ESC
-          </kbd>
+          <kbd style={{
+            fontSize: '10px',
+            color: '#8b949e',
+            border: '1px solid #30363d',
+            borderRadius: '4px',
+            padding: '2px 6px',
+            fontFamily: 'var(--font-mono)',
+          }}>ESC</kbd>
         </div>
 
         {/* Label */}
         {!query && results.length > 0 && (
-          <div className="px-5 pt-3 pb-1">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Recent Articles</p>
+          <div style={{padding:'10px 16px 4px'}}>
+            <p style={{fontSize:'10px',color:'#8b949e',letterSpacing:'0.1em',textTransform:'uppercase',fontFamily:'var(--font-mono)'}}>
+              # recent articles
+            </p>
+          </div>
+        )}
+        {query && results.length > 0 && (
+          <div style={{padding:'10px 16px 4px'}}>
+            <p style={{fontSize:'10px',color:'#8b949e',letterSpacing:'0.1em',textTransform:'uppercase',fontFamily:'var(--font-mono)'}}>
+              # {results.length} result{results.length !== 1 ? 's' : ''} found
+            </p>
           </div>
         )}
 
         {/* Results */}
         {results.length > 0 && (
-          <ul className="max-h-[28rem] overflow-y-auto">
+          <ul style={{maxHeight:'26rem',overflowY:'auto'}}>
             {results.map((doc, idx) => (
-              <li key={doc.path}>
+              <li key={doc.path} style={{borderTop: idx !== 0 ? '1px solid #21262d' : 'none'}}>
                 <Link
                   href={`/${doc.path}`}
                   onClick={() => setIsOpen(false)}
-                  className={`flex items-start gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                    idx !== results.length - 1
-                      ? 'border-b border-gray-100 dark:border-gray-800'
-                      : ''
-                  }`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    textDecoration: 'none',
+                    transition: 'background 0.15s',
+                  }}
+                  className="hover:bg-white/5"
                 >
                   {/* Image */}
                   {doc.images?.[0] ? (
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl">
-                      <Image
-                        src={doc.images[0]}
-                        alt={doc.title}
-                        fill
-                        className="object-cover"
-                      />
+                    <div style={{position:'relative',height:'48px',width:'48px',flexShrink:0,overflow:'hidden',borderRadius:'6px',border:'1px solid #30363d'}}>
+                      <Image src={doc.images[0]} alt={doc.title} fill className="object-cover" />
                     </div>
                   ) : (
-                    <div className="h-14 w-14 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                      <svg
-                        className="h-6 w-6 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
+                    <div style={{height:'48px',width:'48px',flexShrink:0,borderRadius:'6px',border:'1px solid #30363d',background:'#161b22',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                      <span style={{color:'#8b949e',fontSize:'18px'}}>{'>'}</span>
                     </div>
                   )}
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{fontSize:'13px',fontWeight:600,color:'#c9d1d9',marginBottom:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                       {highlight(doc.title, query)}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5 mb-2">
+                    <p style={{fontSize:'11px',color:'#8b949e',marginBottom:'4px',fontFamily:'var(--font-mono)'}}>
                       {formatDate(doc.date, siteMetadata.locale)}
                     </p>
-                    {doc.summary && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mb-2">
-                        {highlight(doc.summary, query)}
-                      </p>
-                    )}
                     {doc.tags && doc.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {doc.tags.map((tag) => (
+                      <div style={{display:'flex',flexWrap:'wrap',gap:'4px'}}>
+                        {doc.tags.slice(0,4).map((tag) => (
                           <span
                             key={tag}
-                            className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                            style={{
+                              fontSize: '10px',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              background: 'rgba(229,62,62,0.08)',
+                              border: '1px solid rgba(229,62,62,0.2)',
+                              color: '#e53e3e',
+                              fontFamily: 'var(--font-mono)',
+                            }}
                           >
                             {highlight(tag, query)}
                           </span>
@@ -215,19 +243,7 @@ export default function CustomSearch() {
                   </div>
 
                   {/* Arrow */}
-                  <svg
-                    className="h-4 w-4 text-gray-300 dark:text-gray-600 shrink-0 mt-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  <span style={{color:'#e53e3e',fontSize:'13px',flexShrink:0}}>→</span>
                 </Link>
               </li>
             ))}
@@ -236,30 +252,31 @@ export default function CustomSearch() {
 
         {/* No results */}
         {query && results.length === 0 && (
-          <div className="px-5 py-12 text-center">
-            <p className="text-sm text-gray-400">
-              No results for{' '}
-              <span className="text-gray-600 dark:text-gray-300 font-medium">"{query}"</span>
+          <div style={{padding:'48px 16px',textAlign:'center'}}>
+            <p style={{fontSize:'13px',color:'#8b949e',fontFamily:'var(--font-mono)'}}>
+              <span style={{color:'#e53e3e'}}>$</span> grep: no matches for <span style={{color:'#c9d1d9'}}>"{query}"</span>
             </p>
-            <p className="text-xs text-gray-400 mt-1">Try searching for a tag, title or topic</p>
+            <p style={{fontSize:'11px',color:'#8b949e',marginTop:'4px'}}>try a different title, tag, or topic</p>
           </div>
         )}
 
         {/* Footer */}
-        <div className="px-5 py-2 border-t border-gray-100 dark:border-gray-800 flex items-center gap-4">
-          <span className="text-xs text-gray-400">
-            Press{' '}
-            <kbd className="font-mono border border-gray-200 dark:border-gray-700 rounded px-1">
-              ESC
-            </kbd>{' '}
-            to close
+        <div style={{
+          padding: '8px 16px',
+          borderTop: '1px solid #30363d',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          background: '#161b22',
+        }}>
+          <span style={{fontSize:'10px',color:'#8b949e',fontFamily:'var(--font-mono)'}}>
+            press <kbd style={{border:'1px solid #30363d',borderRadius:'3px',padding:'1px 4px'}}>ESC</kbd> to close
           </span>
-          <span className="text-xs text-gray-400">
-            Press{' '}
-            <kbd className="font-mono border border-gray-200 dark:border-gray-700 rounded px-1">
-              ↵
-            </kbd>{' '}
-            to open
+          <span style={{fontSize:'10px',color:'#8b949e',fontFamily:'var(--font-mono)'}}>
+            press <kbd style={{border:'1px solid #30363d',borderRadius:'3px',padding:'1px 4px'}}>↵</kbd> to open
+          </span>
+          <span style={{fontSize:'10px',color:'#8b949e',fontFamily:'var(--font-mono)',marginLeft:'auto'}}>
+            <kbd style={{border:'1px solid #30363d',borderRadius:'3px',padding:'1px 4px'}}>⌘K</kbd> to search
           </span>
         </div>
       </div>
