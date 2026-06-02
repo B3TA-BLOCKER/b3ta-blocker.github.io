@@ -53,7 +53,6 @@ export default function NewsletterForm() {
           color: '#e53e3e',
           marginBottom: '0.5rem',
         }}>
-          Newsletter
         </p>
         <h3 style={{
           fontSize: '18px',
