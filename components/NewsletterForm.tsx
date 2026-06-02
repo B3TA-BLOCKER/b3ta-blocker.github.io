@@ -80,7 +80,7 @@ export default function NewsletterForm() {
           <span>{message}</span>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', maxWidth: '480px' }}>
           <input
             type="email"
             value={email}
