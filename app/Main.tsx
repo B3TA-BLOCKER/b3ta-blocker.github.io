@@ -4,7 +4,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import Image from 'next/image'
 
-const MAX_DISPLAY = 6
+const MAX_DISPLAY = 3
 
 export default function Home({ posts }) {
   return (
