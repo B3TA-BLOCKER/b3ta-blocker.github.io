@@ -1,5 +1,4 @@
 'use client'
-
 export default function NewsletterForm() {
   return (
     <div
@@ -39,7 +38,6 @@ export default function NewsletterForm() {
           No spam. Just writeups, walkthroughs, and notes — straight to your inbox.
         </p>
       </div>
-
       <form
         action="https://buttondown.com/api/emails/embed-subscribe/B3TA_BLOCKER"
         method="post"
@@ -80,7 +78,6 @@ export default function NewsletterForm() {
           }}
         />
       </form>
-
       <p style={{ marginTop: '8px', fontSize: '10px', color: '#484f58' }}>
         Powered by{' '}
         
