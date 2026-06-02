@@ -3,6 +3,7 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import Image from 'next/image'
+import NewsletterForm from '@/components/NewsletterForm'
 
 const MAX_DISPLAY = 3
 
@@ -139,6 +140,10 @@ export default function Home({ posts }) {
           </Link>
         </div>
       )}
+
+      <div className="mt-8">
+        <NewsletterForm />
+      </div>
     </>
   )
 }
