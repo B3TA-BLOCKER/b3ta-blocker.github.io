@@ -20,7 +20,7 @@ export default function NewsletterForm() {
 
       if (res.ok) {
         setStatus('success')
-        setMessage('You\'re subscribed! You\'ll get notified on new posts.')
+        setMessage("You're subscribed! You'll get notified on new posts.")
         setEmail('')
       } else {
         setStatus('error')
@@ -38,6 +38,10 @@ export default function NewsletterForm() {
         borderTop: '1px solid #21262d',
         paddingTop: '2rem',
         marginTop: '2rem',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
       }}
     >
       <div style={{ marginBottom: '1rem' }}>
@@ -80,7 +84,7 @@ export default function NewsletterForm() {
           <span>{message}</span>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', maxWidth: '480px' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px', maxWidth: '480px', width: '100%' }}>
           <input
             type="email"
             value={email}
