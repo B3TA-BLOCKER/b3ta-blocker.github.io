@@ -1,4 +1,5 @@
 'use client'
+
 export default function NewsletterForm() {
   return (
     <div
@@ -13,28 +14,29 @@ export default function NewsletterForm() {
       }}
     >
       <div style={{ marginBottom: '1rem' }}>
-        <p style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '10px',
-          letterSpacing: '0.1em',
-          textTransform: 'uppercase',
-          color: '#e53e3e',
-          marginBottom: '0.5rem',
-        }}>
+        <p
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '10px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#e53e3e',
+            marginBottom: '0.5rem',
+          }}
+        >
           Newsletter
         </p>
-        <h3 style={{
-          fontSize: '18px',
-          fontWeight: 600,
-          color: 'var(--color-text-primary)',
-          marginBottom: '0.25rem',
-        }}>
+        <h3
+          style={{
+            fontSize: '18px',
+            fontWeight: 600,
+            color: 'var(--color-text-primary)',
+            marginBottom: '0.25rem',
+          }}
+        >
           Get notified on new posts
         </h3>
-        <p style={{
-          fontSize: '13px',
-          color: '#8b949e',
-        }}>
+        <p style={{ fontSize: '13px', color: '#8b949e' }}>
           No spam. Just writeups, walkthroughs, and notes — straight to your inbox.
         </p>
       </div>
