@@ -63,7 +63,7 @@ export default function NewsletterForm() {
         />
         <input
           type="submit"
-          value="Subscribe →"
+          value="Subscribe"
           style={{
             background: 'transparent',
             border: '1px solid #e53e3e',
@@ -80,13 +80,14 @@ export default function NewsletterForm() {
       </form>
 
       <p style={{ marginTop: '8px', fontSize: '10px', color: '#484f58' }}>
+        Powered by{' '}
         
           href="https://buttondown.com/refer/B3TA_BLOCKER"
           target="_blank"
           rel="noreferrer"
           style={{ color: '#484f58', textDecoration: 'none' }}
         >
-          Powered by Buttondown
+          Buttondown
         </a>
       </p>
     </div>
