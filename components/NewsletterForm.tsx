@@ -21,7 +21,7 @@ export default function NewsletterForm() {
       <p style={{ marginTop: '8px', fontSize: '10px', color: '#484f58' }}>
         
         <a href="https://buttondown.com/refer/B3TA_BLOCKER" target="_blank" rel="noreferrer" style={{ color: '#484f58', textDecoration: 'none' }}>
-          Buttondown
+        
         </a>
       </p>
     </div>
