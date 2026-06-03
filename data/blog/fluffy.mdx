@@ -1,13 +1,12 @@
 ---
-title: "Fluffy"
+title: "Fluffy Machine (HackTheBox) — Step-by-Step Walkthrough"
 date: "2025-07-10"
 draft: false
-tags: ["HackTheBox", "Active Directory", "Windows", "privilege-escalation", "Machine", "Easy"]
-summary: "HackTheBox Fluffy machine writeup"
+tags: ["windows", "hackthebox", "easy", "active-directory", "cve-2025-24071", "privilege-escalation"]
+summary: "Compromise of a Windows HackTheBox Active Directory machine by exploiting CVE-2025-24071 via a malicious library-ms file to capture NTLM hashes via Responder, abusing GenericWrite permissions through BloodHound enumeration to perform Shadow Credential attacks, and escalating to Domain Admin by exploiting an ESC16 ADCS misconfiguration with Certipy."
 images: ["/static/images/fluffy/preview.png"]
 ---
 
-# Fluffy -- HackTheBox Machine writeup
 
 ![Fluffy](/static/images/fluffy/Fluffy.png)
 

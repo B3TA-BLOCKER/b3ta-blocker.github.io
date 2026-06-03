@@ -1,14 +1,11 @@
 ---
-title: "Code"
+title: "Code Machine (HackTheBox) — Step-by-Step Walkthrough"
 date: "2025-08-06"
 draft: false
-tags: ["HackTheBox", "Machine", "Linux", "Easy", "PythonExploit"]
-summary: "HackTheBox Code machine writeup"
+tags: ["linux", "hackthebox", "easy", "python-sandbox-escape", "path-traversal", "privilege-escalation"]
+summary: "Compromise of a Linux HackTheBox machine by escaping a Python code editor sandbox via subclass traversal to obtain a reverse shell, extracting and cracking MD5 credentials from a SQLite database, then escalating privileges by abusing a sudo-permitted backup script with a crafted JSON payload to read the root flag."
 images: ["/static/images/code/preview.png"]
 ---
-
-# Code -- HackTheBox Machine writeup
-
 
 ![Code](/static/images/code/head.png)
 
