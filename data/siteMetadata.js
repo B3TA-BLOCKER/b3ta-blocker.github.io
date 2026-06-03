@@ -1,6 +1,6 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: "Bukhari's Archive — CTF Writeups, Labs & Hacking Notes",
+  title: "Bukhari's Archive ",
   author: 'Hassaan Ali Bukhari',
   headerTitle: "Bukhari's Archive",
   description: 'A hands-on hacking blog covering penetration testing walkthroughs by Hassaan Ali Bukhari.',
