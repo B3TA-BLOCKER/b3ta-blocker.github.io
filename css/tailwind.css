@@ -160,28 +160,28 @@ h1, h2, h3, h4, h5, h6 {
    CODE BLOCK / TERMINAL STYLES
    ============================================ */
 
-/* Light mode */
+/* Light mode - dark terminal same as dark mode */
 .code-block-wrapper {
-  background: #ffffff;
-  border: 1px solid #d1d5db !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+  background: #161b22;
+  border: 1px solid #30363d !important;
+  box-shadow: 0 0 0 1px #21262d, 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 .code-block-titlebar {
-  background: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
+  background: #21262d;
+  border-bottom: 1px solid #30363d;
 }
 .code-block-body {
-  background: #f8f8f8;
+  background: #161b22;
 }
 .code-block-pre {
-  color: #1a1a1a !important;
+  color: #c9d1d9 !important;
 }
 .code-block-path {
-  color: #6b7280;
+  color: #484f58;
 }
 .code-block-copy {
-  border: 1px solid #d1d5db;
-  color: #6b7280;
+  border: 1px solid #30363d;
+  color: #8b949e;
 }
 
 /* Dark mode */
