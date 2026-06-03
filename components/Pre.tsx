@@ -5,13 +5,26 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
   const [copied, setCopied] = useState(false)
   const preRef = useRef<HTMLPreElement>(null)
 
-  // Extract filename from code block meta (e.g. ```python:malicious.py)
-  const getFilename = () => {
+  // Extract filename - try multiple ways MDX passes it
+  const getFilename = (): string | null => {
     const child = (children as any)
+    if (!child) return null
+
     const className: string = child?.props?.className || ''
-    // Try to get filename from language:filename syntax
-    const match = className.match(/language-[^:]+:(.+)/)
-    if (match) return match[1]
+    const metastring: string = child?.props?.metastring || ''
+    const dataLang: string = (props as any)['data-language'] || ''
+
+    // Try className: "language-python:malicious.py"
+    const classMatch = className.match(/language-[^:]+:(.+)/)
+    if (classMatch) return classMatch[1]
+
+    // Try metastring directly (some configs pass filename here)
+    if (metastring && !metastring.startsWith('{')) return metastring.trim()
+
+    // Try data attributes on the pre element itself
+    const dataFilename = (props as any)['data-filename'] || (props as any)['filename']
+    if (dataFilename) return dataFilename
+
     return null
   }
 
@@ -45,7 +58,6 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
         }}
         className="code-block-titlebar"
       >
-        {/* Traffic lights */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{
             width: '12px', height: '12px', borderRadius: '50%',
@@ -66,20 +78,16 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
             opacity: 0.7,
           }} />
 
-          {/* Show filename if set, otherwise nothing */}
-          {filename && (
-            <span className="code-block-path" style={{
-              marginLeft: '10px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              letterSpacing: '0.05em',
-            }}>
-              {filename}
-            </span>
-          )}
+          <span className="code-block-path" style={{
+            marginLeft: '10px',
+            fontSize: '11px',
+            fontFamily: 'monospace',
+            letterSpacing: '0.05em',
+          }}>
+            {filename ?? ''}
+          </span>
         </div>
 
-        {/* Copy button */}
         <button
           onClick={handleCopy}
           style={{
