@@ -229,3 +229,8 @@ h1, h2, h3, h4, h5, h6 {
 .code-block-pre:hover::-webkit-scrollbar-thumb {
   background: #30363d;
 }
+
+/* Hide pliny's default code title — we show it inside Pre instead */
+.remark-code-title {
+  display: none !important;
+}
