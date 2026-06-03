@@ -8,7 +8,6 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
   const preRef = useRef<HTMLPreElement>(null)
 
   useEffect(() => {
-    // pliny's remarkCodeTitles renders a .remark-code-title div just before our wrapper
     const wrapper = wrapperRef.current
     if (!wrapper) return
     const prev = wrapper.previousElementSibling
@@ -47,31 +46,13 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
         className="code-block-titlebar"
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{
-            width: '12px', height: '12px', borderRadius: '50%',
-            background: '#e53e3e',
-            boxShadow: '0 0 6px 2px rgba(229,62,62,0.6)',
-            display: 'inline-block',
-          }} />
-          <span style={{
-            width: '12px', height: '12px', borderRadius: '50%',
-            background: '#d69e2e',
-            display: 'inline-block',
-            opacity: 0.7,
-          }} />
-          <span style={{
-            width: '12px', height: '12px', borderRadius: '50%',
-            background: '#38a169',
-            display: 'inline-block',
-            opacity: 0.7,
-          }} />
-
           {filename && (
-            <span className="code-block-path" style={{
-              marginLeft: '10px',
-              fontSize: '11px',
+            <span style={{
+              fontSize: '13px',
               fontFamily: 'monospace',
               letterSpacing: '0.05em',
+              color: '#e2e8f0',
+              fontWeight: 600,
             }}>
               {filename}
             </span>
