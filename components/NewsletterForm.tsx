@@ -19,7 +19,7 @@ export default function NewsletterForm() {
         <input type="submit" value="Subscribe" style={{ background: 'transparent', border: '1px solid #e53e3e', borderRadius: '6px', padding: '8px 20px', color: '#e53e3e', fontFamily: 'var(--font-mono)', fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }} />
       </form>
       <p style={{ marginTop: '8px', fontSize: '10px', color: '#484f58' }}>
-        Powered by{' '}
+        
         <a href="https://buttondown.com/refer/B3TA_BLOCKER" target="_blank" rel="noreferrer" style={{ color: '#484f58', textDecoration: 'none' }}>
           Buttondown
         </a>
