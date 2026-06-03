@@ -1,11 +1,11 @@
 'use client'
-
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import NextImage, { ImageProps } from 'next/image'
 
 export default function ImageLightbox(props: ImageProps) {
   const [open, setOpen] = useState(false)
   const [scale, setScale] = useState(1)
+  const imgRef = useRef<HTMLDivElement>(null)
 
   const close = useCallback(() => {
     setOpen(false)
@@ -13,14 +13,28 @@ export default function ImageLightbox(props: ImageProps) {
   }, [])
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (!open) return
+    if (!open) return
+
+    const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close()
       if (e.key === '+' || e.key === '=') setScale(s => Math.min(s + 0.25, 4))
       if (e.key === '-') setScale(s => Math.max(s - 0.25, 0.5))
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+
+    const handleScroll = (e: WheelEvent) => {
+      e.preventDefault()
+      setScale(s => {
+        const delta = e.deltaY < 0 ? 0.15 : -0.15
+        return Math.min(Math.max(s + delta, 0.5), 4)
+      })
+    }
+
+    window.addEventListener('keydown', handleKey)
+    window.addEventListener('wheel', handleScroll, { passive: false })
+    return () => {
+      window.removeEventListener('keydown', handleKey)
+      window.removeEventListener('wheel', handleScroll)
+    }
   }, [open, close])
 
   return (
@@ -28,9 +42,8 @@ export default function ImageLightbox(props: ImageProps) {
       <NextImage
         {...props}
         onClick={() => setOpen(true)}
-        style={{ cursor: 'zoom-in' }}
+        style={{ cursor: 'zoom-in', ...(props.style || {}) }}
       />
-
       {open && (
         <div
           onClick={close}
@@ -45,7 +58,7 @@ export default function ImageLightbox(props: ImageProps) {
             cursor: 'zoom-out',
           }}
         >
-          {/* Top controls */}
+          {/* Controls */}
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
@@ -57,36 +70,23 @@ export default function ImageLightbox(props: ImageProps) {
               gap: '8px',
             }}
           >
-            <button
-              onClick={() => setScale(s => Math.max(s - 0.25, 0.5))}
-              style={btnStyle}
-              title="Zoom out"
-            >
-              −
-            </button>
+            <button onClick={() => setScale(s => Math.max(s - 0.25, 0.5))} style={btnStyle} title="Zoom out">−</button>
             <span style={{ color: '#fff', fontFamily: 'monospace', fontSize: '13px', minWidth: '40px', textAlign: 'center' }}>
               {Math.round(scale * 100)}%
             </span>
-            <button
-              onClick={() => setScale(s => Math.min(s + 0.25, 4))}
-              style={btnStyle}
-              title="Zoom in"
-            >
-              +
-            </button>
-            <button
-              onClick={close}
-              style={{ ...btnStyle, fontSize: '22px', marginLeft: '8px' }}
-              title="Close"
-            >
-              ×
-            </button>
+            <button onClick={() => setScale(s => Math.min(s + 0.25, 4))} style={btnStyle} title="Zoom in">+</button>
+            <button onClick={close} style={{ ...btnStyle, fontSize: '22px', marginLeft: '8px' }} title="Close">×</button>
           </div>
 
           {/* Image */}
           <div
+            ref={imgRef}
             onClick={(e) => e.stopPropagation()}
-            style={{ cursor: 'default', transition: 'transform 0.2s', transform: `scale(${scale})` }}
+            style={{
+              cursor: 'default',
+              transition: 'transform 0.15s ease',
+              transform: `scale(${scale})`,
+            }}
           >
             <img
               src={props.src as string}
@@ -100,7 +100,7 @@ export default function ImageLightbox(props: ImageProps) {
             />
           </div>
 
-          {/* Bottom hint */}
+          {/* Hint */}
           <div style={{
             position: 'absolute',
             bottom: '1rem',
@@ -109,8 +109,9 @@ export default function ImageLightbox(props: ImageProps) {
             color: '#8b949e',
             fontFamily: 'monospace',
             fontSize: '11px',
+            whiteSpace: 'nowrap',
           }}>
-            scroll or +/- to zoom · ESC to close
+            scroll or +/− to zoom · ESC to close
           </div>
         </div>
       )}
