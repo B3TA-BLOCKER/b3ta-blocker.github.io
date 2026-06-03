@@ -7,13 +7,23 @@ import TableWrapper from './TableWrapper'
 import LinkPreview from './LinkPreview'
 import ImageLightbox from './ImageLightbox'
 
+const MdxImage = (props: any) => (
+  <ImageLightbox
+    {...props}
+    src={props.src || ''}
+    alt={props.alt || ''}
+    width={props.width || 800}
+    height={props.height || 500}
+  />
+)
+
 export const components: MDXComponents = {
-  Image: ImageLightbox,
+  Image: MdxImage,
+  img: MdxImage,
   TOCInline,
   a: CustomLink,
   pre: Pre,
   table: TableWrapper,
   BlogNewsletterForm,
   LinkPreview,
-  img: ImageLightbox,
 }
