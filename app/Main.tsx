@@ -44,15 +44,12 @@ export default function Home({ posts }) {
             </p>
             <p className="mt-1">
               <span className="mr-2 text-red-500">$</span>
-              <span className="text-gray-900 dark:text-gray-100">ls -la ~/archive</span>
+              <span className="text-gray-900 dark:text-gray-100">ls ~/archive</span>
             </p>
             <div className="mt-0.5 ml-4 grid grid-cols-3 gap-x-6 gap-y-0.5 text-green-500 dark:text-green-400">
               <span>htb-machines/</span>
-              <span>tcm-machines/</span>
-              <span>tryhackme/</span>
               <span>challenges/</span>
               <span>dev-notes/</span>
-              <span>ctf-writeups/</span>
             </div>
             <p className="mt-1">
               <span className="mr-2 text-red-500">$</span>
