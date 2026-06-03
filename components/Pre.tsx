@@ -18,19 +18,22 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
       margin: '1.5rem 0',
       borderRadius: '8px',
       overflow: 'hidden',
-      border: '1px solid #21262d',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+      border: '1px solid #e53e3e',
+      boxShadow: '0 0 0 1px #21262d, 0 4px 24px rgba(0,0,0,0.5)',
       fontFamily: 'var(--font-mono, monospace)',
-    }}>
+    }}
+    className="code-block-wrapper"
+    >
       {/* Title bar */}
       <div style={{
-        background: '#161b22',
         borderBottom: '1px solid #21262d',
         padding: '8px 14px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-      }}>
+      }}
+      className="code-block-titlebar"
+      >
         {/* Traffic lights */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{
@@ -51,9 +54,8 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
             display: 'inline-block',
             opacity: 0.7,
           }} />
-          <span style={{
+          <span className="code-block-path" style={{
             marginLeft: '10px',
-            color: '#484f58',
             fontSize: '11px',
             fontFamily: 'monospace',
             letterSpacing: '0.05em',
@@ -67,24 +69,24 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
           onClick={handleCopy}
           style={{
             background: 'transparent',
-            border: '1px solid #30363d',
             borderRadius: '5px',
-            color: copied ? '#38a169' : '#8b949e',
             fontSize: '11px',
             fontFamily: 'monospace',
             padding: '2px 10px',
             cursor: 'pointer',
             letterSpacing: '0.05em',
             transition: 'all 0.2s',
+            color: copied ? '#38a169' : undefined,
+            borderColor: copied ? '#38a169' : undefined,
           }}
+          className="code-block-copy"
         >
           {copied ? '✓ copied' : 'copy'}
         </button>
       </div>
 
       {/* Code area */}
-      <div style={{ background: '#0d1117', position: 'relative' }}>
-        {/* Prompt indicator line */}
+      <div style={{ position: 'relative' }} className="code-block-body">
         <div style={{
           position: 'absolute',
           top: '12px',
@@ -108,8 +110,8 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
             overflowX: 'auto',
             fontSize: '13px',
             lineHeight: '1.7',
-            color: '#c9d1d9',
           }}
+          className="code-block-pre"
         >
           {children}
         </pre>
