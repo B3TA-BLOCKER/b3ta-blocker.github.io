@@ -81,25 +81,12 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
 
       {/* Code area */}
       <div style={{ position: 'relative' }} className="code-block-body">
-        <div style={{
-          position: 'absolute',
-          top: '12px',
-          left: '14px',
-          color: '#e53e3e',
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          userSelect: 'none',
-          pointerEvents: 'none',
-          zIndex: 1,
-        }}>
-          $
-        </div>
         <pre
           ref={preRef}
           {...props}
           style={{
             margin: 0,
-            padding: '12px 14px 12px 28px',
+            padding: '12px 14px',
             background: 'transparent',
             fontSize: '13px',
             lineHeight: '1.7',
