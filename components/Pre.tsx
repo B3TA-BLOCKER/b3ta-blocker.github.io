@@ -1,34 +1,21 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) {
   const [copied, setCopied] = useState(false)
+  const [filename, setFilename] = useState<string | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const preRef = useRef<HTMLPreElement>(null)
 
-  // Extract filename - try multiple ways MDX passes it
-  const getFilename = (): string | null => {
-    const child = (children as any)
-    if (!child) return null
-
-    const className: string = child?.props?.className || ''
-    const metastring: string = child?.props?.metastring || ''
-    const dataLang: string = (props as any)['data-language'] || ''
-
-    // Try className: "language-python:malicious.py"
-    const classMatch = className.match(/language-[^:]+:(.+)/)
-    if (classMatch) return classMatch[1]
-
-    // Try metastring directly (some configs pass filename here)
-    if (metastring && !metastring.startsWith('{')) return metastring.trim()
-
-    // Try data attributes on the pre element itself
-    const dataFilename = (props as any)['data-filename'] || (props as any)['filename']
-    if (dataFilename) return dataFilename
-
-    return null
-  }
-
-  const filename = getFilename()
+  useEffect(() => {
+    // pliny's remarkCodeTitles renders a .remark-code-title div just before our wrapper
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+    const prev = wrapper.previousElementSibling
+    if (prev && prev.classList.contains('remark-code-title')) {
+      setFilename(prev.textContent || null)
+    }
+  }, [])
 
   const handleCopy = () => {
     const text = preRef.current?.innerText || ''
@@ -40,6 +27,7 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
 
   return (
     <div
+      ref={wrapperRef}
       style={{
         margin: '1.5rem 0',
         borderRadius: '8px',
@@ -78,14 +66,16 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
             opacity: 0.7,
           }} />
 
-          <span className="code-block-path" style={{
-            marginLeft: '10px',
-            fontSize: '11px',
-            fontFamily: 'monospace',
-            letterSpacing: '0.05em',
-          }}>
-            {filename ?? ''}
-          </span>
+          {filename && (
+            <span className="code-block-path" style={{
+              marginLeft: '10px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              letterSpacing: '0.05em',
+            }}>
+              {filename}
+            </span>
+          )}
         </div>
 
         <button
