@@ -3,7 +3,7 @@ const siteMetadata = {
   title: "Bukhari's Archive",
   author: 'Hassaan Ali Bukhari',
   headerTitle: "Bukhari's Archive",
-  description: 'My corner of the internet.',
+  description: 'A hands-on hacking blog covering penetration testing walkthroughs by Hassaan Ali Bukhari.',
   language: 'en-us',
   theme: 'dark',
   siteUrl: 'https://b3ta-blocker.github.io',
