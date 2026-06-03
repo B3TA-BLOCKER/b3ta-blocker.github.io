@@ -5,7 +5,7 @@ export default function NewsletterForm() {
     <div style={{ borderTop: '1px solid #21262d', paddingTop: '2rem', marginTop: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ marginBottom: '1rem' }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#e53e3e', marginBottom: '0.5rem' }}>
-          Newsletter
+          
         </p>
         <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: '0.25rem' }}>
           Get notified on new posts
