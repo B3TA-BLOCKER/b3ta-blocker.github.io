@@ -187,11 +187,11 @@ h1, h2, h3, h4, h5, h6 {
 /* Dark mode */
 .dark .code-block-wrapper {
   background: #161b22 !important;
-  border: 1px solid #e53e3e !important;
-  box-shadow: 0 0 16px rgba(229, 62, 62, 0.2), 0 4px 24px rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid #30363d !important;
+  box-shadow: 0 0 0 1px #21262d, 0 8px 32px rgba(0, 0, 0, 0.8) !important;
 }
 .dark .code-block-titlebar {
-  background: #1c2128 !important;
+  background: #21262d !important;
   border-bottom: 1px solid #30363d !important;
 }
 .dark .code-block-body {
