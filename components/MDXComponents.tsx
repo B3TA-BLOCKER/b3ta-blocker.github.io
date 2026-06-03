@@ -6,6 +6,7 @@ import Image from './Image'
 import CustomLink from './Link'
 import TableWrapper from './TableWrapper'
 import LinkPreview from './LinkPreview'
+import ImageLightbox from './ImageLightbox'
 
 export const components: MDXComponents = {
   Image,
@@ -15,4 +16,5 @@ export const components: MDXComponents = {
   table: TableWrapper,
   BlogNewsletterForm,
   LinkPreview,
+  img: ImageLightbox,
 }
