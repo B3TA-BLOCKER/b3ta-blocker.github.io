@@ -5,6 +5,18 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
   const [copied, setCopied] = useState(false)
   const preRef = useRef<HTMLPreElement>(null)
 
+  // Extract filename from code block meta (e.g. ```python:malicious.py)
+  const getFilename = () => {
+    const child = (children as any)
+    const className: string = child?.props?.className || ''
+    // Try to get filename from language:filename syntax
+    const match = className.match(/language-[^:]+:(.+)/)
+    if (match) return match[1]
+    return null
+  }
+
+  const filename = getFilename()
+
   const handleCopy = () => {
     const text = preRef.current?.innerText || ''
     navigator.clipboard.writeText(text).then(() => {
@@ -14,25 +26,24 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
   }
 
   return (
-    <div style={{
-      margin: '1.5rem 0',
-      borderRadius: '8px',
-      overflow: 'hidden',
-      border: '1px solid #e53e3e',
-      boxShadow: '0 0 0 1px #21262d, 0 4px 24px rgba(0,0,0,0.5)',
-      fontFamily: 'var(--font-mono, monospace)',
-    }}
-    className="code-block-wrapper"
+    <div
+      style={{
+        margin: '1.5rem 0',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        fontFamily: 'var(--font-mono, monospace)',
+      }}
+      className="code-block-wrapper"
     >
       {/* Title bar */}
-      <div style={{
-        borderBottom: '1px solid #21262d',
-        padding: '8px 14px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}
-      className="code-block-titlebar"
+      <div
+        style={{
+          padding: '8px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+        className="code-block-titlebar"
       >
         {/* Traffic lights */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -54,14 +65,18 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
             display: 'inline-block',
             opacity: 0.7,
           }} />
-          <span className="code-block-path" style={{
-            marginLeft: '10px',
-            fontSize: '11px',
-            fontFamily: 'monospace',
-            letterSpacing: '0.05em',
-          }}>
-            ~/b3ta-blocker
-          </span>
+
+          {/* Show filename if set, otherwise nothing */}
+          {filename && (
+            <span className="code-block-path" style={{
+              marginLeft: '10px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              letterSpacing: '0.05em',
+            }}>
+              {filename}
+            </span>
+          )}
         </div>
 
         {/* Copy button */}
@@ -107,7 +122,6 @@ export default function Pre({ children, ...props }: React.HTMLAttributes<HTMLPre
             margin: 0,
             padding: '12px 14px 12px 28px',
             background: 'transparent',
-            overflowX: 'auto',
             fontSize: '13px',
             lineHeight: '1.7',
           }}
