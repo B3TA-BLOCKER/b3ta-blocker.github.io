@@ -254,12 +254,14 @@ export default function Terminal() {
       overflow:'hidden',
       fontFamily:'monospace',
       fontSize:'13px',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
       {/* Title bar */}
-      <div style={{background:'#161b22', padding:'10px 16px', display:'flex', alignItems:'center', gap:'8px', borderBottom:'1px solid #30363d', userSelect:'none'}}>
-        <div onClick={() => setClosed(true)}  style={{width:'12px', height:'12px', borderRadius:'50%', background:'#ff5f56', cursor:'pointer'}}></div>
+      <div style={{background:'#161b22', padding:'10px 16px', display:'flex', alignItems:'center', gap:'8px', borderBottom:'1px solid #30363d', userSelect:'none', flexShrink: 0}}>
+        <div onClick={() => setClosed(true)} style={{width:'12px', height:'12px', borderRadius:'50%', background:'#ff5f56', cursor:'pointer'}}></div>
         <div onClick={() => setMinimized(m => !m)} style={{width:'12px', height:'12px', borderRadius:'50%', background:'#ffbd2e', cursor:'pointer'}}></div>
-        <div onClick={() => setFullscreen(f => !f)} style={{width:'12px', height:'12px', borderRadius:'50%', background:'#27c93f', cursor:'pointer'}}></div>
+        <div onClick={() => { setFullscreen(f => !f); setTimeout(() => inputRef.current?.focus(), 100) }} style={{width:'12px', height:'12px', borderRadius:'50%', background:'#27c93f', cursor:'pointer'}}></div>
         <span style={{color:'#8b949e', fontSize:'12px', flex:1, textAlign:'center'}}>b3ta-blocker@archive:~</span>
       </div>
 
@@ -268,17 +270,25 @@ export default function Terminal() {
         <div
           ref={outputRef}
           onClick={() => inputRef.current?.focus()}
-          style={{padding:'16px', minHeight:'300px', maxHeight: fullscreen ? 'calc(100vh - 80px)' : '500px', overflowY:'auto', color:'#c9d1d9', cursor:'text'}}
+          style={{
+            padding:'16px',
+            flex: 1,
+            minHeight: fullscreen ? 0 : '300px',
+            maxHeight: fullscreen ? undefined : '500px',
+            overflowY:'auto',
+            color:'#c9d1d9',
+            cursor:'text',
+          }}
         >
           {lines.map((l, i) => (
-            <div key={i} style={{margin:'2px 0', lineHeight:'1.7', whiteSpace:'pre', display: l.cls === 'prompt-line' ? 'flex' : 'block', alignItems:'center', gap:'8px'}} dangerouslySetInnerHTML={{__html: l.cls === 'prompt-line' ? l.html : l.html}} />
+            <div key={i} style={{margin:'2px 0', lineHeight:'1.7', whiteSpace:'pre', display: l.cls === 'prompt-line' ? 'flex' : 'block', alignItems:'center', gap:'8px'}} dangerouslySetInnerHTML={{__html: l.html}} />
           ))}
         </div>
       )}
 
       {/* Input */}
       {!minimized && (
-        <div style={{padding:'8px 16px 16px', borderTop:'1px solid #30363d'}}>
+        <div style={{padding:'8px 16px 16px', borderTop:'1px solid #30363d', flexShrink: 0, background:'#0d1117'}}>
           <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
             <span style={{color:'#e53e3e'}}>$</span>
             <input
