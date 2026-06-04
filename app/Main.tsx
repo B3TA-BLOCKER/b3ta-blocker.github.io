@@ -12,8 +12,6 @@ export default function Home({ posts }) {
     <>
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         <div className="relative overflow-hidden pt-10 pb-8">
-
-          {/* Grid background */}
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
             style={{
@@ -22,13 +20,9 @@ export default function Home({ posts }) {
               backgroundSize: '40px 40px',
             }}
           />
-
-          {/* Badge */}
           <div className="mb-5 inline-flex items-center rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
             Hack · Learn · Repeat
           </div>
-
-          {/* Title */}
           <h1 className="mb-5 font-sans text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">
             Bukhari's <span className="text-red-500">Archive</span>
             <span
@@ -36,8 +30,6 @@ export default function Home({ posts }) {
               style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
             />
           </h1>
-
-          {/* Terminal block */}
           <div className="font-mono text-sm leading-loose text-gray-500 dark:text-gray-400">
             <p className="opacity-60">
               # My journey through CTFs, labs, and everything in between.
@@ -59,13 +51,12 @@ export default function Home({ posts }) {
               />
             </p>
           </div>
-
         </div>
 
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           {!posts.length && 'No posts found.'}
           {posts.slice(0, MAX_DISPLAY).map((post) => {
-            const { slug, date, title, summary, tags, images } = post
+            const { slug, date, title, summary, tags, images, locked } = post
             return (
               <li key={slug} className="py-12">
                 <article>
@@ -84,6 +75,12 @@ export default function Home({ posts }) {
                             No image
                           </div>
                         )}
+                        {/* Lock overlay on image */}
+                        {locked && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-xl">
+                            <span className="text-2xl">🔒</span>
+                          </div>
+                        )}
                       </div>
                       <dd className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
@@ -91,13 +88,30 @@ export default function Home({ posts }) {
                     </Link>
                     <div className="space-y-3 flex-1">
                       <div>
-                        <h2 className="text-2xl leading-8 font-bold tracking-tight">
+                        <h2 className="text-2xl leading-8 font-bold tracking-tight flex items-center gap-2">
                           <Link
                             href={`/blog/${slug}`}
                             className="text-gray-900 dark:text-gray-100"
                           >
                             {title}
                           </Link>
+                          {locked && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                fontFamily: 'monospace',
+                                letterSpacing: '0.08em',
+                                textTransform: 'uppercase',
+                                color: '#e53e3e',
+                                border: '1px solid rgba(229,62,62,0.4)',
+                                borderRadius: '4px',
+                                padding: '2px 8px',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              Active
+                            </span>
+                          )}
                         </h2>
                         <div className="flex flex-wrap">
                           {tags.map((tag) => (
@@ -114,7 +128,7 @@ export default function Home({ posts }) {
                           className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                           aria-label={`Read more: "${title}"`}
                         >
-                          Read more &rarr;
+                          {locked ? 'View details →' : 'Read more →'}
                         </Link>
                       </div>
                     </div>

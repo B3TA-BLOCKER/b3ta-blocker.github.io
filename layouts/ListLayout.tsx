@@ -118,7 +118,7 @@ export default function ListLayout({
             <p className="py-8 text-gray-500 dark:text-gray-400">No posts found.</p>
           )}
           {displayPosts.map((post) => {
-            const { path, date, title, summary, tags, images } = post
+            const { path, date, title, summary, tags, images, locked } = post
             return (
               <li key={path} className="py-4">
                 <article className="flex gap-4 items-start xl:grid xl:grid-cols-4 xl:items-baseline xl:gap-8">
@@ -134,12 +134,12 @@ export default function ListLayout({
                     <div className="shrink-0">
                       <Link href={`/${path}`}>
                         <div className="relative h-16 w-16 overflow-hidden rounded-full">
-                          <Image
-                            src={images[0]}
-                            alt={title}
-                            fill
-                            className="object-cover"
-                          />
+                          <Image src={images[0]} alt={title} fill className="object-cover" />
+                          {locked && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">
+                              <span className="text-sm">🔒</span>
+                            </div>
+                          )}
                         </div>
                       </Link>
                     </div>
@@ -149,13 +149,28 @@ export default function ListLayout({
                       <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                     </div>
                     <div>
-                      <h2 className="text-xl leading-8 font-bold tracking-tight">
+                      <h2 className="text-xl leading-8 font-bold tracking-tight flex items-center gap-2">
                         <Link
                           href={`/${path}`}
                           className="text-gray-900 dark:text-gray-100 hover:text-primary-500 dark:hover:text-primary-400"
                         >
                           {title}
                         </Link>
+                        {locked && (
+                          <span style={{
+                            fontSize: '10px',
+                            fontFamily: 'monospace',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#e53e3e',
+                            border: '1px solid rgba(229,62,62,0.4)',
+                            borderRadius: '4px',
+                            padding: '2px 8px',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            Active
+                          </span>
+                        )}
                       </h2>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {tags?.map((tag) => <Tag key={tag} text={tag} />)}
@@ -167,7 +182,7 @@ export default function ListLayout({
                       className="text-sm font-medium text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
                       aria-label={`Read more: "${title}"`}
                     >
-                      Read more &rarr;
+                      {locked ? 'View details →' : 'Read more →'}
                     </Link>
                   </div>
                 </article>
