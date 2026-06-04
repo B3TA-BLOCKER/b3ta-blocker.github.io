@@ -234,3 +234,15 @@ h1, h2, h3, h4, h5, h6 {
 .remark-code-title {
   display: none !important;
 }
+
+/* Image border in light mode */
+.prose img {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+/* Remove border in dark mode - images already stand out */
+.dark .prose img {
+  border: 1px solid #30363d;
+  border-radius: 6px;
+}
