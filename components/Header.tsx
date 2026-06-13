@@ -35,11 +35,8 @@ const Header = () => {
           Latest post — {relativeTime}
         </div>
       ) : (
-        <Link href="/" aria-label={siteMetadata.headerTitle} className="px-4">
+        <Link href="/" aria-label={siteMetadata.headerTitle} className="block">
           <div className="flex items-center">
-            <div className="mr-3">
-              <Logo />
-            </div>
             {typeof siteMetadata.headerTitle === 'string' ? (
               <div className="h-6 text-2xl font-semibold">
                 {siteMetadata.headerTitle}
