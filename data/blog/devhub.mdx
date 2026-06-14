@@ -70,7 +70,11 @@ Navigating to the MCP Inspector and checking the settings tab reveals the server
 
 ![devhub](/static/images/devhub/image%204.png)
 
-A quick search for this version reveals a critical unauthenticated RCE vulnerability: **CVE-2026-23744**. The advisory is documented at [https://github.com/advisories/GHSA-232v-j27c-5pp6](https://github.com/advisories/GHSA-232v-j27c-5pp6).
+A quick search for this version reveals a critical unauthenticated RCE vulnerability: **CVE-2026-23744**. 
+
+![devhub](/static/images/devhub/image%205.png)
+
+The advisory is documented at [https://github.com/advisories/GHSA-232v-j27c-5pp6](https://github.com/advisories/GHSA-232v-j27c-5pp6).
 
 The root cause is that the MCP Inspector accepts arbitrary `command` and `args` via its `/api/mcp/connect` endpoint and spawns them as a child process without any validation or authentication. By default, it also binds to `0.0.0.0` instead of `127.0.0.1`, making it externally reachable.
 
