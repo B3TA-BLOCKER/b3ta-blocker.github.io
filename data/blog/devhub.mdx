@@ -2,7 +2,7 @@
 title: "DevHub Machine (HackTheBox) — Step-by-Step Walkthrough"
 date: "2026-06-15"
 draft: false
-locked: false
+locked: true
 tags: ["hackthebox" ,"linux", "medium", "mcp", "rce", "jupyter", "lateral-movement", "privilege-escalation"]
 summary: "DevHub is a Linux machine compromised via CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, followed by lateral movement through an exposed Jupyter Lab instance with a plaintext token, and privilege escalation via a hardcoded API key in an internal Flask service running as root."
 images: ["/static/images/devhub/devhub.png"]
@@ -368,4 +368,3 @@ e5eb4e369300d429c7d99c663621865e
 | Lateral Movement | Jupyter token in process args → WebSocket kernel code execution | `mcp-dev` → `analyst` |
 | Privilege Escalation | Hardcoded API key + hidden admin endpoint in OPSMCP → root SSH key | `analyst` → `root` |
 
----
