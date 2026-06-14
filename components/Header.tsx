@@ -9,12 +9,18 @@ import CustomSearch from './CustomSearch'
 import { usePathname } from 'next/navigation'
 import { allBlogs } from 'contentlayer/generated'
 import { sortPosts, allCoreContent } from 'pliny/utils/contentlayer'
+
 function getRelativeTime(dateStr: string) {
-  const diffDays = Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24))
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const postDate = new Date(dateStr)
+  postDate.setHours(0, 0, 0, 0)
+  const diffDays = Math.round((today.getTime() - postDate.getTime()) / (1000 * 60 * 60 * 24))
   if (diffDays === 0) return 'today'
   if (diffDays === 1) return 'yesterday'
   return `${diffDays} days ago`
 }
+
 const Header = () => {
   const pathname = usePathname()
   const isHome = pathname === '/'
@@ -68,4 +74,5 @@ const Header = () => {
     </header>
   )
 }
+
 export default Header

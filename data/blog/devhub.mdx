@@ -3,11 +3,10 @@ title: "DevHub Machine (HackTheBox) — Step-by-Step Walkthrough"
 date: "2026-06-15"
 draft: false
 locked: false
-tags: ["linux", "medium", "mcp", "rce", "jupyter", "lateral-movement", "privilege-escalation"]
-summary: "Compromise of a Linux machine via CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, followed by lateral movement through an exposed Jupyter Lab instance with a plaintext token, and privilege escalation via a hardcoded API key in an internal Flask service running as root."
+tags: ["hackthebox" ,"linux", "medium", "mcp", "rce", "jupyter", "lateral-movement", "privilege-escalation"]
+summary: "DevHub is a Linux machine compromised via CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, followed by lateral movement through an exposed Jupyter Lab instance with a plaintext token, and privilege escalation via a hardcoded API key in an internal Flask service running as root."
 images: ["/static/images/devhub/devhub.png"]
 ---
-
 
 
 ![victory](/static/images/devhub/victory.png)
@@ -137,7 +136,7 @@ Landing directory: `/opt/mcpjam/node_modules/@mcpjam/inspector`
 With a foothold on the box, internal services are enumerated to find paths to other users:
 
 ```bash
-ps aux | grep -E "jupyter|opsmcp"
+ps aux | grep jupyter
 ```
 
 ![devhub](/static/images/devhub/image%207.png)
@@ -241,9 +240,9 @@ cat /tmp/flag.txt
 
 ## Privilege Escalation
 
-### Reading the OPSMCP Source
+### Reading the MCP Source
 
-The OPSMCP Flask service on port 5000 runs as root and requires an `X-API-Key` header. Direct file access to `/opt/opsmcp/server.py` is not available as `mcp-dev`, but the Jupyter kernel running as `analyst` can read it. The same WebSocket execution technique is reused with a different payload:
+The Flask service on port 5000 runs as root and requires an `X-API-Key` header. Direct file access to `/opt/opsmcp/server.py` is not available as `mcp-dev`, but the Jupyter kernel running as `analyst` can read it. The same WebSocket execution technique is reused with a different payload:
 
 ```python
 python3 << 'EOF'
@@ -370,10 +369,3 @@ e5eb4e369300d429c7d99c663621865e
 | Privilege Escalation | Hardcoded API key + hidden admin endpoint in OPSMCP → root SSH key | `analyst` → `root` |
 
 ---
-
-## Key Takeaways
-
-- **Secrets in process arguments are world-readable** via `ps aux` and `/proc/<pid>/cmdline`. Tokens and credentials should be passed via environment variables or config files with restricted permissions.
-- **Jupyter is RCE by design.** A valid token grants full code execution as the owning user. Jupyter should never run on a network-accessible interface without additional auth layers.
-- **Security through obscurity is not access control.** Hidden API endpoints are discoverable through source code review and provide no real protection.
-- **Services running as root with no privilege separation** turn any code execution bug into full compromise.
