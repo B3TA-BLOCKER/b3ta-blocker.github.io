@@ -98,6 +98,7 @@ export const Blog = defineDocumentType(() => ({
     lastmod: { type: 'date' },
     draft: { type: 'boolean' },
     locked: { type: 'boolean', default: false },
+    lockedMessage: { type: 'string' },
     summary: { type: 'string' },
     images: { type: 'json' },
     authors: { type: 'list', of: { type: 'string' } },
