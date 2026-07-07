@@ -177,8 +177,10 @@ function LockedPost({ post }: { post: Blog }) {
         color: '#8b949e',
         lineHeight: 1.7,
       }}>
-        <span style={{ color: '#e53e3e' }}>$</span> This machine is currently active on HackTheBox.<br />
-        The full writeup will be published once it retires.<br />
+        <span style={{ color: '#e53e3e' }}>$</span>{' '}
+        {post.lockedMessage ||
+          'This content is tied to a challenge that is still active. The full writeup will be published once it is safe to release.'}
+        <br />
         <span style={{ color: '#38a169' }}>// Check back later</span>
       </div>
     </div>
