@@ -114,14 +114,16 @@ function LockedPost({ post }: { post: Blog }) {
       </div>
 
       {/* Title */}
-      <h1 style={{
-        fontSize: 'clamp(1.4rem, 4vw, 2rem)',
-        fontWeight: 700,
-        color: 'var(--color-gray-100)',
-        marginBottom: '1rem',
-        maxWidth: '600px',
-        lineHeight: 1.3,
-      }}>
+      <h1
+        className="text-gray-900 dark:text-gray-100"
+        style={{
+          fontSize: 'clamp(1.4rem, 4vw, 2rem)',
+          fontWeight: 700,
+          marginBottom: '1rem',
+          maxWidth: '600px',
+          lineHeight: 1.3,
+        }}
+      >
         {post.title}
       </h1>
 
