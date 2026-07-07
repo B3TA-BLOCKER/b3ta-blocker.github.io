@@ -11,6 +11,8 @@ import PostBanner from '@/layouts/PostBanner'
 import { Metadata } from 'next'
 import siteMetadata from '@/data/siteMetadata'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import { slug as slugify } from 'github-slugger'
 
 const defaultLayout = 'PostLayout'
 const layouts = {
@@ -150,17 +152,22 @@ function LockedPost({ post }: { post: Blog }) {
           marginBottom: '2.5rem',
         }}>
           {post.tags.map((tag) => (
-            <span key={tag} style={{
-              background: '#161b22',
-              border: '1px solid #30363d',
-              borderRadius: '4px',
-              padding: '2px 10px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              color: '#8b949e',
-            }}>
-              #{tag}
-            </span>
+            <Link
+              key={tag}
+              href={`/tags/${slugify(tag)}`}
+              style={{
+                background: '#161b22',
+                border: '1px solid #30363d',
+                borderRadius: '4px',
+                padding: '2px 10px',
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                color: '#e53e3e',
+                textDecoration: 'none',
+              }}
+            >
+              {tag}
+            </Link>
           ))}
         </div>
       )}
