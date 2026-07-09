@@ -9,9 +9,6 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 
-const discussUrl = (path) =>
-  `https://mobile.twitter.com/search?q=${encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)}`
-
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
   year: 'numeric',
@@ -28,7 +25,7 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { path, date, title, tags } = content
+  const { path, date, title, tags, twitterUrl } = content
   const basePath = path.split('/')[0]
 
   return (
@@ -93,11 +90,45 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
             </dl>
             <div className="divide-y divide-gray-200 xl:col-span-3 xl:row-span-2 xl:pb-0 dark:divide-gray-700">
               <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
-              <div className="pt-6 pb-6 text-sm text-gray-700 dark:text-gray-300">
-                <Link href={discussUrl(path)} rel="nofollow">
-                  Discuss on Twitter
-                </Link>
-              </div>
+              {twitterUrl && (
+                <div className="pt-6 pb-6">
+                  <Link
+                    href={twitterUrl}
+                    rel="nofollow"
+                    className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-500 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-primary-400"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-white transition-transform duration-200 group-hover:scale-110 dark:bg-white dark:text-black">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5 fill-current"
+                        >
+                          <path d="M18.9 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                        </svg>
+                      </span>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                          Think I missed an angle? Tell me on X.
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Reply with your own approach, a sharper exploit path, or just roast the writeup.
+                        </p>
+                      </div>
+                    </div>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      className="h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary-500"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 12h14" />
+                    </svg>
+                  </Link>
+                </div>
+              )}
             </div>
             <footer>
               <div className="divide-gray-200 text-sm leading-5 font-medium xl:col-start-1 xl:row-start-2 xl:divide-y dark:divide-gray-700">
