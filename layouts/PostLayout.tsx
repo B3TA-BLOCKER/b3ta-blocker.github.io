@@ -8,13 +8,20 @@ import Image from 'next/image'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
-import Comments from '@/components/Comments'
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
   year: 'numeric',
   month: 'long',
   day: 'numeric',
+}
+
+// Turns a tweet URL like https://x.com/user/status/12345 into a reply-intent
+// link that opens X with the reply box already focused, ready to type.
+// Falls back to the plain tweet URL if the ID can't be parsed.
+const getReplyUrl = (tweetUrl: string) => {
+  const match = tweetUrl.match(/status\/(\d+)/)
+  return match ? `https://twitter.com/intent/tweet?in_reply_to=${match[1]}` : tweetUrl
 }
 
 interface LayoutProps {
@@ -26,7 +33,7 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { path, slug, date, title, tags, twitterUrl } = content
+  const { path, date, title, tags, twitterUrl } = content
   const basePath = path.split('/')[0]
 
   return (
@@ -94,7 +101,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               {twitterUrl && (
                 <div className="pt-6 pb-6">
                   <Link
-                    href={twitterUrl}
+                    href={getReplyUrl(twitterUrl)}
                     rel="nofollow"
                     className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-500 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:border-primary-400"
                   >
@@ -128,11 +135,6 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 12h14" />
                     </svg>
                   </Link>
-                </div>
-              )}
-              {siteMetadata.comments && (
-                <div className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300" id="comment">
-                  <Comments slug={slug} />
                 </div>
               )}
             </div>
