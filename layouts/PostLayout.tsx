@@ -8,6 +8,7 @@ import Image from 'next/image'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
+import Comments from '@/components/Comments'
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -25,7 +26,7 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
-  const { path, date, title, tags, twitterUrl } = content
+  const { path, slug, date, title, tags, twitterUrl } = content
   const basePath = path.split('/')[0]
 
   return (
@@ -127,6 +128,11 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 12h14" />
                     </svg>
                   </Link>
+                </div>
+              )}
+              {siteMetadata.comments && (
+                <div className="pt-6 pb-6 text-center text-gray-700 dark:text-gray-300" id="comment">
+                  <Comments slug={slug} />
                 </div>
               )}
             </div>
