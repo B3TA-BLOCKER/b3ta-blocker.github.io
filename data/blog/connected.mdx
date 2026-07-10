@@ -1,0 +1,20 @@
+---
+title: 'Connected Machine (HackTheBox) — Step-by-Step Walkthrough'
+date: '2026-07-10'
+draft: false
+locked: true
+lockedMessage: 'This machine is currently active on HackTheBox. The full writeup will be published once it retires.'
+tags:
+  [
+    'hackthebox',
+    'linux',
+    'easy',
+    'freepbx',
+    'sql-injection',
+    'rce',
+    'privilege-escalation',
+    'incron',
+  ]
+summary: 'Connected is a Linux machine compromised via CVE-2025-57819, an unauthenticated SQL injection in FreePBX 16 Endpoint Manager, leveraged to plant a cron-triggered web shell for RCE as the asterisk user, followed by privilege escalation through a writable config file executed by a root-owned Incron trigger.'
+images: ['/static/images/connected/connected.png']
+---
