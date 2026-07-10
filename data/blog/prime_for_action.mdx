@@ -1,0 +1,97 @@
+---
+title: 'Primed for Action'
+date: '2026-07-11'
+category: 'Coding / Misc'
+difficulty: 'Very Easy'
+platform: 'HackTheBox'
+tags: ['cpp', 'challenge', 'very-easy', 'hackthebox']
+summary: 'A quick coding challenge solved over a raw socket — filter primes out of a noisy list and multiply them to get the key.'
+images: ['/static/images/coding/coding.png']
+---
+
+## Challenge Scenario:
+
+Intelligence units intercepted a list of numbers. Most of them are garbage — but two are prime. Those two primes form a key, obtained by multiplying them together. The goal is to recover that key.
+
+## Recon
+
+Connected to the target over raw TCP:
+
+```bash
+nc -v 154.57.164.70 31333
+```
+
+The service serves an in-browser code editor over the socket. Default language was Python, but I switched to C++ since that's what I'm most comfortable working under time pressure in.
+
+## Starting Template
+
+The challenge hands you this skeleton:
+
+```cpp
+// take in the number
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n;
+
+    // calculate answer
+
+    // print answer
+    cout << n;
+
+    return 0;
+}
+```
+
+It reads a single `int n` and echoes it straight back — no logic at all. The real input is a list of 50 space-separated integers, so the template needs to be reworked to read an array instead of a scalar.
+
+## Solution
+
+```cpp:main.cpp
+#include <iostream>
+using namespace std;
+
+bool isPrime(int num) {
+    if (num < 2) return false;
+    for (int i = 2; i * i <= num; i++) {
+        if (num % i == 0) return false;
+    }
+    return true;
+}
+
+int main() {
+    int n[50];
+    for (int i = 0; i < 50; i++) {
+        cin >> n[i];
+    }
+
+    long long product = 1;
+    for (int i = 0; i < 50; i++) {
+        if (isPrime(n[i])) {
+            product *= n[i];
+        }
+    }
+
+    cout << product;
+    return 0;
+}
+```
+
+### Approach
+
+- Read all 50 integers into an array.
+- `isPrime()` runs simple trial division up to `sqrt(num)` — more than enough for numbers in this range.
+- Multiply every prime found into a running product, using `long long` to avoid overflow.
+- Print the final product — that's the key.
+
+## Flag
+
+```
+HTB{pr1m3_Pr0...}
+```
+
+## Notes
+
+- Trivial once you notice this is a "filter + multiply" problem, not a crypto challenge.
+- Worth remembering `long long` for the product — two primes in the 1000–5000 range multiply well past `int` range on most systems.
