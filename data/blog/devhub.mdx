@@ -1,14 +1,23 @@
 ---
-title: "DevHub Machine (HackTheBox) — Step-by-Step Walkthrough"
-date: "2026-06-15"
+title: 'DevHub Machine (HackTheBox) — Step-by-Step Walkthrough'
+date: '2026-06-14'
 draft: false
 locked: true
-lockedMessage: "This machine is currently active on HackTheBox. The full writeup will be published once it retires."
-tags: ["hackthebox" ,"linux", "medium", "mcp", "rce", "jupyter", "lateral-movement", "privilege-escalation"]
-summary: "DevHub is a Linux machine compromised via CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, followed by lateral movement through an exposed Jupyter Lab instance with a plaintext token, and privilege escalation via a hardcoded API key in an internal Flask service running as root."
-images: ["/static/images/devhub/devhub.png"]
+lockedMessage: 'This machine is currently active on HackTheBox. The full writeup will be published once it retires.'
+tags:
+  [
+    'hackthebox',
+    'linux',
+    'medium',
+    'mcp',
+    'rce',
+    'jupyter',
+    'lateral-movement',
+    'privilege-escalation',
+  ]
+summary: 'DevHub is a Linux machine compromised via CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, followed by lateral movement through an exposed Jupyter Lab instance with a plaintext token, and privilege escalation via a hardcoded API key in an internal Flask service running as root.'
+images: ['/static/images/devhub/devhub.png']
 ---
-
 
 ![victory](/static/images/devhub/victory.png)
 
@@ -70,7 +79,7 @@ Navigating to the MCP Inspector and checking the settings tab reveals the server
 
 ![devhub](/static/images/devhub/image%204.png)
 
-A quick search for this version reveals a critical unauthenticated RCE vulnerability: **CVE-2026-23744**. 
+A quick search for this version reveals a critical unauthenticated RCE vulnerability: **CVE-2026-23744**.
 
 ![devhub](/static/images/devhub/image%205.png)
 
@@ -170,8 +179,9 @@ curl -s -X POST "http://localhost:8888/api/kernels?token=a7f3b2c9d8e1f4a5b6c7d8e
 ```
 
 Response:
+
 ```json
-{"id": "65ab938e-944f-44b8-a973-77356ae34c50", "name": "python3", "execution_state": "starting"}
+{ "id": "65ab938e-944f-44b8-a973-77356ae34c50", "name": "python3", "execution_state": "starting" }
 ```
 
 ### Executing Code via WebSocket
@@ -179,6 +189,7 @@ Response:
 Jupyter does not accept code execution over HTTP — all kernel communication happens over WebSocket on the `/api/kernels/<id>/channels` endpoint. Since `websocket-client` was not available on the machine, the WebSocket handshake and frame format are implemented manually using raw sockets.
 
 **WebSocket frame structure (client → server):**
+
 - `0x81` — FIN bit set, opcode 1 (text frame)
 - Length byte(s) — 1 byte for ≤125, 3 bytes for ≤65535, 9 bytes for larger
 - 4-byte masking key — client-to-server frames must be masked per RFC 6455
@@ -363,9 +374,8 @@ e5eb4e369300d429c7d99c663621865e
 
 ## Attack Chain Summary
 
-| Step | Technique | From → To |
-|------|-----------|-----------|
-| Foothold | CVE-2026-23744 — unauthenticated RCE in MCPJam v1.4.2 | External → `mcp-dev` |
-| Lateral Movement | Jupyter token in process args → WebSocket kernel code execution | `mcp-dev` → `analyst` |
-| Privilege Escalation | Hardcoded API key + hidden admin endpoint in OPSMCP → root SSH key | `analyst` → `root` |
-
+| Step                 | Technique                                                          | From → To             |
+| -------------------- | ------------------------------------------------------------------ | --------------------- |
+| Foothold             | CVE-2026-23744 — unauthenticated RCE in MCPJam v1.4.2              | External → `mcp-dev`  |
+| Lateral Movement     | Jupyter token in process args → WebSocket kernel code execution    | `mcp-dev` → `analyst` |
+| Privilege Escalation | Hardcoded API key + hidden admin endpoint in OPSMCP → root SSH key | `analyst` → `root`    |
