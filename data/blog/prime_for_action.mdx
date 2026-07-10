@@ -4,7 +4,7 @@ date: '2026-07-11'
 category: 'Coding / Misc'
 difficulty: 'Very Easy'
 platform: 'HackTheBox'
-tags: ['cpp', 'challenge', 'very-easy', 'hackthebox']
+tags: ['cpp', 'challenge', 'very-easy', 'hackthebox', 'coding']
 summary: 'A quick coding challenge solved over a raw socket — filter primes out of a noisy list and multiply them to get the key.'
 images: ['/static/images/coding/coding.png']
 ---
@@ -53,26 +53,27 @@ It reads a single `int n` and echoes it straight back — no logic at all. The r
 using namespace std;
 
 bool isPrime(int num) {
-    if (num < 2) return false;
-    for (int i = 2; i * i <= num; i++) {
-        if (num % i == 0) return false;
+    if (num<2) return false;
+    for (int i=2; i*i <= num; i++) {
+        if (num%i == 0) return false;
     }
     return true;
 }
 
 int main() {
     int n[50];
-    for (int i = 0; i < 50; i++) {
+    // calculate answer
+    for (int i=0;i<50;i++) {
         cin >> n[i];
     }
 
     long long product = 1;
-    for (int i = 0; i < 50; i++) {
+    for (int i=0;i<50;i++) {
         if (isPrime(n[i])) {
             product *= n[i];
         }
     }
-
+    // print answer
     cout << product;
     return 0;
 }
