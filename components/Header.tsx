@@ -42,9 +42,9 @@ const Header = () => {
           so nav content still lines up with the rest of the page. */}
       <header className="mx-auto flex max-w-4xl items-center justify-between px-4 py-10 sm:px-6 xl:max-w-6xl xl:px-0">
         {isHome ? (
-          <div className="inline-flex items-center gap-2 rounded border border-green-600/50 px-4 py-2 font-mono text-[13px] tracking-widest text-green-600 dark:border-green-500/30 dark:text-green-500">
+          <div className="inline-flex items-center gap-2 rounded border border-green-600/50 px-4 py-2 font-mono text-base font-bold tracking-widest text-green-700 dark:border-green-500/30 dark:text-green-500">
             <span
-              className="h-2 w-2 rounded-full bg-green-600 dark:bg-green-500"
+              className="h-2 w-2 rounded-full bg-green-700 dark:bg-green-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
             Latest post — {relativeTime}

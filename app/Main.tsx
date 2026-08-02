@@ -20,7 +20,7 @@ export default function Home({ posts }) {
               backgroundSize: '40px 40px',
             }}
           />
-          <div className="mb-5 inline-flex items-center rounded border border-red-600/50 px-4 py-1.5 font-mono text-sm tracking-widest text-red-600 dark:border-red-500/30 dark:text-red-500">
+          <div className="mb-5 inline-flex items-center rounded border border-red-600/50 px-4 py-1.5 font-mono text-sm font-bold tracking-widest text-red-700 dark:border-red-500/30 dark:text-red-500">
             Hack · Learn · Repeat
           </div>
           <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
@@ -30,23 +30,23 @@ export default function Home({ posts }) {
               style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
             />
           </h1>
-          <div className="font-mono text-sm leading-loose text-gray-700 dark:text-gray-400">
-            <p className="text-gray-500 dark:text-gray-400/60">
+          <div className="font-mono text-sm leading-loose text-gray-900 dark:text-gray-400">
+            <p className="text-lg text-gray-600 dark:text-gray-400/60">
               # My journey through CTFs, labs, and everything in between.
             </p>
-            <p className="mt-1">
-              <span className="mr-2 text-red-500">$</span>
+            <p className="mt-1 font-bold">
+              <span className="mr-2 text-red-600 dark:text-red-500">$</span>
               <span className="text-gray-900 dark:text-gray-100">ls ~/archive</span>
             </p>
-            <div className="mt-0.5 ml-4 grid grid-cols-3 gap-x-6 gap-y-0.5 text-green-500 dark:text-green-400">
+            <div className="mt-0.5 ml-4 grid grid-cols-3 gap-x-6 gap-y-0.5 font-bold text-green-700 dark:text-green-400">
               <span>htb-machines/</span>
               <span>challenges/</span>
               <span>dev-notes/</span>
             </div>
-            <p className="mt-1">
-              <span className="mr-2 text-red-500">$</span>
+            <p className="mt-1 font-bold">
+              <span className="mr-2 text-red-600 dark:text-red-500">$</span>
               <span
-                className="inline-block w-[3px] bg-red-500 align-middle"
+                className="inline-block w-[3px] bg-red-600 align-middle dark:bg-red-500"
                 style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
               />
             </p>
