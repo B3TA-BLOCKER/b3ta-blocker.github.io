@@ -74,16 +74,40 @@ async function createTagCount(allBlogs) {
   writeFileSync('./app/tag-data.json', formatted)
 }
 
+// Strips MDX/markdown syntax down to plain readable text so it's safe
+// (and reasonably compact) to ship inside public/search.json.
+function stripMdx(raw: string): string {
+  return raw
+    .replace(/```[\s\S]*?```/g, ' ') // fenced code blocks
+    .replace(/`([^`]+)`/g, '$1') // inline code
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ') // images
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // [text](url) -> text
+    .replace(/<\/?[^>]+>/g, ' ') // stray html/jsx tags
+    .replace(/^#{1,6}\s+/gm, '') // heading markers
+    .replace(/[*_~>#]/g, ' ') // leftover md symbols
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function createSearchIndex(allBlogs) {
   if (
     siteMetadata?.search?.provider === 'kbar' &&
     siteMetadata.search.kbarConfig.searchDocumentsPath
   ) {
+    // Match by `path` rather than array index, since allCoreContent(sortPosts(...))
+    // re-sorts the list and would otherwise pair posts with the wrong body text.
+    const bodyByPath = new Map(allBlogs.map((b) => [b.path, stripMdx(b.body.raw)]))
+
+    const withBody = allCoreContent(sortPosts(allBlogs)).map((post) => ({
+      ...post,
+      body: bodyByPath.get(post.path) ?? '',
+    }))
+
     writeFileSync(
       `public/${path.basename(siteMetadata.search.kbarConfig.searchDocumentsPath)}`,
-      JSON.stringify(allCoreContent(sortPosts(allBlogs)))
+      JSON.stringify(withBody)
     )
-    console.log('Local search index generated...')
+    console.log('Local search index generated (with body text)...')
   }
 }
 
