@@ -14,7 +14,7 @@ export default function AuthorLayout({ children, content }: Props) {
 
   return (
     <>
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="divide-y divide-gray-300 dark:divide-gray-700">
 
         {/* Hero Section */}
         <div className="relative overflow-hidden pt-10 pb-8">
