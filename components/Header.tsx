@@ -24,54 +24,62 @@ function getRelativeTime(dateStr: string) {
 const Header = () => {
   const pathname = usePathname()
   const isHome = pathname === '/'
-  let headerClass = 'flex items-center w-full bg-white dark:bg-gray-950 justify-between py-10'
+
+  // This outer wrapper is the piece that must span the FULL viewport width.
+  // It carries the background + sticky/z-index, so there is no gap on
+  // either side where page content underneath can peek through on scroll.
+  let wrapperClass = 'w-full bg-white dark:bg-gray-950'
   if (siteMetadata.stickyNav) {
-    headerClass += ' sticky top-0 z-50'
+    wrapperClass += ' sticky top-0 z-50'
   }
+
   const posts = allCoreContent(sortPosts(allBlogs))
   const relativeTime = posts[0] ? getRelativeTime(posts[0].date) : null
+
   return (
-    <header className={headerClass}>
-      {isHome ? (
-        <div className="inline-flex items-center gap-2 rounded border border-green-500/30 px-4 py-2 font-mono text-[13px] tracking-widest text-green-500">
-          <span
-            className="h-2 w-2 rounded-full bg-green-500"
-            style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
-          />
-          Latest post — {relativeTime}
-        </div>
-      ) : (
-        <Link href="/" aria-label={siteMetadata.headerTitle} className="block">
-          <div className="flex items-center">
-            {typeof siteMetadata.headerTitle === 'string' ? (
-              <div className="h-6 text-2xl font-semibold">
-                {siteMetadata.headerTitle}
-              </div>
-            ) : (
-              siteMetadata.headerTitle
-            )}
+    <div className={wrapperClass}>
+      {/* Inner row stays centered and matches SectionContainer's max-width
+          so nav content still lines up with the rest of the page. */}
+      <header className="mx-auto flex max-w-4xl items-center justify-between px-4 py-10 sm:px-6 xl:max-w-6xl xl:px-0">
+        {isHome ? (
+          <div className="inline-flex items-center gap-2 rounded border border-green-500/30 px-4 py-2 font-mono text-[13px] tracking-widest text-green-500">
+            <span
+              className="h-2 w-2 rounded-full bg-green-500"
+              style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
+            />
+            Latest post — {relativeTime}
           </div>
-        </Link>
-      )}
-      <div className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6">
-        <div className="no-scrollbar hidden max-w-40 items-center gap-x-4 overflow-x-auto sm:flex md:max-w-72 lg:max-w-96">
-          {headerNavLinks
-            .filter((link) => link.href !== '/')
-            .map((link) => (
-              <Link
-                key={link.title}
-                href={link.href}
-                className="hover:text-primary-500 dark:hover:text-primary-400 m-1 font-medium text-gray-900 dark:text-gray-100"
-              >
-                {link.title}
-              </Link>
-            ))}
+        ) : (
+          <Link href="/" aria-label={siteMetadata.headerTitle} className="block">
+            <div className="flex items-center">
+              {typeof siteMetadata.headerTitle === 'string' ? (
+                <div className="h-6 text-2xl font-semibold">{siteMetadata.headerTitle}</div>
+              ) : (
+                siteMetadata.headerTitle
+              )}
+            </div>
+          </Link>
+        )}
+        <div className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6">
+          <div className="no-scrollbar hidden max-w-40 items-center gap-x-4 overflow-x-auto sm:flex md:max-w-72 lg:max-w-96">
+            {headerNavLinks
+              .filter((link) => link.href !== '/')
+              .map((link) => (
+                <Link
+                  key={link.title}
+                  href={link.href}
+                  className="hover:text-primary-500 dark:hover:text-primary-400 m-1 font-medium text-gray-900 dark:text-gray-100"
+                >
+                  {link.title}
+                </Link>
+              ))}
+          </div>
+          <CustomSearch />
+          <ThemeSwitch />
+          <MobileNav />
         </div>
-        <CustomSearch />
-        <ThemeSwitch />
-        <MobileNav />
-      </div>
-    </header>
+      </header>
+    </div>
   )
 }
 
