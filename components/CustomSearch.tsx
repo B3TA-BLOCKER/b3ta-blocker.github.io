@@ -21,7 +21,7 @@ function highlight(text: string, query: string) {
   const parts = text.split(regex)
   return parts.map((part, i) =>
     regex.test(part) ? (
-      <mark key={i} className="bg-red-500/20 text-red-400 rounded px-0.5">
+      <mark key={i} className="rounded bg-red-500/20 px-0.5 text-red-400">
         {part}
       </mark>
     ) : (
@@ -88,7 +88,7 @@ export default function CustomSearch() {
           viewBox="0 0 24 24"
           strokeWidth={1.5}
           stroke="currentColor"
-          className="hover:text-primary-500 dark:hover:text-primary-400 h-6 w-6 text-gray-900 dark:text-gray-100"
+          className="hover:text-primary-500 dark:hover:text-primary-400 h-7 w-7 text-gray-900 dark:text-gray-100"
         >
           <path
             strokeLinecap="round"
@@ -101,10 +101,15 @@ export default function CustomSearch() {
   }
 
   return (
+    // Backdrop click-to-dismiss is a mouse convenience only: keyboard users
+    // already have a working Escape key (global listener above) and the
+    // focusable close button below, so no separate onKeyDown is needed here.
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm pt-24 px-4"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 px-4 pt-24 backdrop-blur-sm"
       onClick={() => setIsOpen(false)}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         className="w-full max-w-xl overflow-hidden"
         style={{
@@ -116,14 +121,16 @@ export default function CustomSearch() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Title bar */}
-        <div style={{
-          background: '#161b22',
-          padding: '10px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          borderBottom: '1px solid #30363d',
-        }}>
+        <div
+          style={{
+            background: '#161b22',
+            padding: '10px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            borderBottom: '1px solid #30363d',
+          }}
+        >
           <button
             onClick={() => setIsOpen(false)}
             style={{
@@ -143,20 +150,29 @@ export default function CustomSearch() {
         </div>
 
         {/* Search Input */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '12px 16px',
-          borderBottom: '1px solid #30363d',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '12px 16px',
+            borderBottom: '1px solid #30363d',
+          }}
+        >
           <svg
             style={{ color: '#8b949e', flexShrink: 0 }}
-            width="15" height="15"
-            fill="none" viewBox="0 0 24 24"
-            stroke="currentColor" strokeWidth="1.5"
+            width="15"
+            height="15"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="1.5"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+            />
           </svg>
           <input
             ref={inputRef}
@@ -175,27 +191,45 @@ export default function CustomSearch() {
               caretColor: '#e53e3e',
             }}
           />
-          <kbd style={{
-            fontSize: '10px',
-            color: '#8b949e',
-            border: '1px solid #30363d',
-            borderRadius: '4px',
-            padding: '2px 6px',
-            fontFamily: 'var(--font-mono)',
-          }}>ESC</kbd>
+          <kbd
+            style={{
+              fontSize: '10px',
+              color: '#8b949e',
+              border: '1px solid #30363d',
+              borderRadius: '4px',
+              padding: '2px 6px',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            ESC
+          </kbd>
         </div>
 
         {/* Label */}
         {!query && results.length > 0 && (
           <div style={{ padding: '10px 16px 4px' }}>
-            <p style={{ fontSize: '10px', color: '#8b949e', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <p
+              style={{
+                fontSize: '10px',
+                color: '#8b949e',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}
+            >
               Recent Articles
             </p>
           </div>
         )}
         {query && results.length > 0 && (
           <div style={{ padding: '10px 16px 4px' }}>
-            <p style={{ fontSize: '10px', color: '#8b949e', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <p
+              style={{
+                fontSize: '10px',
+                color: '#8b949e',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}
+            >
               {results.length} result{results.length !== 1 ? 's' : ''} found
             </p>
           </div>
@@ -219,25 +253,48 @@ export default function CustomSearch() {
                     transition: 'background 0.15s',
                   }}
                 >
-                  <div style={{
-                    position: 'relative',
-                    height: '44px',
-                    width: '44px',
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                    borderRadius: '6px',
-                    border: '1px solid #30363d',
-                    background: '#161b22',
-                  }}>
+                  <div
+                    style={{
+                      position: 'relative',
+                      height: '44px',
+                      width: '44px',
+                      flexShrink: 0,
+                      overflow: 'hidden',
+                      borderRadius: '6px',
+                      border: '1px solid #30363d',
+                      background: '#161b22',
+                    }}
+                  >
                     {doc.images?.[0] ? (
                       <Image src={doc.images[0]} alt={doc.title} fill className="object-cover" />
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#484f58', fontSize: '16px' }}>›</div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '100%',
+                          color: '#484f58',
+                          fontSize: '16px',
+                        }}
+                      >
+                        ›
+                      </div>
                     )}
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '13px', fontWeight: 500, color: '#c9d1d9', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        color: '#c9d1d9',
+                        marginBottom: '2px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {highlight(doc.title, query)}
                     </p>
                     <p style={{ fontSize: '11px', color: '#8b949e', marginBottom: '4px' }}>
@@ -280,19 +337,29 @@ export default function CustomSearch() {
         )}
 
         {/* Footer */}
-        <div style={{
-          padding: '8px 16px',
-          borderTop: '1px solid #30363d',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          background: '#161b22',
-        }}>
+        <div
+          style={{
+            padding: '8px 16px',
+            borderTop: '1px solid #30363d',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            background: '#161b22',
+          }}
+        >
           <span style={{ fontSize: '10px', color: '#8b949e' }}>
-            press <kbd style={{ border: '1px solid #30363d', borderRadius: '3px', padding: '1px 4px' }}>ESC</kbd> to close
+            press{' '}
+            <kbd style={{ border: '1px solid #30363d', borderRadius: '3px', padding: '1px 4px' }}>
+              ESC
+            </kbd>{' '}
+            to close
           </span>
           <span style={{ fontSize: '10px', color: '#8b949e' }}>
-            press <kbd style={{ border: '1px solid #30363d', borderRadius: '3px', padding: '1px 4px' }}>↵</kbd> to open
+            press{' '}
+            <kbd style={{ border: '1px solid #30363d', borderRadius: '3px', padding: '1px 4px' }}>
+              ↵
+            </kbd>{' '}
+            to open
           </span>
         </div>
       </div>

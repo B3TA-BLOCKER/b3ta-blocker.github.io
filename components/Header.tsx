@@ -42,7 +42,7 @@ const Header = () => {
           so nav content still lines up with the rest of the page. */}
       <header className="mx-auto flex max-w-4xl items-center justify-between px-4 py-10 sm:px-6 xl:max-w-6xl xl:px-0">
         {isHome ? (
-          <div className="inline-flex items-center gap-2 font-mono text-base font-bold tracking-widest text-green-700 dark:text-green-500">
+          <div className="inline-flex items-center gap-2 font-mono text-lg font-bold tracking-widest text-green-700 dark:text-green-500">
             <span
               className="h-2 w-2 rounded-full bg-green-700 dark:bg-green-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
@@ -68,7 +68,7 @@ const Header = () => {
                 <Link
                   key={link.title}
                   href={link.href}
-                  className="hover:text-primary-500 dark:hover:text-primary-400 m-1 font-medium text-gray-900 dark:text-gray-100"
+                  className="hover:text-primary-500 dark:hover:text-primary-400 m-1 text-lg font-medium text-gray-900 dark:text-gray-100"
                 >
                   {link.title}
                 </Link>
