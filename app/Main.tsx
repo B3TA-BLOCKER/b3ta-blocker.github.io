@@ -20,7 +20,7 @@ export default function Home({ posts }) {
               backgroundSize: '40px 40px',
             }}
           />
-          <div className="mb-5 inline-flex items-center rounded border border-red-600/50 px-4 py-1.5 font-mono text-sm font-bold tracking-widest text-red-700 dark:border-red-500/30 dark:text-red-500">
+          <div className="mb-5 inline-flex items-center rounded border-2 border-red-600/50 px-4 py-1.5 font-mono text-sm font-bold tracking-widest text-red-700 dark:border-red-500/30 dark:text-red-500">
             Hack · Learn · Repeat
           </div>
           <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
