@@ -14,11 +14,9 @@ export default function AuthorLayout({ children, content }: Props) {
 
   return (
     <>
-      <div className="divide-y divide-gray-300 dark:divide-gray-700">
-
+      <div className="divide-y divide-gray-800 dark:divide-gray-700">
         {/* Hero Section */}
         <div className="relative overflow-hidden pt-10 pb-8">
-
           {/* Grid background */}
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -39,7 +37,6 @@ export default function AuthorLayout({ children, content }: Props) {
           </div>
 
           <div className="flex flex-col items-center gap-8 md:flex-row md:items-center md:gap-10">
-
             {/* Left — avatar + socials */}
             <div className="flex w-full shrink-0 flex-col items-center gap-3 md:w-auto">
               {avatar && (
@@ -78,7 +75,7 @@ export default function AuthorLayout({ children, content }: Props) {
 
             {/* Right — text */}
             <div className="w-full flex-1 text-center md:text-left">
-              <h1 className="mb-5 font-sans text-3xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl md:text-5xl xl:text-6xl">
+              <h1 className="mb-5 font-sans text-3xl leading-tight font-bold tracking-tight text-gray-900 sm:text-4xl md:text-5xl xl:text-6xl dark:text-gray-100">
                 Hassaan Ali <span className="text-red-500">Bukhari</span>
                 <span
                   className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
@@ -92,7 +89,7 @@ export default function AuthorLayout({ children, content }: Props) {
                   <span className="mr-2 text-red-500">$</span>
                   <span className="text-gray-900 dark:text-gray-100">cat identity.txt</span>
                 </p>
-                <div className="ml-4 mt-0.5 space-y-0.5 text-left">
+                <div className="mt-0.5 ml-4 space-y-0.5 text-left">
                   <p>
                     <span className="text-green-500 dark:text-green-400">role</span>
                     <span className="mx-2">:</span>
@@ -118,23 +115,19 @@ export default function AuthorLayout({ children, content }: Props) {
                 </p>
               </div>
             </div>
-
           </div>
         </div>
 
         {/* Content below */}
-        <div className="prose dark:prose-invert max-w-none pt-8 pb-8">
-          {children}
-        </div>
+        <div className="prose dark:prose-invert max-w-none pt-8 pb-8">{children}</div>
 
         {/* Terminal */}
         <div className="not-prose pt-8 pb-8">
-          <h2 className="mb-4 font-mono text-sm uppercase tracking-widest text-red-500">
+          <h2 className="mb-4 font-mono text-sm tracking-widest text-red-500 uppercase">
             — Terminal
           </h2>
           <TerminalWrapper />
         </div>
-
       </div>
     </>
   )

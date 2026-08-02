@@ -81,7 +81,7 @@ export default function ListLayout({
 
   return (
     <>
-      <div className="divide-y divide-gray-300 dark:divide-gray-700">
+      <div className="divide-y divide-gray-800 dark:divide-gray-700">
         <div className="space-y-2 pt-6 pb-8 md:space-y-5">
           <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
             {title}
@@ -121,7 +121,7 @@ export default function ListLayout({
             const { path, date, title, summary, tags, images, locked } = post
             return (
               <li key={path} className="py-4">
-                <article className="flex gap-4 items-start xl:grid xl:grid-cols-4 xl:items-baseline xl:gap-8">
+                <article className="flex items-start gap-4 xl:grid xl:grid-cols-4 xl:items-baseline xl:gap-8">
                   <div className="hidden xl:block">
                     <dl>
                       <dt className="sr-only">Published on</dt>
@@ -136,7 +136,7 @@ export default function ListLayout({
                         <div className="relative h-16 w-16 overflow-hidden rounded-full">
                           <Image src={images[0]} alt={title} fill className="object-cover" />
                           {locked && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">
+                            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
                               <span className="text-sm">🔒</span>
                             </div>
                           )}
@@ -144,42 +144,46 @@ export default function ListLayout({
                       </Link>
                     </div>
                   )}
-                  <div className="xl:col-span-3 space-y-2">
-                    <div className="xl:hidden text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <div className="space-y-2 xl:col-span-3">
+                    <div className="text-sm font-medium text-gray-500 xl:hidden dark:text-gray-400">
                       <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                     </div>
                     <div>
-                      <h2 className="text-xl leading-8 font-bold tracking-tight flex items-center gap-2">
+                      <h2 className="flex items-center gap-2 text-xl leading-8 font-bold tracking-tight">
                         <Link
                           href={`/${path}`}
-                          className="text-gray-900 dark:text-gray-100 hover:text-primary-500 dark:hover:text-primary-400"
+                          className="hover:text-primary-500 dark:hover:text-primary-400 text-gray-900 dark:text-gray-100"
                         >
                           {title}
                         </Link>
                         {locked && (
-                          <span style={{
-                            fontSize: '10px',
-                            fontFamily: 'monospace',
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            color: '#e53e3e',
-                            border: '1px solid rgba(229,62,62,0.4)',
-                            borderRadius: '4px',
-                            padding: '2px 8px',
-                            whiteSpace: 'nowrap',
-                          }}>
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontFamily: 'monospace',
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: '#e53e3e',
+                              border: '1px solid rgba(229,62,62,0.4)',
+                              borderRadius: '4px',
+                              padding: '2px 8px',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
                             Active
                           </span>
                         )}
                       </h2>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {tags?.map((tag) => <Tag key={tag} text={tag} />)}
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {tags?.map((tag) => (
+                          <Tag key={tag} text={tag} />
+                        ))}
                       </div>
                     </div>
                     <p className="prose max-w-none text-gray-500 dark:text-gray-400">{summary}</p>
                     <Link
                       href={`/${path}`}
-                      className="text-sm font-medium text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                      className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium"
                       aria-label={`Read more: "${title}"`}
                     >
                       {locked ? 'View details →' : 'Read more →'}

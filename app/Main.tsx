@@ -10,7 +10,7 @@ const MAX_DISPLAY = 3
 export default function Home({ posts }) {
   return (
     <>
-      <div className="divide-y divide-gray-300 dark:divide-gray-700">
+      <div className="divide-y divide-gray-800 dark:divide-gray-700">
         <div className="relative overflow-hidden pt-10 pb-8">
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -23,7 +23,7 @@ export default function Home({ posts }) {
           <div className="mb-5 inline-flex items-center rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
             Hack · Learn · Repeat
           </div>
-          <h1 className="mb-5 font-sans text-5xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100 md:text-6xl">
+          <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
             Bukhari's <span className="text-red-500">Archive</span>
             <span
               className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
@@ -53,14 +53,14 @@ export default function Home({ posts }) {
           </div>
         </div>
 
-        <ul className="divide-y divide-gray-300 dark:divide-gray-700">
+        <ul className="divide-y divide-gray-800 dark:divide-gray-700">
           {!posts.length && 'No posts found.'}
           {posts.slice(0, MAX_DISPLAY).map((post) => {
             const { slug, date, title, summary, tags, images, locked } = post
             return (
               <li key={slug} className="py-12">
                 <article>
-                  <div className="flex gap-6 items-start">
+                  <div className="flex items-start gap-6">
                     <Link href={`/blog/${slug}`} className="shrink-0">
                       <div className="relative h-36 w-36 overflow-hidden rounded-xl">
                         {images?.[0] ? (
@@ -77,7 +77,7 @@ export default function Home({ posts }) {
                         )}
                         {/* Lock overlay on image */}
                         {locked && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-xl">
+                          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60">
                             <span className="text-2xl">🔒</span>
                           </div>
                         )}
@@ -86,13 +86,10 @@ export default function Home({ posts }) {
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                       </dd>
                     </Link>
-                    <div className="space-y-3 flex-1">
+                    <div className="flex-1 space-y-3">
                       <div>
-                        <h2 className="text-2xl leading-8 font-bold tracking-tight flex items-center gap-2">
-                          <Link
-                            href={`/blog/${slug}`}
-                            className="text-gray-900 dark:text-gray-100"
-                          >
+                        <h2 className="flex items-center gap-2 text-2xl leading-8 font-bold tracking-tight">
+                          <Link href={`/blog/${slug}`} className="text-gray-900 dark:text-gray-100">
                             {title}
                           </Link>
                           {locked && (

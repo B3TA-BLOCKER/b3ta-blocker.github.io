@@ -25,7 +25,7 @@ export default function PostLayout({ content, next, prev, children }: LayoutProp
       <article>
         <div>
           <header>
-            <div className="space-y-1 border-b border-gray-300 pb-10 text-center dark:border-gray-700">
+            <div className="space-y-1 border-b border-gray-800 pb-10 text-center dark:border-gray-700">
               <dl>
                 <div>
                   <dt className="sr-only">Published on</dt>
@@ -39,8 +39,8 @@ export default function PostLayout({ content, next, prev, children }: LayoutProp
               </div>
             </div>
           </header>
-          <div className="grid-rows-[auto_1fr] divide-y divide-gray-300 pb-8 xl:divide-y-0 dark:divide-gray-700">
-            <div className="divide-y divide-gray-300 xl:col-span-3 xl:row-span-2 xl:pb-0 dark:divide-gray-700">
+          <div className="grid-rows-[auto_1fr] divide-y divide-gray-800 pb-8 xl:divide-y-0 dark:divide-gray-700">
+            <div className="divide-y divide-gray-800 xl:col-span-3 xl:row-span-2 xl:pb-0 dark:divide-gray-700">
               <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
             </div>
             {siteMetadata.comments && (
