@@ -20,7 +20,7 @@ export default function Home({ posts }) {
               backgroundSize: '40px 40px',
             }}
           />
-          <div className="mb-5 inline-flex items-center rounded border border-red-500/30 px-3 py-1 font-mono text-[11px] tracking-widest text-red-500">
+          <div className="mb-5 inline-flex items-center rounded border border-red-600/50 px-4 py-1.5 font-mono text-sm tracking-widest text-red-600 dark:border-red-500/30 dark:text-red-500">
             Hack · Learn · Repeat
           </div>
           <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
@@ -30,8 +30,8 @@ export default function Home({ posts }) {
               style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
             />
           </h1>
-          <div className="font-mono text-sm leading-loose text-gray-500 dark:text-gray-400">
-            <p className="opacity-60">
+          <div className="font-mono text-sm leading-loose text-gray-700 dark:text-gray-400">
+            <p className="text-gray-500 dark:text-gray-400/60">
               # My journey through CTFs, labs, and everything in between.
             </p>
             <p className="mt-1">
