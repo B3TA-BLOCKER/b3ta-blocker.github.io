@@ -10,7 +10,7 @@ const MAX_DISPLAY = 3
 export default function Home({ posts }) {
   return (
     <>
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="divide-y divide-gray-300 dark:divide-gray-700">
         <div className="relative overflow-hidden pt-10 pb-8">
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -53,7 +53,7 @@ export default function Home({ posts }) {
           </div>
         </div>
 
-        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+        <ul className="divide-y divide-gray-300 dark:divide-gray-700">
           {!posts.length && 'No posts found.'}
           {posts.slice(0, MAX_DISPLAY).map((post) => {
             const { slug, date, title, summary, tags, images, locked } = post
