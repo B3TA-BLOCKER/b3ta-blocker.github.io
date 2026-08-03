@@ -30,7 +30,7 @@ export default function Home({ posts }) {
               style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
             />
           </h1>
-          <div className="font-mono text-sm leading-loose text-gray-900 dark:text-gray-400">
+          <div className="font-mono text-lg leading-loose text-gray-900 dark:text-gray-400">
             <p className="text-lg text-gray-600 dark:text-gray-400/60">
               # My journey through CTFs, labs, and everything in between.
             </p>
