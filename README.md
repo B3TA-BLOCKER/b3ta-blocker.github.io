@@ -1,6 +1,6 @@
 <div align="center">
 
-# 👻 Bukhari's Archive
+# Bukhari's Archive
 
 </div>
 
@@ -12,10 +12,9 @@ status    : Self-taught, Graduated
 focus     : Red Teaming · Malware Research 
 site      : https://b3ta-blocker.github.io/
 ```
-
 ---
 
-## `whoami`
+## `$ whoami`
 
 I'm Hassaan — Cybersecurity graduate from GIKI, red teamer by interest, exploit dev by aspiration. This repo powers my blog, where I write up boxes I've rooted, bugs I've chased, and tools I'm building along the way. No fluff, no "10 tips for cybersecurity" listicles — just raw process: recon, failure, the moment something finally pops a shell, and what I learned from it.
 
@@ -23,7 +22,7 @@ If you're here from a CV, an interview panel, or just stumbled in from HTB — w
 
 ---
 
-## `ls -la ./content`
+## `$ ls -la ./content`
 
 **Box & CTF Writeups**
 Full attack-chain breakdowns — not just "run this command," but the actual thought process behind each pivot.
@@ -60,7 +59,7 @@ cd b3ta-blocker.github.io
 
 ---
 
-## `cat ROE.txt` — Rules of Engagement / Disclaimer
+## `$ cat ROE.txt` — Rules of Engagement / Disclaimer
 
 Every exploit, walkthrough, and attack chain in this archive was executed against **isolated lab targets** — HTB machines, TryHackMe rooms, or self-hosted VMs I own. Nothing here documents unauthorized access to real systems. Read it, learn from it, don't be an idiot with it.
 
