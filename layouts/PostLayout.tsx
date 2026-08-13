@@ -8,6 +8,7 @@ import Image from 'next/image'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
+import TableOfContents from '@/components/TableOfContents'
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -29,12 +30,21 @@ interface LayoutProps {
   authorDetails: CoreContent<Authors>[]
   next?: { path: string; title: string; images?: string[] }
   prev?: { path: string; title: string; images?: string[] }
+  toc?: { value: string; url: string; depth: number }[]
   children: ReactNode
 }
 
-export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
+export default function PostLayout({
+  content,
+  authorDetails,
+  next,
+  prev,
+  toc,
+  children,
+}: LayoutProps) {
   const { path, date, title, tags, twitterUrl } = content
   const basePath = path.split('/')[0]
+  const hasToc = Boolean(toc && toc.length > 1)
 
   return (
     <SectionContainer>
@@ -58,93 +68,57 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               </div>
             </div>
           </header>
-          <div className="grid-rows-[auto_1fr] divide-y divide-gray-800 pb-8 xl:grid xl:grid-cols-4 xl:gap-x-6 xl:divide-y-0 dark:divide-gray-700">
-            <dl className="pt-6 pb-10 xl:border-b xl:border-gray-800 xl:pt-11 xl:dark:border-gray-700">
-              <dt className="sr-only">Authors</dt>
-              <dd>
-                <ul className="flex flex-wrap justify-center gap-4 sm:space-x-12 xl:block xl:space-y-8 xl:space-x-0">
-                  {authorDetails.map((author) => (
-                    <li className="flex items-center space-x-2" key={author.name}>
-                      {author.avatar && (
-                        <Image
-                          src={author.avatar}
-                          width={38}
-                          height={38}
-                          alt="avatar"
-                          className="h-10 w-10 rounded-full"
-                        />
-                      )}
-                      <dl className="text-sm leading-5 font-medium whitespace-nowrap">
-                        <dt className="sr-only">Name</dt>
-                        <dd className="text-gray-900 dark:text-gray-100">{author.name}</dd>
-                        <dt className="sr-only">Twitter</dt>
-                        <dd>
-                          {author.twitter && (
-                            <Link
-                              href={author.twitter}
-                              className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                            >
-                              {author.twitter
-                                .replace('https://twitter.com/', '@')
-                                .replace('https://x.com/', '@')}
-                            </Link>
-                          )}
-                        </dd>
-                      </dl>
-                    </li>
-                  ))}
-                </ul>
-              </dd>
-            </dl>
-            <div className="divide-y divide-gray-800 xl:col-span-3 xl:row-span-2 xl:pb-0 dark:divide-gray-700">
-              <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
-              {twitterUrl && (
-                <div className="pt-6 pb-6">
-                  <Link
-                    href={getReplyUrl(twitterUrl)}
-                    rel="nofollow"
-                    className="group hover:border-primary-500 dark:hover:border-primary-400 relative flex items-center justify-between gap-4 overflow-hidden rounded-xl border border-gray-300 bg-gray-50 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-white transition-transform duration-200 group-hover:scale-110 dark:bg-white dark:text-black">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          className="h-5 w-5 fill-current"
-                        >
-                          <path d="M18.9 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-                        </svg>
-                      </span>
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">
-                          Think I missed an angle? Tell me on X.
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Reply with your own approach, a sharper exploit path, or just roast the
-                          writeup.
-                        </p>
-                      </div>
-                    </div>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      className="group-hover:text-primary-500 h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13 5l7 7-7 7M5 12h14"
-                      />
-                    </svg>
-                  </Link>
-                </div>
-              )}
-            </div>
-            <footer>
-              <div className="divide-gray-800 text-sm leading-5 font-medium xl:col-start-1 xl:row-start-2 xl:divide-y dark:divide-gray-700">
+
+          {/* Single-row 3-column grid: left rail | article | TOC rail.
+              All three cells sit in row 1, so CSS Grid's default stretch
+              makes the two side cells exactly as tall as the article cell —
+              which is what lets `sticky` inside them track the full length
+              of the post instead of running out of room early. */}
+          <div
+            className={`grid-rows-[auto_1fr] divide-y divide-gray-800 pb-8 xl:grid xl:items-start xl:gap-x-8 xl:divide-y-0 dark:divide-gray-700 ${
+              hasToc ? 'xl:grid-cols-[13rem_minmax(0,1fr)_13.5rem]' : 'xl:grid-cols-[13rem_1fr]'
+            }`}
+          >
+            {/* Left rail — author, tags, prev/next, back link */}
+            <div className="xl:sticky xl:top-28 xl:pt-10">
+              <dl className="pt-6 pb-10">
+                <dt className="sr-only">Authors</dt>
+                <dd>
+                  <ul className="flex flex-wrap justify-center gap-4 sm:space-x-12 xl:block xl:space-y-8 xl:space-x-0">
+                    {authorDetails.map((author) => (
+                      <li className="flex items-center space-x-2" key={author.name}>
+                        {author.avatar && (
+                          <Image
+                            src={author.avatar}
+                            width={38}
+                            height={38}
+                            alt="avatar"
+                            className="h-10 w-10 rounded-full"
+                          />
+                        )}
+                        <dl className="text-sm leading-5 font-medium whitespace-nowrap">
+                          <dt className="sr-only">Name</dt>
+                          <dd className="text-gray-900 dark:text-gray-100">{author.name}</dd>
+                          <dt className="sr-only">Twitter</dt>
+                          <dd>
+                            {author.twitter && (
+                              <Link
+                                href={author.twitter}
+                                className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                              >
+                                {author.twitter
+                                  .replace('https://twitter.com/', '@')
+                                  .replace('https://x.com/', '@')}
+                              </Link>
+                            )}
+                          </dd>
+                        </dl>
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </dl>
+              <div className="divide-gray-800 text-sm leading-5 font-medium xl:divide-y dark:divide-gray-700">
                 {tags && (
                   <div className="py-4 xl:py-8">
                     <h2 className="text-xs tracking-wide text-gray-500 uppercase dark:text-gray-400">
@@ -219,7 +193,63 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                   &larr; Back to the blog
                 </Link>
               </div>
-            </footer>
+            </div>
+
+            {/* Center — the article itself */}
+            <div className="divide-y divide-gray-800 xl:pb-0 dark:divide-gray-700">
+              <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
+              {twitterUrl && (
+                <div className="pt-6 pb-6">
+                  <Link
+                    href={getReplyUrl(twitterUrl)}
+                    rel="nofollow"
+                    className="group hover:border-primary-500 dark:hover:border-primary-400 relative flex items-center justify-between gap-4 overflow-hidden rounded-xl border border-gray-300 bg-gray-50 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-white transition-transform duration-200 group-hover:scale-110 dark:bg-white dark:text-black">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5 fill-current"
+                        >
+                          <path d="M18.9 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                        </svg>
+                      </span>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                          Think I missed an angle? Tell me on X.
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Reply with your own approach, a sharper exploit path, or just roast the
+                          writeup.
+                        </p>
+                      </div>
+                    </div>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      className="group-hover:text-primary-500 h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13 5l7 7-7 7M5 12h14"
+                      />
+                    </svg>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Right rail — table of contents, top-aligned with the left rail */}
+            {hasToc && (
+              <div className="hidden xl:sticky xl:top-28 xl:block xl:pt-10">
+                <TableOfContents toc={toc!} />
+              </div>
+            )}
           </div>
         </div>
       </article>

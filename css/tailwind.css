@@ -132,6 +132,19 @@ input:-webkit-autofill:focus {
 .katex-display {
   overflow: auto hidden;
 }
+.toc-glow {
+  text-shadow:
+    0 0 6px var(--color-primary-500),
+    0 0 16px oklch(0.628 0.258 27 / 45%);
+}
+.toc-active-bar {
+  box-shadow:
+    0 0 6px var(--color-primary-500),
+    0 0 12px var(--color-primary-500);
+}
+.toc-link {
+  will-change: opacity, color;
+}
 .content-header-link {
   opacity: 0;
   margin-left: -24px;

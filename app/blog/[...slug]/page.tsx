@@ -73,45 +73,51 @@ export const generateStaticParams = async () => {
 
 function LockedPost({ post }: { post: Blog }) {
   return (
-    <div style={{
-      minHeight: '70vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '4rem 1.5rem',
-      textAlign: 'center',
-    }}>
-      {/* Lock icon */}
-      <div style={{
-        width: '72px',
-        height: '72px',
-        borderRadius: '50%',
-        background: 'rgba(229,62,62,0.1)',
-        border: '2px solid rgba(229,62,62,0.3)',
+    <div
+      style={{
+        minHeight: '70vh',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: '1.5rem',
-        fontSize: '32px',
-      }}>
+        padding: '4rem 1.5rem',
+        textAlign: 'center',
+      }}
+    >
+      {/* Lock icon */}
+      <div
+        style={{
+          width: '72px',
+          height: '72px',
+          borderRadius: '50%',
+          background: 'rgba(229,62,62,0.1)',
+          border: '2px solid rgba(229,62,62,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '1.5rem',
+          fontSize: '32px',
+        }}
+      >
         🔒
       </div>
 
       {/* Badge */}
-      <div style={{
-        display: 'inline-block',
-        background: 'rgba(229,62,62,0.1)',
-        border: '1px solid rgba(229,62,62,0.4)',
-        borderRadius: '20px',
-        padding: '4px 14px',
-        fontSize: '11px',
-        fontFamily: 'monospace',
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        color: '#e53e3e',
-        marginBottom: '1.5rem',
-      }}>
+      <div
+        style={{
+          display: 'inline-block',
+          background: 'rgba(229,62,62,0.1)',
+          border: '1px solid rgba(229,62,62,0.4)',
+          borderRadius: '20px',
+          padding: '4px 14px',
+          fontSize: '11px',
+          fontFamily: 'monospace',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#e53e3e',
+          marginBottom: '1.5rem',
+        }}
+      >
         Machine Still Active
       </div>
 
@@ -131,26 +137,30 @@ function LockedPost({ post }: { post: Blog }) {
 
       {/* Summary */}
       {post.summary && (
-        <p style={{
-          fontSize: '14px',
-          color: '#8b949e',
-          maxWidth: '560px',
-          lineHeight: 1.7,
-          marginBottom: '2rem',
-        }}>
+        <p
+          style={{
+            fontSize: '14px',
+            color: '#8b949e',
+            maxWidth: '560px',
+            lineHeight: 1.7,
+            marginBottom: '2rem',
+          }}
+        >
           {post.summary}
         </p>
       )}
 
       {/* Tags */}
       {post.tags && post.tags.length > 0 && (
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px',
-          justifyContent: 'center',
-          marginBottom: '2.5rem',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+            justifyContent: 'center',
+            marginBottom: '2.5rem',
+          }}
+        >
           {post.tags.map((tag) => (
             <Link
               key={tag}
@@ -173,22 +183,24 @@ function LockedPost({ post }: { post: Blog }) {
       )}
 
       {/* Message */}
-      <div style={{
-        background: '#161b22',
-        border: '1px solid #30363d',
-        borderRadius: '8px',
-        padding: '1.25rem 1.75rem',
-        maxWidth: '500px',
-        fontSize: '13px',
-        fontFamily: 'monospace',
-        color: '#8b949e',
-        lineHeight: 1.7,
-      }}>
+      <div
+        style={{
+          background: '#161b22',
+          border: '1px solid #30363d',
+          borderRadius: '8px',
+          padding: '1.25rem 1.75rem',
+          maxWidth: '500px',
+          fontSize: '13px',
+          fontFamily: 'monospace',
+          color: '#8b949e',
+          lineHeight: 1.7,
+        }}
+      >
         <span style={{ color: '#e53e3e' }}>$</span>{' '}
         {post.lockedMessage ||
           'This content is tied to a challenge that is still active. The full writeup will be published once it is safe to release.'}
         <br />
-        <span style={{ color: '#38a169' }}>// Check back later</span>
+        <span style={{ color: '#38a169' }}>{'// Check back later'}</span>
       </div>
     </div>
   )
@@ -237,7 +249,13 @@ export default async function Page(props: { params: Promise<{ slug: string[] }> 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Layout content={mainContent} authorDetails={authorDetails} next={next} prev={prev}>
+      <Layout
+        content={mainContent}
+        authorDetails={authorDetails}
+        next={next}
+        prev={prev}
+        toc={post.toc}
+      >
         <MDXLayoutRenderer code={post.body.code} components={components} toc={post.toc} />
       </Layout>
     </>
