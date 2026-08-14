@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 interface TocHeading {
   value: string
@@ -12,13 +12,14 @@ interface TableOfContentsProps {
   toc: TocHeading[]
 }
 
+// Distance (px) from the top of the viewport that counts as the "active
+// line". Used for both scrollspy detection and the click-to-scroll offset,
+// so the heading that lights up is always the same one you scrolled to.
+const ACTIVE_LINE = 110
+
 export default function TableOfContents({ toc }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>('')
-  const observerRef = useRef<IntersectionObserver | null>(null)
-
-  // toc[0] is almost always the post's H1, which is already shown as the
-  // page title above — skip it so the list only holds real sections.
-  const items = useMemo(() => (toc && toc.length > 1 ? toc.slice(1) : []), [toc])
+  const items = useMemo(() => toc || [], [toc])
 
   useEffect(() => {
     if (items.length === 0) return
@@ -30,25 +31,39 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
 
     if (elements.length === 0) return
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting)
-        if (visible.length > 0) {
-          // Topmost heading currently in the "active band" wins.
-          setActiveId(visible[0].target.id)
-        }
-      },
-      {
-        // Counts a heading "active" once it crosses ~96px from the top and
-        // until it's 70% of the way up the viewport — keeps one section lit
-        // at a time instead of flickering between neighbours.
-        rootMargin: '-96px 0px -70% 0px',
-        threshold: 0,
-      }
-    )
+    let ticking = false
 
-    elements.forEach((el) => observerRef.current?.observe(el))
-    return () => observerRef.current?.disconnect()
+    // Walk the headings in document order and keep the last one that has
+    // scrolled past the active line. If none have (we're above the first
+    // heading, e.g. right after landing back at the top), nothing is
+    // active — the list goes dark instead of freezing on a stale heading.
+    const updateActive = () => {
+      let current = ''
+      for (const el of elements) {
+        if (el.getBoundingClientRect().top <= ACTIVE_LINE) {
+          current = el.id
+        } else {
+          break
+        }
+      }
+      setActiveId(current)
+      ticking = false
+    }
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true
+        requestAnimationFrame(updateActive)
+      }
+    }
+
+    updateActive()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [items])
 
   if (items.length === 0) return null
@@ -57,8 +72,7 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
     e.preventDefault()
     const el = document.getElementById(id)
     if (!el) return
-    const offset = 88
-    const top = el.getBoundingClientRect().top + window.scrollY - offset
+    const top = el.getBoundingClientRect().top + window.scrollY - ACTIVE_LINE
     window.scrollTo({ top, behavior: 'smooth' })
     window.history.replaceState(null, '', `#${id}`)
     setActiveId(id)
