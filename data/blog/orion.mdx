@@ -13,14 +13,16 @@ images: ['/static/images/orion/preview.png']
 
 Orion is an Easy-difficulty Linux machine built around a Craft CMS 5.6.16 instance exposed on port 80. Enumeration of the site revealed the CMS and version, which had a known exploit available in Metasploit, giving initial access as `www-data`. From there, a `.env` file in the Craft installation directory leaked database credentials, which I used to connect directly to the backend MySQL instance and dump the `users` table. The extracted admin password hash cracked via `hashcat` against `rockyou.txt`, yielding valid SSH credentials for the `adam` user and the user flag.
 
-Post-exploitation port enumeration on the box showed two additional services — MySQL (3306) and Telnet (23) — both bound to loopback only. Local port forwarding over SSH exposed these to my attack host, and researching the Telnet service pointed to CVE-2026-24061, a `telnetd` auto-login flaw. Passing a crafted `USER` environment variable (`USER='-f root'`) alongside the `-a` flag exploited this trust issue, bypassing authentication entirely and dropping a root shell — completing the box.
+Post-exploitation port enumeration on the box showed two additional services — MySQL (3306) and Telnet (23) — researching the Telnet service pointed to CVE-2026-24061, a `telnetd` auto-login flaw. Passing a crafted `USER` environment variable (`USER='-f root'`) alongside the `-a` flag exploited this trust issue, bypassing authentication entirely and dropping a root shell — completing the box.
 
 ## Machine Info
 
-| Target IP        | 10.129.8.209  |
+| ---------------- | ------------- |
+| Target IP | 10.129.8.209 |
 | ---------------- | ------------- |
 | Difficulty Level | **Very Easy** |
-| OS               | **Linux**     |
+| OS | **Linux** |
+| ---------------- | ------------- |
 
 ---
 
@@ -133,7 +135,7 @@ It contained several tables. I focused on the `users` table and ran a query to p
 
 ```
 username: admin
-password hash: $2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS
+password_hash: $2y$13$e9zuohgFZzGtbQalcn9Mz.5PJbjxobO0GMbXo8NHp3P/B42LUg0lS
 email: adam@orion.htb
 ```
 
@@ -156,7 +158,7 @@ $ ssh adam@10.129.8.209
 
 ![image.png](/static/images/orion/image%2011.png)
 
-## Priv Esc --> `root`
+## Priv Esc --> Root
 
 I started by checking for open ports.
 
