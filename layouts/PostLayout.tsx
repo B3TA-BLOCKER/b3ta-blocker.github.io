@@ -81,7 +81,7 @@ export default function PostLayout({
           >
             {/* Left rail — author, tags, prev/next, back link */}
             <div className="xl:sticky xl:top-28 xl:pt-10">
-              <dl className="pt-6 pb-10">
+              <dl className="border-b border-gray-800 pt-6 pb-10 dark:border-gray-700">
                 <dt className="sr-only">Authors</dt>
                 <dd>
                   <ul className="flex flex-wrap justify-center gap-4 sm:space-x-12 xl:block xl:space-y-8 xl:space-x-0">
