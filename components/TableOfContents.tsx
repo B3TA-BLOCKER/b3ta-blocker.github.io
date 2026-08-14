@@ -15,7 +15,7 @@ interface TableOfContentsProps {
 // Distance (px) from the top of the viewport that counts as the "active
 // line". Used for both scrollspy detection and the click-to-scroll offset,
 // so the heading that lights up is always the same one you scrolled to.
-const ACTIVE_LINE = 110
+const ACTIVE_LINE = 150
 
 export default function TableOfContents({ toc }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>('')
