@@ -132,6 +132,9 @@ input:-webkit-autofill:focus {
 .katex-display {
   overflow: auto hidden;
 }
+.prose :where(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: 170px;
+}
 .toc-glow {
   text-shadow:
     0 0 6px var(--color-primary-500),

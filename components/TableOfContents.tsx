@@ -15,7 +15,11 @@ interface TableOfContentsProps {
 // Distance (px) from the top of the viewport that counts as the "active
 // line". Used for both scrollspy detection and the click-to-scroll offset,
 // so the heading that lights up is always the same one you scrolled to.
-const ACTIVE_LINE = 150
+// Kept in sync with the `.prose h1..h6 { scroll-margin-top }` rule in
+// tailwind.css. Used only for scrollspy detection here — the click handler
+// below relies on that CSS rule directly via scrollIntoView, so the two can
+// never disagree about where "the top" is.
+const ACTIVE_LINE = 170
 
 export default function TableOfContents({ toc }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>('')
@@ -72,8 +76,7 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
     e.preventDefault()
     const el = document.getElementById(id)
     if (!el) return
-    const top = el.getBoundingClientRect().top + window.scrollY - ACTIVE_LINE
-    window.scrollTo({ top, behavior: 'smooth' })
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     window.history.replaceState(null, '', `#${id}`)
     setActiveId(id)
   }
