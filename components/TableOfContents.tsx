@@ -17,28 +17,41 @@ interface TableOfContentsProps {
 // scrollIntoView, so the two can never disagree about where "the top" is.
 const ACTIVE_LINE = 170
 
-// Matches every heading rendered inside the article body.
+// Matches every heading actually rendered inside the article body.
 const HEADING_SELECTOR = '.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6'
+
+interface HeadingEntry {
+  value: string
+  id: string
+  depth: number
+}
 
 export default function TableOfContents({ toc }: TableOfContentsProps) {
   const [activeIndex, setActiveIndex] = useState<number>(-1)
-  // The real ids read straight off the rendered headings, keyed by their
-  // position in the document — not the slug string in toc[i].url. The TOC
-  // list (post.toc) and the actual article are built by two separate
-  // passes of the slugger, and when a heading's text repeats anywhere else
-  // in the post (a filename, "Exploit", "Setup") the two passes can number
-  // the "-1", "-2" duplicate suffixes differently. Matching by document
-  // order instead of by slug string sidesteps that mismatch entirely.
-  const [realIds, setRealIds] = useState<string[]>([])
-  const items = useMemo(() => toc || [], [toc])
+
+  // `post.toc` is computed server-side by a separate, minimal markdown
+  // parse (no MDX components, no GFM, none of the other remark/rehype
+  // plugins the real article pipeline uses) — so it's only used here as a
+  // placeholder for the very first paint, before this effect runs.
+  const fallback = useMemo(() => toc || [], [toc])
+
+  // The real list, read straight off the rendered headings once the
+  // article mounts. This is the single source of truth for both what's
+  // shown here and what the scrollspy below tracks, so the two — and the
+  // clicked heading — can never point at different things.
+  const [items, setItems] = useState<HeadingEntry[] | null>(null)
 
   useEffect(() => {
-    if (items.length === 0) return
-
     const elements = Array.from(document.querySelectorAll<HTMLElement>(HEADING_SELECTOR))
     if (elements.length === 0) return
 
-    setRealIds(elements.map((el) => el.id))
+    setItems(
+      elements.map((el) => ({
+        value: el.textContent || '',
+        id: el.id,
+        depth: Number(el.tagName.slice(1)) || 1,
+      }))
+    )
 
     let ticking = false
 
@@ -71,9 +84,12 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
-  }, [items])
+  }, [fallback])
 
-  if (items.length === 0) return null
+  const list: HeadingEntry[] =
+    items ?? fallback.map((item) => ({ value: item.value, id: '', depth: item.depth }))
+
+  if (list.length === 0) return null
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, index: number) => {
     e.preventDefault()
@@ -93,18 +109,15 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
         <span className="text-primary-500">{'//'}</span> On this page
       </h2>
       <ul className="space-y-2.5 border-l border-gray-800 dark:border-gray-700">
-        {items.map((item, index) => {
+        {list.map((item, index) => {
           const isActive = activeIndex === index
           const isTopLevel = item.depth <= 1
           const indent = isTopLevel ? 'pl-4' : item.depth === 2 ? 'pl-7' : 'pl-10'
           const size = isTopLevel ? 'text-base' : 'text-sm'
-          // Falls back to the toc-computed slug before the article mounts
-          // (SSR / first paint) — replaced by the real rendered id the
-          // moment the effect above resolves it.
-          const href = realIds[index] ? `#${realIds[index]}` : item.url
+          const href = item.id ? `#${item.id}` : '#'
 
           return (
-            <li key={item.url} className={`relative ${indent}`}>
+            <li key={`${index}-${item.value}`} className={`relative ${indent}`}>
               {isActive && (
                 <span className="toc-active-bar bg-primary-500 absolute top-0 -left-px h-full w-0.5 rounded-full" />
               )}
