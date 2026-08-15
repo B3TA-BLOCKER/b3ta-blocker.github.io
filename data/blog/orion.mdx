@@ -10,6 +10,8 @@ images: ['/static/images/orion/preview.png']
 twitterUrl: https://x.com/B3TA_BLOCKER/status/2088348455186116659?s=20
 ---
 
+![image.png](/static/images/orion/image%2014.png)
+
 ## Overview
 
 Orion is an Easy-difficulty Linux machine built around a Craft CMS 5.6.16 instance exposed on port 80. Enumeration of the site revealed the CMS and version, which had a known exploit available in Metasploit, giving initial access as `www-data`. From there, a `.env` file in the Craft installation directory leaked database credentials, which I used to connect directly to the backend MySQL instance and dump the `users` table. The extracted admin password hash cracked via `hashcat` against `rockyou.txt`, yielding valid SSH credentials for the `adam` user and the user flag.
@@ -194,7 +196,3 @@ adam@orion:~$ USER='-f root' telnet -a 127.0.0.1
 root@orion:~# cat root.txt
 1d007d0442dd3c******************
 ```
-
----
-
-![image.png](/static/images/orion/image%2014.png)
