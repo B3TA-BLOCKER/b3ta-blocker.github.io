@@ -12,28 +12,33 @@ interface TableOfContentsProps {
   toc: TocHeading[]
 }
 
-// Distance (px) from the top of the viewport that counts as the "active
-// line". Used for both scrollspy detection and the click-to-scroll offset,
-// so the heading that lights up is always the same one you scrolled to.
 // Kept in sync with the `.prose h1..h6 { scroll-margin-top }` rule in
-// tailwind.css. Used only for scrollspy detection here — the click handler
-// below relies on that CSS rule directly via scrollIntoView, so the two can
-// never disagree about where "the top" is.
+// tailwind.css — the click handler relies on that CSS rule via
+// scrollIntoView, so the two can never disagree about where "the top" is.
 const ACTIVE_LINE = 170
 
+// Matches every heading rendered inside the article body.
+const HEADING_SELECTOR = '.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6'
+
 export default function TableOfContents({ toc }: TableOfContentsProps) {
-  const [activeId, setActiveId] = useState<string>('')
+  const [activeIndex, setActiveIndex] = useState<number>(-1)
+  // The real ids read straight off the rendered headings, keyed by their
+  // position in the document — not the slug string in toc[i].url. The TOC
+  // list (post.toc) and the actual article are built by two separate
+  // passes of the slugger, and when a heading's text repeats anywhere else
+  // in the post (a filename, "Exploit", "Setup") the two passes can number
+  // the "-1", "-2" duplicate suffixes differently. Matching by document
+  // order instead of by slug string sidesteps that mismatch entirely.
+  const [realIds, setRealIds] = useState<string[]>([])
   const items = useMemo(() => toc || [], [toc])
 
   useEffect(() => {
     if (items.length === 0) return
 
-    const ids = items.map((item) => decodeURIComponent(item.url.replace('#', '')))
-    const elements = ids
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null)
-
+    const elements = Array.from(document.querySelectorAll<HTMLElement>(HEADING_SELECTOR))
     if (elements.length === 0) return
+
+    setRealIds(elements.map((el) => el.id))
 
     let ticking = false
 
@@ -42,15 +47,13 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
     // heading, e.g. right after landing back at the top), nothing is
     // active — the list goes dark instead of freezing on a stale heading.
     const updateActive = () => {
-      let current = ''
-      for (const el of elements) {
+      let current = -1
+      elements.forEach((el, index) => {
         if (el.getBoundingClientRect().top <= ACTIVE_LINE) {
-          current = el.id
-        } else {
-          break
+          current = index
         }
-      }
-      setActiveId(current)
+      })
+      setActiveIndex(current)
       ticking = false
     }
 
@@ -72,13 +75,13 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
 
   if (items.length === 0) return null
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, index: number) => {
     e.preventDefault()
-    const el = document.getElementById(id)
+    const el = document.querySelectorAll<HTMLElement>(HEADING_SELECTOR)[index]
     if (!el) return
     el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    window.history.replaceState(null, '', `#${id}`)
-    setActiveId(id)
+    if (el.id) window.history.replaceState(null, '', `#${el.id}`)
+    setActiveIndex(index)
   }
 
   return (
@@ -90,12 +93,15 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
         <span className="text-primary-500">{'//'}</span> On this page
       </h2>
       <ul className="space-y-2.5 border-l border-gray-800 dark:border-gray-700">
-        {items.map((item) => {
-          const id = decodeURIComponent(item.url.replace('#', ''))
-          const isActive = activeId === id
+        {items.map((item, index) => {
+          const isActive = activeIndex === index
           const isTopLevel = item.depth <= 1
           const indent = isTopLevel ? 'pl-4' : item.depth === 2 ? 'pl-7' : 'pl-10'
           const size = isTopLevel ? 'text-base' : 'text-sm'
+          // Falls back to the toc-computed slug before the article mounts
+          // (SSR / first paint) — replaced by the real rendered id the
+          // moment the effect above resolves it.
+          const href = realIds[index] ? `#${realIds[index]}` : item.url
 
           return (
             <li key={item.url} className={`relative ${indent}`}>
@@ -103,8 +109,8 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
                 <span className="toc-active-bar bg-primary-500 absolute top-0 -left-px h-full w-0.5 rounded-full" />
               )}
               <a
-                href={item.url}
-                onClick={(e) => handleClick(e, id)}
+                href={href}
+                onClick={(e) => handleClick(e, index)}
                 className={`toc-link block leading-6 transition-all duration-200 ${size} ${
                   isActive
                     ? `toc-glow text-primary-400 ${isTopLevel ? 'font-semibold' : 'font-medium'}`
