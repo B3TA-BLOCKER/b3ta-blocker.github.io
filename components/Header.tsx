@@ -1,4 +1,5 @@
 'use client'
+import { useEffect, useRef, useState } from 'react'
 import siteMetadata from '@/data/siteMetadata'
 import headerNavLinks from '@/data/headerNavLinks'
 import Logo from '@/data/logo.svg'
@@ -6,9 +7,11 @@ import Link from './Link'
 import MobileNav from './MobileNav'
 import ThemeSwitch from './ThemeSwitch'
 import CustomSearch from './CustomSearch'
+import HandwrittenText from './HandwrittenText'
 import { usePathname } from 'next/navigation'
 import { allBlogs } from 'contentlayer/generated'
 import { sortPosts, allCoreContent } from 'pliny/utils/contentlayer'
+import { hasSeenIntro, markIntroSeen, startIntroPhaseTwo } from '@/lib/introSequence'
 
 function getRelativeTime(dateStr: string) {
   const today = new Date()
@@ -25,9 +28,6 @@ const Header = () => {
   const pathname = usePathname()
   const isHome = pathname === '/'
 
-  // This outer wrapper is the piece that must span the FULL viewport width.
-  // It carries the background + sticky/z-index, so there is no gap on
-  // either side where page content underneath can peek through on scroll.
   let wrapperClass = 'w-full bg-white dark:bg-gray-950'
   if (siteMetadata.stickyNav) {
     wrapperClass += ' sticky top-0 z-50'
@@ -35,6 +35,39 @@ const Header = () => {
 
   const posts = allCoreContent(sortPosts(allBlogs))
   const relativeTime = posts[0] ? getRelativeTime(posts[0].date) : null
+
+  // Default to "already seen" so the very first paint (server + first client
+  // render) matches — everything visible immediately, exactly as before.
+  // The effect below flips this to false for a genuinely fresh session,
+  // just before the nav is hidden and the intro starts.
+  const [skipIntro, setSkipIntro] = useState(true)
+  const [navReady, setNavReady] = useState(true)
+  const navItemRefs = useRef<(HTMLElement | null)[]>([])
+
+  useEffect(() => {
+    if (!isHome) return
+    const seen = hasSeenIntro()
+    if (!seen) {
+      setSkipIntro(false)
+      setNavReady(false)
+    }
+  }, [isHome])
+
+  function handleHandwritingDone() {
+    setNavReady(true)
+    navItemRefs.current.forEach((el, i) => {
+      if (!el) return
+      el.style.animation = `navItemIn 0.5s ease forwards, navItemGlow 0.6s ease forwards`
+      el.style.animationDelay = `${i * 90}ms`
+    })
+    const glowTail = navItemRefs.current.length * 90 + 600
+    setTimeout(() => {
+      markIntroSeen()
+      startIntroPhaseTwo()
+    }, glowTail)
+  }
+
+  const visibleLinks = headerNavLinks.filter((link) => link.href !== '/')
 
   return (
     <div className={wrapperClass}>
@@ -47,7 +80,13 @@ const Header = () => {
               className="h-2 w-2 rounded-full bg-green-700 dark:bg-green-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
-            Latest post — {relativeTime}
+            {relativeTime && (
+              <HandwrittenText
+                text={`Latest post — ${relativeTime}`}
+                skip={skipIntro}
+                onDone={handleHandwritingDone}
+              />
+            )}
           </div>
         ) : (
           <Link href="/" aria-label={siteMetadata.headerTitle} className="block">
@@ -60,19 +99,27 @@ const Header = () => {
             </div>
           </Link>
         )}
-        <div className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6">
+        <div
+          className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6"
+          style={!navReady ? { opacity: 0, transform: 'translateY(-8px)' } : undefined}
+        >
           <div className="no-scrollbar hidden max-w-40 items-center gap-x-4 overflow-x-auto sm:flex md:max-w-72 lg:max-w-96">
-            {headerNavLinks
-              .filter((link) => link.href !== '/')
-              .map((link) => (
+            {visibleLinks.map((link, i) => (
+              <span
+                key={link.title}
+                ref={(el) => {
+                  navItemRefs.current[i] = el
+                }}
+                className="inline-block"
+              >
                 <Link
-                  key={link.title}
                   href={link.href}
                   className="hover:text-primary-500 dark:hover:text-primary-400 m-1 text-lg font-medium text-gray-900 dark:text-gray-100"
                 >
                   {link.title}
                 </Link>
-              ))}
+              </span>
+            ))}
           </div>
           <CustomSearch />
           <ThemeSwitch />
