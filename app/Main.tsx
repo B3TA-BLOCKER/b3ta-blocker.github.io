@@ -29,6 +29,7 @@ export default function Home({ posts }) {
   const outputRef = useRef<HTMLDivElement>(null)
   const promptLineRef = useRef<HTMLParagraphElement>(null)
   const cardRefs = useRef<(HTMLLIElement | null)[]>([])
+  const phaseTwoPlayedRef = useRef(false)
 
   const [cardsHidden, setCardsHidden] = useState(false)
 
@@ -100,6 +101,8 @@ export default function Home({ posts }) {
     }
 
     function onPhaseTwo() {
+      if (phaseTwoPlayedRef.current) return
+      phaseTwoPlayedRef.current = true
       playPhaseTwo()
     }
     window.addEventListener(INTRO_PHASE_TWO_EVENT, onPhaseTwo)

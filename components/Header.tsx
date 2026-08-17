@@ -42,7 +42,12 @@ const Header = () => {
   // just before the nav is hidden and the intro starts.
   const [skipIntro, setSkipIntro] = useState(true)
   const [navReady, setNavReady] = useState(true)
-  const navItemRefs = useRef<(HTMLElement | null)[]>([])
+  // Separate from navReady: only true while the intro's own reveal animation
+  // should play. On a repeat-visit (skip) render, navReady is true from the
+  // start but navAnimating never turns on, so the nav just renders normally
+  // with no animation — it only animates on the actual first-run reveal.
+  const [navAnimating, setNavAnimating] = useState(false)
+  const handwritingDoneRef = useRef(false)
 
   useEffect(() => {
     if (!isHome) return
@@ -54,13 +59,14 @@ const Header = () => {
   }, [isHome])
 
   function handleHandwritingDone() {
+    if (handwritingDoneRef.current) return
+    handwritingDoneRef.current = true
+    // Both flip in the same render — no separate imperative DOM mutation
+    // racing against this state update, so the wrapper becoming visible and
+    // each item's stagger/glow animation always land in the same paint.
     setNavReady(true)
-    navItemRefs.current.forEach((el, i) => {
-      if (!el) return
-      el.style.animation = `navItemIn 0.5s ease forwards, navItemGlow 0.6s ease forwards`
-      el.style.animationDelay = `${i * 90}ms`
-    })
-    const glowTail = navItemRefs.current.length * 90 + 600
+    setNavAnimating(true)
+    const glowTail = visibleLinks.length * 90 + 600
     setTimeout(() => {
       markIntroSeen()
       startIntroPhaseTwo()
@@ -101,16 +107,29 @@ const Header = () => {
         )}
         <div
           className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6"
-          style={!navReady ? { opacity: 0, transform: 'translateY(-8px)' } : undefined}
+          style={
+            !navReady
+              ? { opacity: 0, transform: 'translateY(-8px)' }
+              : navAnimating
+                ? { animation: 'navItemIn 0.5s ease forwards' }
+                : undefined
+          }
         >
           <div className="no-scrollbar hidden max-w-40 items-center gap-x-4 overflow-x-auto sm:flex md:max-w-72 lg:max-w-96">
             {visibleLinks.map((link, i) => (
               <span
                 key={link.title}
-                ref={(el) => {
-                  navItemRefs.current[i] = el
-                }}
                 className="inline-block"
+                style={
+                  !navReady
+                    ? { opacity: 0 }
+                    : navAnimating
+                      ? {
+                          animation: 'navItemIn 0.5s ease forwards, navItemGlow 0.6s ease forwards',
+                          animationDelay: `${i * 90}ms`,
+                        }
+                      : undefined
+                }
               >
                 <Link
                   href={link.href}

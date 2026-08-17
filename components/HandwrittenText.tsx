@@ -56,11 +56,24 @@ export default function HandwrittenText({
   const [mode, setMode] = useState<'static' | 'animating' | 'failed'>('static')
   const fontRef = useRef<Font | null>(null)
   const startedRef = useRef(false)
+  const doneFiredRef = useRef(false)
+
+  // Every call site below goes through this instead of onDone directly —
+  // Strict Mode's dev-only double effect invocation (or a stray extra rAF
+  // tick) could otherwise fire completion twice, which — since Header
+  // forwards it into a "start phase two" event — would replay the whole
+  // rest of the intro a second time. This makes that structurally
+  // impossible instead of just unlikely.
+  function fireDone() {
+    if (doneFiredRef.current) return
+    doneFiredRef.current = true
+    onDone?.()
+  }
 
   // Phase 1: load + parse the font (network/CPU work, no DOM needed yet).
   useEffect(() => {
     if (skip || startedRef.current) {
-      if (skip) onDone?.()
+      if (skip) fireDone()
       return
     }
     startedRef.current = true
@@ -75,7 +88,7 @@ export default function HandwrittenText({
       .catch(() => {
         if (!cancelled) {
           setMode('failed')
-          onDone?.()
+          fireDone()
         }
       })
 
@@ -180,14 +193,14 @@ export default function HandwrittenText({
           rafId = requestAnimationFrame(frame)
         } else {
           pen.style.opacity = '0'
-          onDone?.()
+          fireDone()
         }
       }
       rafId = requestAnimationFrame(frame)
     } catch {
       if (!cancelled) {
         setMode('failed')
-        onDone?.()
+        fireDone()
       }
     }
 
