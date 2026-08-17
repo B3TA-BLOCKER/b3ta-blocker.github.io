@@ -227,6 +227,19 @@ input:-webkit-autofill:focus {
     text-shadow: 0 0 0 transparent;
   }
 }
+/* Lets a fresh-session visitor avoid a flash of the finished page before
+   the intro plays. The beforeInteractive script in app/layout.tsx sets
+   data-intro-pending on <html>, before first paint, but ONLY for a
+   genuinely fresh session on "/" — everyone else (repeat visits, no-JS
+   browsers, crawlers) never gets this attribute, so [data-intro-target]
+   elements stay visible by default. That matters: hiding by default and
+   relying on JS to reveal would leave no-JS visitors looking at a
+   permanently blank header. For an actual fresh session, Header/Main
+   remove the attribute themselves the instant their own inline
+   styles/animations have taken over. */
+html[data-intro-pending] [data-intro-target] {
+  opacity: 0;
+}
 h1,
 h2,
 h3,

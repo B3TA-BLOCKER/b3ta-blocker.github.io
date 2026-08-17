@@ -1,13 +1,18 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import Link from '@/components/Link'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import Image from 'next/image'
 import NewsletterForm from '@/components/NewsletterForm'
-import { hasSeenIntro, markIntroSeen, INTRO_PHASE_TWO_EVENT } from '@/lib/introSequence'
+import {
+  hasSeenIntro,
+  markIntroSeen,
+  INTRO_PHASE_TWO_EVENT,
+  INTRO_PENDING_ATTR,
+} from '@/lib/introSequence'
 
 const MAX_DISPLAY = 3
 
@@ -33,8 +38,14 @@ export default function Home({ posts }) {
 
   const [cardsHidden, setCardsHidden] = useState(false)
 
-  useEffect(() => {
-    if (hasSeenIntro()) return // repeat visit this session — leave everything as server-rendered
+  useLayoutEffect(() => {
+    if (hasSeenIntro()) {
+      // Repeat visit this session — leave everything as server-rendered,
+      // and let go of the pre-paint CSS guard (harmless no-op if the
+      // blocking script never set it, which it shouldn't have here).
+      document.documentElement.removeAttribute(INTRO_PENDING_ATTR)
+      return
+    }
 
     let cancelled = false
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -48,9 +59,12 @@ export default function Home({ posts }) {
       }
     }
 
-    // Hide everything this sequence controls, right up front, before the
+    // Hide everything this sequence controls, synchronously, before the
     // browser paints again — Header is still tracing the handwritten line
-    // and glowing the nav in at this point.
+    // and glowing the nav in at this point. Our own [data-intro-target]
+    // elements were already hidden via CSS pre-paint; this replaces that
+    // with JS-driven control, so we can safely lift the CSS guard right
+    // after without any gap where nothing is hiding the content.
     if (badgeRef.current) badgeRef.current.style.opacity = '0'
     if (headingWhiteRef.current) headingWhiteRef.current.textContent = ''
     if (headingRedRef.current) headingRedRef.current.textContent = ''
@@ -59,6 +73,7 @@ export default function Home({ posts }) {
     if (outputRef.current) outputRef.current.style.opacity = '0'
     if (promptLineRef.current) promptLineRef.current.style.opacity = '0'
     setCardsHidden(true)
+    document.documentElement.removeAttribute(INTRO_PENDING_ATTR)
 
     async function playPhaseTwo() {
       if (badgeRef.current) {
@@ -126,11 +141,15 @@ export default function Home({ posts }) {
           />
           <div
             ref={badgeRef}
+            data-intro-target
             className="mb-5 inline-flex items-center rounded border-2 border-red-600/50 px-4 py-1.5 font-mono text-sm font-bold tracking-widest text-red-700 dark:border-red-500/30 dark:text-red-500"
           >
             Hack · Learn · Repeat
           </div>
-          <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
+          <h1
+            data-intro-target
+            className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100"
+          >
             <span ref={headingWhiteRef}>{HEADING_WHITE}</span>
             <span ref={headingRedRef} className="text-red-500">
               {HEADING_RED}
@@ -140,7 +159,10 @@ export default function Home({ posts }) {
               style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
             />
           </h1>
-          <div className="font-mono text-lg leading-loose text-gray-900 dark:text-gray-400">
+          <div
+            data-intro-target
+            className="font-mono text-lg leading-loose text-gray-900 dark:text-gray-400"
+          >
             <p className="text-lg text-gray-600 dark:text-gray-400/60">
               <span ref={taglineRef}>{TAGLINE}</span>
             </p>
@@ -178,6 +200,7 @@ export default function Home({ posts }) {
                 ref={(el) => {
                   cardRefs.current[i] = el
                 }}
+                data-intro-target
                 className="py-12"
                 style={
                   cardsHidden

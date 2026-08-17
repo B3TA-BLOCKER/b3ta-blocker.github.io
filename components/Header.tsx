@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import siteMetadata from '@/data/siteMetadata'
 import headerNavLinks from '@/data/headerNavLinks'
 import Logo from '@/data/logo.svg'
@@ -11,7 +11,12 @@ import HandwrittenText from './HandwrittenText'
 import { usePathname } from 'next/navigation'
 import { allBlogs } from 'contentlayer/generated'
 import { sortPosts, allCoreContent } from 'pliny/utils/contentlayer'
-import { hasSeenIntro, markIntroSeen, startIntroPhaseTwo } from '@/lib/introSequence'
+import {
+  hasSeenIntro,
+  markIntroSeen,
+  startIntroPhaseTwo,
+  INTRO_PENDING_ATTR,
+} from '@/lib/introSequence'
 
 function getRelativeTime(dateStr: string) {
   const today = new Date()
@@ -49,13 +54,17 @@ const Header = () => {
   const [navAnimating, setNavAnimating] = useState(false)
   const handwritingDoneRef = useRef(false)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isHome) return
     const seen = hasSeenIntro()
     if (!seen) {
       setSkipIntro(false)
       setNavReady(false)
     }
+    // Whichever way this went, our own hidden/visible state is now
+    // committed for this paint — the CSS pre-paint guard has done its job
+    // and can step aside. Safe to call even if it was never set.
+    document.documentElement.removeAttribute(INTRO_PENDING_ATTR)
   }, [isHome])
 
   function handleHandwritingDone() {
@@ -81,7 +90,11 @@ const Header = () => {
           so nav content still lines up with the rest of the page. */}
       <header className="mx-auto flex max-w-4xl items-center justify-between px-4 py-10 sm:px-6 xl:max-w-6xl xl:px-0">
         {isHome ? (
-          <div className="font-cursive inline-flex items-center gap-2 text-2xl font-bold tracking-wide text-green-700 dark:text-green-500">
+          <div
+            data-intro-target
+            className="font-cursive inline-flex items-center gap-2 text-2xl font-bold tracking-wide text-green-700 dark:text-green-500"
+            style={!skipIntro ? { opacity: 1 } : undefined}
+          >
             <span
               className="h-2 w-2 rounded-full bg-green-700 dark:bg-green-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
@@ -108,6 +121,7 @@ const Header = () => {
           </Link>
         )}
         <div
+          data-intro-target
           className="flex items-center space-x-4 leading-5 sm:-mr-6 sm:space-x-6"
           style={
             !navReady

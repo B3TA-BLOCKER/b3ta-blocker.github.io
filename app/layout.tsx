@@ -103,6 +103,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href={`${basePath}/feed.xml`} />
+      {/* Runs synchronously before first paint — same technique the theme
+          switch already relies on (hence suppressHydrationWarning above).
+          Sets data-intro-pending ONLY for a genuinely fresh session on the
+          homepage; its absence is the safe default (repeat visits, no-JS
+          browsers, crawlers all see the finished page immediately, same
+          as if this script didn't exist). Header/Main remove the
+          attribute themselves once their own hidden state has taken
+          over — see the comment on INTRO_PENDING_ATTR in
+          lib/introSequence.ts, whose value and INTRO_SESSION_KEY must
+          stay in sync with the literals hardcoded here, since this script
+          runs before any app code is loaded and can't import them. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `try{if(location.pathname==='/'&&sessionStorage.getItem('ba-intro-seen-v1')!=='1'){document.documentElement.setAttribute('data-intro-pending','')}}catch(e){}`,
+        }}
+      />
       <body className="bg-white pl-[calc(100vw-100%)] text-black antialiased dark:bg-gray-950 dark:text-white">
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
