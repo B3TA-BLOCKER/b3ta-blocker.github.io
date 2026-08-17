@@ -86,13 +86,15 @@ const Header = () => {
               className="h-2 w-2 rounded-full bg-green-700 dark:bg-green-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
-            {relativeTime && (
-              <HandwrittenText
-                text={`Latest post — ${relativeTime}`}
-                skip={skipIntro}
-                onDone={handleHandwritingDone}
-              />
-            )}
+            {relativeTime &&
+              (skipIntro ? (
+                <span className="font-cursive">{`Latest post — ${relativeTime}`}</span>
+              ) : (
+                <HandwrittenText
+                  text={`Latest post — ${relativeTime}`}
+                  onDone={handleHandwritingDone}
+                />
+              ))}
           </div>
         ) : (
           <Link href="/" aria-label={siteMetadata.headerTitle} className="block">
