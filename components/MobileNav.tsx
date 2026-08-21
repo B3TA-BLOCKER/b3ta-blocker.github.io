@@ -42,8 +42,19 @@ const MobileNav = () => {
           />
         </svg>
       </button>
-      <Transition appear show={navShow} as={Fragment} unmount={false}>
-        <Dialog as="div" onClose={onToggleNav} unmount={false}>
+      {/*
+        Do NOT pass unmount={false} on the outer Transition — that kept the
+        Dialog in the DOM permanently, meaning the enterFrom classes never
+        applied from a clean state on re-open (the element was already there).
+        Result: the slide-in animation was skipped or mis-timed on every
+        open after the first.
+
+        unmount={false} is kept only on each TransitionChild so the backdrop
+        and panel stay rendered during the leave animation (no flicker on
+        close), but the Dialog itself is properly removed once leave finishes.
+      */}
+      <Transition appear show={navShow} as={Fragment}>
+        <Dialog as="div" onClose={onToggleNav}>
           <TransitionChild
             as={Fragment}
             enter="ease-out duration-300"
@@ -52,7 +63,6 @@ const MobileNav = () => {
             leave="ease-in duration-200"
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
-            unmount={false}
           >
             <div className="fixed inset-0 z-60 bg-black/25" />
           </TransitionChild>
@@ -65,7 +75,6 @@ const MobileNav = () => {
             leave="transition ease-in duration-200 transform"
             leaveFrom="translate-x-0 opacity-95"
             leaveTo="translate-x-full opacity-0"
-            unmount={false}
           >
             <DialogPanel className="fixed top-0 left-0 z-70 h-full w-full bg-white/95 duration-300 dark:bg-gray-950/98">
               <nav

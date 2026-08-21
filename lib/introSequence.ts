@@ -10,6 +10,12 @@
 const INTRO_SESSION_KEY = 'ba-intro-seen-v1'
 export const INTRO_PHASE_TWO_EVENT = 'ba:intro-phase-two'
 
+// The data attribute set on <html> by the beforeInteractive script in
+// app/layout.tsx to suppress [data-intro-target] elements before first
+// paint on a fresh session. Exported so Header and Main can remove it
+// the moment their own JS-driven hiding has taken over.
+export const INTRO_PENDING_ATTR = 'data-intro-pending'
+
 export function hasSeenIntro(): boolean {
   if (typeof window === 'undefined') return true
   try {
