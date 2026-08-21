@@ -41,14 +41,16 @@ export default function Home({ posts }) {
   useLayoutEffect(() => {
     if (hasSeenIntro()) {
       // Repeat visit this session — leave everything as server-rendered,
-      // and let go of the pre-paint CSS guard (harmless no-op if the
-      // blocking script never set it, which it shouldn't have here).
+      // and let go of the pre-paint CSS guard.
       document.documentElement.removeAttribute(INTRO_PENDING_ATTR)
       return
     }
 
     let cancelled = false
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+
+    // Types characters into el one by one at `speed` ms per char.
+    // Returns a promise that resolves when the full text is in.
     const typeInto = async (el: HTMLElement | null, text: string, speed = 32) => {
       if (!el) return
       el.textContent = ''
@@ -61,10 +63,7 @@ export default function Home({ posts }) {
 
     // Hide everything this sequence controls, synchronously, before the
     // browser paints again — Header is still tracing the handwritten line
-    // and glowing the nav in at this point. Our own [data-intro-target]
-    // elements were already hidden via CSS pre-paint; this replaces that
-    // with JS-driven control, so we can safely lift the CSS guard right
-    // after without any gap where nothing is hiding the content.
+    // and glowing the nav in at this point.
     if (badgeRef.current) badgeRef.current.style.opacity = '0'
     if (headingWhiteRef.current) headingWhiteRef.current.textContent = ''
     if (headingRedRef.current) headingRedRef.current.textContent = ''
@@ -76,24 +75,38 @@ export default function Home({ posts }) {
     document.documentElement.removeAttribute(INTRO_PENDING_ATTR)
 
     async function playPhaseTwo() {
+      // Step 1 — badge glows in
       if (badgeRef.current) {
         badgeRef.current.style.opacity = '1'
         badgeRef.current.style.animation = 'badgeGlow 0.7s ease'
       }
-      await sleep(500)
-
-      await typeInto(headingWhiteRef.current, HEADING_WHITE, 38)
-      await typeInto(headingRedRef.current, HEADING_RED, 38)
-      await sleep(200)
-
-      await typeInto(taglineRef.current, TAGLINE, 14)
-      await sleep(250)
-
-      await typeInto(commandRef.current, COMMAND, 45)
-      await sleep(350)
+      await sleep(400)
       if (cancelled) return
 
-      // Real terminal behavior: output and the next prompt land together, instantly.
+      // Step 2 — ALL text starts typing at the same time:
+      //   • heading white + heading red (chained — they're one line)
+      //   • tagline
+      //   • $ command
+      //
+      // The heading is white+red in sequence (they're one sentence),
+      // tagline and command run fully in parallel with it.
+      const headingDone = (async () => {
+        await typeInto(headingWhiteRef.current, HEADING_WHITE, 38)
+        await typeInto(headingRedRef.current, HEADING_RED, 38)
+      })()
+
+      const taglineDone = typeInto(taglineRef.current, TAGLINE, 14)
+
+      const commandDone = typeInto(commandRef.current, COMMAND, 45)
+
+      // Wait for all three streams to finish
+      await Promise.all([headingDone, taglineDone, commandDone])
+      if (cancelled) return
+
+      // Step 3 — output + prompt land instantly (terminal behaviour)
+      await sleep(250)
+      if (cancelled) return
+
       if (outputRef.current) {
         outputRef.current.style.opacity = '1'
         outputRef.current.style.animation = 'introPop 0.4s cubic-bezier(.3,1.3,.4,1)'
@@ -101,12 +114,15 @@ export default function Home({ posts }) {
       if (promptLineRef.current) {
         promptLineRef.current.style.opacity = '1'
       }
-      await sleep(500)
+
+      // Step 4 — blog cards slide in staggered
+      await sleep(400)
       if (cancelled) return
 
       cardRefs.current.forEach((el, i) => {
         if (!el) return
         setTimeout(() => {
+          if (cancelled) return
           el.style.opacity = '1'
           el.style.transform = 'translateY(0)'
         }, i * 220)
