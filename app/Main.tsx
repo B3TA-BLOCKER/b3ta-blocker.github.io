@@ -22,26 +22,29 @@ const TAGLINE = '# My journey through CTFs, labs, and everything in between.'
 const COMMAND = 'ls ~/archive'
 
 export default function Home({ posts }) {
-  // Refs for everything the intro sequence types/reveals. The JSX below
-  // always renders the real, final content (server-safe, no-JS-safe) — the
-  // effect only ever *temporarily* clears/hides it for a fresh session,
-  // then plays it back in.
   const badgeRef = useRef<HTMLDivElement>(null)
   const headingWhiteRef = useRef<HTMLSpanElement>(null)
   const headingRedRef = useRef<HTMLSpanElement>(null)
+  // The blinking cursor after the heading — hidden until typing starts
+  const headingCursorRef = useRef<HTMLSpanElement>(null)
   const taglineRef = useRef<HTMLSpanElement>(null)
+  // The $ before the command line — hidden until typing starts
+  const commandDollarRef = useRef<HTMLSpanElement>(null)
   const commandRef = useRef<HTMLSpanElement>(null)
   const outputRef = useRef<HTMLDivElement>(null)
+  // The entire second prompt line ($  + blinking cursor) — hidden until output lands
   const promptLineRef = useRef<HTMLParagraphElement>(null)
   const cardRefs = useRef<(HTMLLIElement | null)[]>([])
   const phaseTwoPlayedRef = useRef(false)
 
+  // Controls whether cards start hidden (for the intro animation)
   const [cardsHidden, setCardsHidden] = useState(false)
+  // Controls whether the whole hero block is hidden before the intro claims it
+  const [heroHidden, setHeroHidden] = useState(false)
 
   useLayoutEffect(() => {
     if (hasSeenIntro()) {
-      // Repeat visit this session — leave everything as server-rendered,
-      // and let go of the pre-paint CSS guard.
+      // Repeat visit — remove CSS guard, show everything as-is
       document.documentElement.removeAttribute(INTRO_PENDING_ATTR)
       return
     }
@@ -49,8 +52,6 @@ export default function Home({ posts }) {
     let cancelled = false
     const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
-    // Types characters into el one by one at `speed` ms per char.
-    // Returns a promise that resolves when the full text is in.
     const typeInto = async (el: HTMLElement | null, text: string, speed = 32) => {
       if (!el) return
       el.textContent = ''
@@ -61,21 +62,28 @@ export default function Home({ posts }) {
       }
     }
 
-    // Hide everything this sequence controls, synchronously, before the
-    // browser paints again — Header is still tracing the handwritten line
-    // and glowing the nav in at this point.
-    if (badgeRef.current) badgeRef.current.style.opacity = '0'
+    // --- Hide everything synchronously before the browser paints again ---
+    // Use React state for the hero block — this is cleaner than poking
+    // opacity on individual elements and avoids the 1-frame flash where
+    // the CSS guard is lifted before JS hiding takes over.
+    setHeroHidden(true)
+    setCardsHidden(true)
+
+    // Also zero out text nodes so they don't flash in if the CSS guard
+    // lifts before the state update commits.
     if (headingWhiteRef.current) headingWhiteRef.current.textContent = ''
     if (headingRedRef.current) headingRedRef.current.textContent = ''
     if (taglineRef.current) taglineRef.current.textContent = ''
     if (commandRef.current) commandRef.current.textContent = ''
-    if (outputRef.current) outputRef.current.style.opacity = '0'
-    if (promptLineRef.current) promptLineRef.current.style.opacity = '0'
-    setCardsHidden(true)
+
+    // Now it's safe to drop the CSS pre-paint guard — our own state is
+    // controlling visibility from this point on.
     document.documentElement.removeAttribute(INTRO_PENDING_ATTR)
 
     async function playPhaseTwo() {
-      // Step 1 — badge glows in
+      // Step 1 — reveal hero block, then badge glows in
+      setHeroHidden(false)
+
       if (badgeRef.current) {
         badgeRef.current.style.opacity = '1'
         badgeRef.current.style.animation = 'badgeGlow 0.7s ease'
@@ -83,27 +91,22 @@ export default function Home({ posts }) {
       await sleep(400)
       if (cancelled) return
 
-      // Step 2 — ALL text starts typing at the same time:
-      //   • heading white + heading red (chained — they're one line)
-      //   • tagline
-      //   • $ command
-      //
-      // The heading is white+red in sequence (they're one sentence),
-      // tagline and command run fully in parallel with it.
+      // Step 2 — show the heading cursor and $ prompt now that typing is about to start
+      if (headingCursorRef.current) headingCursorRef.current.style.opacity = '1'
+      if (commandDollarRef.current) commandDollarRef.current.style.opacity = '1'
+
+      // Step 3 — ALL typing starts at once: heading, tagline, and $ command in parallel
       const headingDone = (async () => {
         await typeInto(headingWhiteRef.current, HEADING_WHITE, 38)
         await typeInto(headingRedRef.current, HEADING_RED, 38)
       })()
-
       const taglineDone = typeInto(taglineRef.current, TAGLINE, 14)
-
       const commandDone = typeInto(commandRef.current, COMMAND, 45)
 
-      // Wait for all three streams to finish
       await Promise.all([headingDone, taglineDone, commandDone])
       if (cancelled) return
 
-      // Step 3 — output + prompt land instantly (terminal behaviour)
+      // Step 4 — output + second prompt land instantly (terminal behaviour)
       await sleep(250)
       if (cancelled) return
 
@@ -115,7 +118,7 @@ export default function Home({ posts }) {
         promptLineRef.current.style.opacity = '1'
       }
 
-      // Step 4 — blog cards slide in staggered
+      // Step 5 — blog cards slide in staggered
       await sleep(400)
       if (cancelled) return
 
@@ -146,7 +149,16 @@ export default function Home({ posts }) {
   return (
     <>
       <div className="divide-y divide-gray-800 dark:divide-gray-700">
-        <div className="relative overflow-hidden pt-10 pb-8">
+        {/*
+          heroHidden wraps the entire hero block. When true (fresh session,
+          before phase two fires) the whole section is invisible — no flash
+          of pre-typed content, no orphan dollar signs or cursors visible
+          while the header is still doing its handwriting animation.
+        */}
+        <div
+          className="relative overflow-hidden pt-10 pb-8"
+          style={heroHidden ? { opacity: 0 } : undefined}
+        >
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
             style={{
@@ -155,48 +167,72 @@ export default function Home({ posts }) {
               backgroundSize: '40px 40px',
             }}
           />
+
+          {/* Badge — always rendered, opacity driven by JS during intro */}
           <div
             ref={badgeRef}
-            data-intro-target
             className="mb-5 inline-flex items-center rounded border-2 border-red-600/50 px-4 py-1.5 font-mono text-sm font-bold tracking-widest text-red-700 dark:border-red-500/30 dark:text-red-500"
+            style={heroHidden ? { opacity: 0 } : undefined}
           >
             Hack · Learn · Repeat
           </div>
-          <h1
-            data-intro-target
-            className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100"
-          >
+
+          <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
             <span ref={headingWhiteRef}>{HEADING_WHITE}</span>
             <span ref={headingRedRef} className="text-red-500">
               {HEADING_RED}
             </span>
+            {/*
+              Cursor is hidden (opacity 0) until typing begins — it would
+              look wrong blinking at the end of an empty heading before
+              the text arrives. Shown once commandDollar is shown in step 2.
+            */}
             <span
+              ref={headingCursorRef}
               className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
-              style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
+              style={{ height: '1em', animation: 'blink 1s step-end infinite', opacity: 0 }}
             />
           </h1>
-          <div
-            data-intro-target
-            className="font-mono text-lg leading-loose text-gray-900 dark:text-gray-400"
-          >
+
+          <div className="font-mono text-lg leading-loose text-gray-900 dark:text-gray-400">
             <p className="text-lg text-gray-600 dark:text-gray-400/60">
               <span ref={taglineRef}>{TAGLINE}</span>
             </p>
             <p className="mt-1 font-bold">
-              <span className="mr-2 text-red-600 dark:text-red-500">$</span>
+              {/*
+                The $ before `ls ~/archive` is hidden until typing begins —
+                it would be a lone dollar sign sitting on screen before the
+                command arrives. Shown in step 2 alongside headingCursor.
+              */}
+              <span
+                ref={commandDollarRef}
+                className="mr-2 text-red-600 dark:text-red-500"
+                style={{ opacity: 0 }}
+              >
+                $
+              </span>
               <span ref={commandRef} className="text-gray-900 dark:text-gray-100">
                 {COMMAND}
               </span>
             </p>
+            {/*
+              Output div — hidden until the command finishes typing,
+              then pops in instantly (introPop animation).
+            */}
             <div
               ref={outputRef}
               className="mt-0.5 ml-4 grid grid-cols-3 gap-x-6 gap-y-0.5 font-bold text-green-700 dark:text-green-400"
+              style={{ opacity: 0 }}
             >
               <span>htb-machines/</span>
               <span>challenges/</span>
               <span>dev-notes/</span>
             </div>
-            <p ref={promptLineRef} className="mt-1 font-bold">
+            {/*
+              Second prompt line ($ + blinking cursor) — hidden until output
+              lands. This is the "idle" cursor after the command runs.
+            */}
+            <p ref={promptLineRef} className="mt-1 font-bold" style={{ opacity: 0 }}>
               <span className="mr-2 text-red-600 dark:text-red-500">$</span>
               <span
                 className="inline-block w-[3px] bg-red-600 align-middle dark:bg-red-500"
@@ -216,7 +252,6 @@ export default function Home({ posts }) {
                 ref={(el) => {
                   cardRefs.current[i] = el
                 }}
-                data-intro-target
                 className="py-12"
                 style={
                   cardsHidden
@@ -244,7 +279,6 @@ export default function Home({ posts }) {
                             No image
                           </div>
                         )}
-                        {/* Lock overlay on image */}
                         {locked && (
                           <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60">
                             <span className="text-2xl">🔒</span>
