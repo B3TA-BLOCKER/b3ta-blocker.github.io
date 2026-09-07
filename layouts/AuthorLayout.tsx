@@ -27,10 +27,10 @@ export default function AuthorLayout({ children, content }: Props) {
             }}
           />
 
-          {/* Badge */}
-          <div className="mb-5 inline-flex items-center gap-2 rounded border border-red-500/30 px-4 py-1.5 font-mono text-[13px] tracking-widest text-red-500">
+          {/* Badge — sized and styled to match the homepage badge */}
+          <div className="mb-5 inline-flex items-center gap-2 rounded border-2 border-red-600/50 px-4 py-1.5 font-mono text-sm font-bold tracking-widest text-red-700 dark:border-red-500/30 dark:text-red-500">
             <span
-              className="h-2 w-2 rounded-full bg-red-500"
+              className="h-2 w-2 rounded-full bg-red-700 dark:bg-red-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
             Cybersecurity Graduate.
@@ -75,7 +75,7 @@ export default function AuthorLayout({ children, content }: Props) {
 
             {/* Right — text */}
             <div className="w-full flex-1 text-center md:text-left">
-              <h1 className="mb-5 font-sans text-3xl leading-tight font-bold tracking-tight text-gray-900 sm:text-4xl md:text-5xl xl:text-6xl dark:text-gray-100">
+              <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
                 Hassaan Ali <span className="text-red-500">Bukhari</span>
                 <span
                   className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
