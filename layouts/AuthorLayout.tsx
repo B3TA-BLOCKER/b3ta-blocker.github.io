@@ -83,33 +83,33 @@ export default function AuthorLayout({ children, content }: Props) {
                 />
               </h1>
 
-              <div className="font-mono text-sm leading-loose text-gray-500 dark:text-gray-400">
-                <p className="opacity-60"># B3TA-BLOCKER</p>
-                <p className="mt-1">
-                  <span className="mr-2 text-red-500">$</span>
+              <div className="font-mono text-lg leading-loose text-gray-900 dark:text-gray-400">
+                <p className="text-lg text-gray-600 dark:text-gray-400/60"># B3TA-BLOCKER</p>
+                <p className="mt-1 font-bold">
+                  <span className="mr-2 text-red-600 dark:text-red-500">$</span>
                   <span className="text-gray-900 dark:text-gray-100">cat identity.txt</span>
                 </p>
-                <div className="mt-0.5 ml-4 space-y-0.5 text-left">
+                <div className="mt-0.5 ml-4 space-y-0.5 text-left font-bold">
                   <p>
-                    <span className="text-green-500 dark:text-green-400">role</span>
+                    <span className="text-green-700 dark:text-green-400">role</span>
                     <span className="mx-2">:</span>
                     Red Teamer · CTF Player · Binary Exploitation Enthusiast
                   </p>
                   <p>
-                    <span className="text-green-500 dark:text-green-400">status</span>
+                    <span className="text-green-700 dark:text-green-400">status</span>
                     <span className="mx-2">:</span>
                     Self-taught · Graduated
                   </p>
                   <p>
-                    <span className="text-green-500 dark:text-green-400">passion</span>
+                    <span className="text-green-700 dark:text-green-400">passion</span>
                     <span className="mx-2">:</span>
                     Breaking things · Pentesting · Hacking
                   </p>
                 </div>
-                <p className="mt-1">
-                  <span className="mr-2 text-red-500">$</span>
+                <p className="mt-1 font-bold">
+                  <span className="mr-2 text-red-600 dark:text-red-500">$</span>
                   <span
-                    className="inline-block w-[3px] bg-red-500 align-middle"
+                    className="inline-block w-[3px] bg-red-600 align-middle dark:bg-red-500"
                     style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
                   />
                 </p>
