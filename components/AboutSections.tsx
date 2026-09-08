@@ -9,57 +9,29 @@ import {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-8 flex items-baseline gap-3">
-      <span className="font-mono text-lg text-red-500" aria-hidden="true">
-        —
-      </span>
-      <span className="font-sans text-2xl font-bold tracking-tight text-gray-100 md:text-3xl">
-        {children}
-      </span>
+    <h2 className="mb-6 flex items-center gap-3 font-mono text-lg tracking-widest text-red-500 uppercase">
+      <span aria-hidden="true">—</span>
+      {children}
     </h2>
   )
 }
 
-type SkillCategory = {
-  name: string
-  items: string[]
-  colorClass: string
-}
-
-function SkillsTree({ categories }: { categories: SkillCategory[] }) {
+function Tag({
+  children,
+  tone = 'gray',
+}: {
+  children: React.ReactNode
+  tone?: 'gray' | 'green' | 'red'
+}) {
+  const tones = {
+    gray: 'border-gray-800 bg-gray-900/60 text-gray-200',
+    green: 'border-green-500/30 bg-green-500/5 text-green-400',
+    red: 'border-red-500/30 bg-red-500/5 text-red-400',
+  }
   return (
-    <div className="overflow-x-auto font-mono text-base leading-relaxed whitespace-pre">
-      <div className="mb-2">
-        <span className="mr-2 font-bold text-red-600 dark:text-red-500">$</span>
-        <span className="font-bold text-gray-900 dark:text-gray-100">tree ~/skills</span>
-      </div>
-      {categories.map((cat, ci) => {
-        const isLastCat = ci === categories.length - 1
-        const catConnector = isLastCat ? '└── ' : '├── '
-        const childPrefix = isLastCat ? '    ' : '│   '
-        return (
-          <div key={cat.name}>
-            <div>
-              <span className="text-gray-600">{catConnector}</span>
-              <span className="font-bold text-gray-900 dark:text-gray-100">{cat.name}/</span>
-            </div>
-            {cat.items.map((item, ii) => {
-              const isLastItem = ii === cat.items.length - 1
-              const itemConnector = isLastItem ? '└── ' : '├── '
-              return (
-                <div key={item}>
-                  <span className="text-gray-600">
-                    {childPrefix}
-                    {itemConnector}
-                  </span>
-                  <span className={cat.colorClass}>{item}</span>
-                </div>
-              )
-            })}
-          </div>
-        )
-      })}
-    </div>
+    <span className={`rounded border px-4 py-1.5 font-mono text-base ${tones[tone]}`}>
+      {children}
+    </span>
   )
 }
 
@@ -119,25 +91,36 @@ export function AboutMiddleContent() {
     <>
       <section className="mb-14">
         <SectionHeading>Skills</SectionHeading>
-        <SkillsTree
-          categories={[
-            {
-              name: 'languages',
-              items: skills.languages,
-              colorClass: 'text-gray-900 dark:text-gray-200',
-            },
-            {
-              name: 'tools',
-              items: skills.tools,
-              colorClass: 'text-green-700 dark:text-green-400',
-            },
-            {
-              name: 'platforms',
-              items: skills.platforms,
-              colorClass: 'text-red-600 dark:text-red-400',
-            },
-          ]}
-        />
+        <div className="space-y-5">
+          <div>
+            <div className="mb-2 font-mono text-sm text-gray-600">languages</div>
+            <div className="flex flex-wrap gap-2">
+              {skills.languages.map((s) => (
+                <Tag key={s}>{s}</Tag>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="mb-2 font-mono text-sm text-gray-600">tools &amp; frameworks</div>
+            <div className="flex flex-wrap gap-2">
+              {skills.tools.map((s) => (
+                <Tag key={s} tone="green">
+                  {s}
+                </Tag>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="mb-2 font-mono text-sm text-gray-600">platforms</div>
+            <div className="flex flex-wrap gap-2">
+              {skills.platforms.map((s) => (
+                <Tag key={s} tone="red">
+                  {s}
+                </Tag>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="mb-14">
