@@ -3,6 +3,7 @@ import type { Authors } from 'contentlayer/generated'
 import SocialIcon from '@/components/social-icons'
 import Image from '@/components/Image'
 import TerminalWrapper from '@/components/TerminalWrapper'
+import { AboutMiddleContent } from '@/components/AboutSections'
 
 interface Props {
   children: ReactNode
@@ -118,8 +119,12 @@ export default function AuthorLayout({ children, content }: Props) {
           </div>
         </div>
 
-        {/* Content below */}
-        <div className="prose dark:prose-invert max-w-none pt-8 pb-8">{children}</div>
+        {/* Content below — bio paragraph stays as authored prose from the MDX file;
+            everything else is structured data rendered by AboutSections. */}
+        <div className="pt-8 pb-8">
+          <div className="prose dark:prose-invert mb-14 max-w-none">{children}</div>
+          <AboutMiddleContent />
+        </div>
 
         {/* Terminal */}
         <div className="not-prose pt-8 pb-8">
