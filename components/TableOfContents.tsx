@@ -189,10 +189,6 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
               className="relative"
               style={{ paddingLeft: contentPadding }}
             >
-              {isActive && (
-                <span className="toc-active-bar bg-primary-500 absolute top-0 -left-px h-full w-0.5 rounded-full" />
-              )}
-
               {/* Ancestor trunk lines — keep running past this row for any
                   ancestor that still has more siblings coming below it. */}
               {row.ancestorContinues.map((continues, k) =>
@@ -207,9 +203,11 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
 
               {/* This row's own corner: a full-height "├" if more siblings
                   follow at this level, or a half-height "└" elbow if it's
-                  the last one — then the horizontal stub into the label. */}
+                  the last one — then the horizontal stub into the label.
+                  Glows red instead of the default gray when this is the
+                  active heading, so the tree line itself marks it. */}
               <span
-                className={`absolute w-px ${LINE_CLASS}`}
+                className={`absolute w-px ${isActive ? 'bg-primary-500 toc-line-glow' : LINE_CLASS}`}
                 style={{
                   left: ownColumn,
                   top: 0,
@@ -217,7 +215,7 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
                 }}
               />
               <span
-                className={`absolute h-px ${LINE_CLASS}`}
+                className={`absolute h-px ${isActive ? 'bg-primary-500 toc-line-glow' : LINE_CLASS}`}
                 style={{
                   left: ownColumn,
                   top: '50%',

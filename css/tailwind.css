@@ -141,7 +141,7 @@ input:-webkit-autofill:focus {
     0 0 6px var(--color-primary-500),
     0 0 16px oklch(0.628 0.258 27 / 45%);
 }
-.toc-active-bar {
+.toc-line-glow {
   box-shadow:
     0 0 6px var(--color-primary-500),
     0 0 12px var(--color-primary-500);
