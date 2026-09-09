@@ -1,3 +1,8 @@
+export const intro = {
+  handle: 'B3TA-BLOCKER',
+  bio: 'A cybersecurity graduate from GIKI, interested in how systems break and how those weaknesses turn into real-world exploits (in controlled, legal environments). Focused on red teaming, malware research, exploit development, and offensive security. Most often found in labs where breaking things is the point; otherwise, reading books with a cup of tea and chilling away from the keyboard.',
+}
+
 export const skills = {
   languages: ['Python', 'C', 'C++', 'Bash'],
   tools: ['Docker', 'Ghidra', 'GDB', 'IDA Pro', 'Burp Suite'],

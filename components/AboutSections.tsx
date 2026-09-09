@@ -1,4 +1,5 @@
 import {
+  intro,
   skills,
   experience,
   education,
@@ -89,6 +90,15 @@ function TimelineItem({
 export function AboutMiddleContent() {
   return (
     <>
+      <section className="mb-14">
+        <h1 className="mb-5 font-sans text-3xl leading-tight font-bold tracking-tight text-gray-900 md:text-4xl dark:text-gray-100">
+          I&apos;m <span className="text-red-500">{intro.handle}</span>
+        </h1>
+        <p className="max-w-2xl text-base leading-relaxed text-gray-600 dark:text-gray-400">
+          {intro.bio}
+        </p>
+      </section>
+
       <section className="mb-14">
         <SectionHeading>Skills</SectionHeading>
         <div className="space-y-5">

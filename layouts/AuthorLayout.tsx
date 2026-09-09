@@ -10,7 +10,7 @@ interface Props {
   content: Omit<Authors, '_id' | '_raw' | 'body'>
 }
 
-export default function AuthorLayout({ children, content }: Props) {
+export default function AuthorLayout({ content }: Props) {
   const { name, avatar, occupation, company, email, twitter, bluesky, linkedin, github } = content
 
   return (
@@ -119,10 +119,10 @@ export default function AuthorLayout({ children, content }: Props) {
           </div>
         </div>
 
-        {/* Content below — bio paragraph stays as authored prose from the MDX file;
-            everything else is structured data rendered by AboutSections. */}
+        {/* Content below — intro heading, bio, and every section are now
+            structured data rendered by AboutSections, matching the rest
+            of the page's visual language instead of raw MDX prose. */}
         <div className="pt-8 pb-8">
-          <div className="prose dark:prose-invert mb-14 max-w-none">{children}</div>
           <AboutMiddleContent />
         </div>
 
