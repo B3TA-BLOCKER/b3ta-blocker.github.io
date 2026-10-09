@@ -11,27 +11,17 @@ twitterUrl: https://x.com/B3TA_BLOCKER/status/2108660166745010257
 
 ![victory](/static/images/cap/victory.png)
 
-## Table of Contents
-
-- [Summary](#summary)
-- [Machine Info](#machine-info)
-- [Recon](#recon)
-- [FTP — Anonymous Login](#ftp-anonymous-login)
-- [Web Enumeration](#web-enumeration)
-- [Analyzing the Capture](#analyzing-the-capture)
-- [Foothold — SSH](#gaining-a-foothold-ssh)
-- [Privilege Escalation](#privilege-escalation)
-
 ---
 
-# Summary
+# Overview
 
-This box was a good reminder of two very different but equally common real-world issues:
+**Cap** is an Easy-rated Linux machine that centers around two distinct, easy-to-understand misconfigurations rather than any complex exploit chain, making it a great box for beginners learning the basics of web and Linux privilege escalation.
 
-1. **IDOR vulnerabilities** — never trust that an application is enforcing access control just because a feature is hidden behind a login. If a resource is referenced by a predictable ID in a URL, it's always worth testing adjacent values.
-2. **Linux capabilities left on interpreters** — granting `cap_setuid` to a general-purpose binary like Python is effectively equivalent to giving every user who can run that binary a path straight to root. It's a small misconfiguration with an outsized impact, and exactly the kind of thing tools like LinPEAS are built to catch.
+The attack path starts with a custom "Security Dashboard" web app on port 80 that auto-logs visitors in as a user named Nathan. A quick look at the app's "Security Snapshot" feature reveals a classic **IDOR (Insecure Direct Object Reference)** — the download URL references files by a simple incrementing ID, and tweaking that ID exposes a packet capture that was never meant to be accessible. Since FTP (also running on the box) transmits credentials in plaintext, that leaked pcap hands over valid SSH credentials almost immediately.
 
----
+Once on the box as a low-privileged user, privilege escalation to root comes down to a single misconfigured **Linux capability**: the `cap_setuid` flag set on the system's Python 3 binary. That one setting lets any user who can run Python call `setuid(0)` and spawn a root shell — no sudo rights, no kernel exploit, no password needed.
+
+## In short: **web IDOR → leaked creds → user access → abused binary capability → root.**
 
 # Machine Info
 
@@ -228,9 +218,11 @@ drwx------  2 root root 4096 May 23  2021 .ssh
 lrwxrwxrwx  1 root root    9 May 27  2021 .viminfo -> /dev/null
 -r--------  1 root root   33 Oct 10 17:49 root.txt
 drwxr-xr-x  3 root root 4096 May 23  2021 snap
+```
 
+Finally, I grabbed the root flag:
+
+```bash
 root@cap:/var/www/html# cat /root/root.txt
 e584391d70bdebf0a72d057ce3cc7a9a
 ```
-
-Root flag captured. 🎉
