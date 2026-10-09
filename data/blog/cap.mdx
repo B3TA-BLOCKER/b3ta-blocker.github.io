@@ -19,7 +19,7 @@ The attack path starts with a custom "Security Dashboard" web app on port 80 tha
 
 Once on the box as a low-privileged user, privilege escalation to root comes down to a single misconfigured **Linux capability**: the `cap_setuid` flag set on the system's Python 3 binary. That one setting lets any user who can run Python call `setuid(0)` and spawn a root shell — no sudo rights, no kernel exploit, no password needed.
 
-## In short: **web IDOR → leaked creds → user access → abused binary capability → root.**
+`**In short**: **web IDOR → leaked creds → user access → abused binary capability → root.**`
 
 ---
 
@@ -60,9 +60,9 @@ Nmap done: 1 IP address (1 host up) scanned in 40.65 seconds
 
 Three open TCP ports. Here's how I prioritized them:
 
-- **Port 21 (FTP)** — I always check for an anonymous login first, since it's one of the most common misconfigurations and takes seconds to rule out.
-- **Port 22 (SSH)** — Without credentials or a known username to test, there's nothing to do here yet. I set it aside for later.
-- **Port 80 (HTTP)** — A custom "Security Dashboard" application running on Gunicorn. This looked like the most promising entry point, so I focused my enumeration here.
+- `**Port 21 (FTP)**` — I always check for an anonymous login first, since it's one of the most common misconfigurations and takes seconds to rule out.
+- `**Port 22 (SSH)**` — Without credentials or a known username to test, there's nothing to do here yet. I set it aside for later.
+- `**Port 80 (HTTP)**` — A custom "Security Dashboard" application running on Gunicorn. This looked like the most promising entry point, so I focused my enumeration here.
 
 # FTP: Anonymous Login
 
@@ -84,7 +84,7 @@ No luck — anonymous access was disabled. I moved on to the web application.
 
 # Web Enumeration
 
-Browsing to the web server on port 80 landed me on a "Security Dashboard," and interestingly, I was already logged in as a user called **Nathan**. No login screen, no credentials needed — the session was just handed to me.
+Browsing to the web server on port 80 landed me on a **`Security Dashboard`**, and interestingly, I was already logged in as a user called **Nathan**. No login screen, no credentials needed — the session was just handed to me.
 
 ![cap](/static/images/cap/image.png)
 
