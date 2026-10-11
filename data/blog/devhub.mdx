@@ -18,7 +18,7 @@ tags:
   ]
 summary: 'DevHub is a Linux machine compromised via CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, followed by lateral movement through an exposed Jupyter Lab instance with a plaintext token, and privilege escalation via a hardcoded API key in an internal Flask service running as root.'
 images: ['/static/images/devhub/devhub.png']
-twitterrUrl: https://x.com/B3TA_BLOCKER/status/2109297568161423573
+twitterUrl: https://x.com/B3TA_BLOCKER/status/2109297568161423573
 ---
 
 ![victory](/static/images/devhub/victory.png)
@@ -351,7 +351,7 @@ ssh -i /tmp/root_key root@localhost
 
 ---
 
-# Root Flag
+## Root Flag
 
 ```bash
 root@devhub:~# id
@@ -362,7 +362,7 @@ e5eb4e369300d429c7d99c663621865e
 
 ---
 
-# Attack Chain Summary
+## Attack Chain Summary
 
 | Step                 | Technique                                                          | From → To             |
 | -------------------- | ------------------------------------------------------------------ | --------------------- |
