@@ -655,7 +655,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             viewBox={'0 0 ' + radarSize + ' ' + radarSize}
             style={{
               width: '100%',
-              maxWidth: 400,
+              maxWidth: 350,
               display: 'block',
               margin: '0 auto',
               overflow: 'visible',
