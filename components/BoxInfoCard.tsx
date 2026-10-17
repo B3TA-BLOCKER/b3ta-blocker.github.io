@@ -221,6 +221,8 @@ function RespectIcon() {
 }
 
 function Badge({ badge }: { badge: BadgeInfo }) {
+  const [imgFailed, setImgFailed] = useState(false)
+  const showImg = !!badge.avatarUrl && !imgFailed
   return (
     <a
       href={badge.htbProfileUrl}
@@ -230,36 +232,52 @@ function Badge({ badge }: { badge: BadgeInfo }) {
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        gap: 9,
         background: '#141f30',
         border: '1px solid #233247',
-        borderRadius: 8,
-        padding: '10px 40px 10px 12px',
+        borderRadius: 7,
+        padding: '6px 32px 6px 8px',
         textDecoration: 'none',
-        minWidth: 240,
+        minWidth: 190,
       }}
     >
-      {badge.avatarUrl ? (
+      {showImg ? (
         <img
           src={badge.avatarUrl}
           alt=""
           referrerPolicy="no-referrer"
-          style={{ width: 44, height: 44, borderRadius: 4, flexShrink: 0, objectFit: 'cover' }}
+          onError={() => setImgFailed(true)}
+          style={{ width: 34, height: 34, borderRadius: 4, flexShrink: 0, objectFit: 'cover' }}
         />
       ) : (
         <div
-          style={{ width: 44, height: 44, borderRadius: 4, background: '#1c2838', flexShrink: 0 }}
-        />
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 4,
+            background: '#1c2838',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#6b7c93',
+            fontSize: 14,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+          }}
+        >
+          {badge.name.charAt(0)}
+        </div>
       )}
-      <div style={{ lineHeight: 1.35, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span style={{ color: '#f1f5fb', fontSize: 13, fontWeight: 700 }}>{badge.name}</span>
+      <div style={{ lineHeight: 1.25, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ color: '#f1f5fb', fontSize: 12, fontWeight: 700 }}>{badge.name}</span>
           {badge.title && (
-            <span style={{ color: '#aeb9c9', fontSize: 12, fontWeight: 500 }}>{badge.title}</span>
+            <span style={{ color: '#aeb9c9', fontSize: 11, fontWeight: 500 }}>{badge.title}</span>
           )}
         </div>
         {(badge.rank || badge.respects !== undefined || badge.points !== undefined) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10 }}>
             {badge.rank && <span style={{ color: '#dce3ee' }}>Rank: {badge.rank}</span>}
             {badge.respects !== undefined && (
               <span
@@ -273,21 +291,21 @@ function Badge({ badge }: { badge: BadgeInfo }) {
               <span
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#f0a020' }}
               >
-                <span style={{ fontSize: 12 }}>★</span>
+                <span style={{ fontSize: 11 }}>★</span>
                 {badge.points}
               </span>
             )}
           </div>
         )}
-        <div style={{ color: '#9fef00', fontSize: 11 }}>hackthebox.com</div>
+        <div style={{ color: '#9fef00', fontSize: 10 }}>hackthebox.com</div>
       </div>
       <div
         style={{
           position: 'absolute',
-          right: 8,
-          bottom: 8,
-          width: 22,
-          height: 22,
+          right: 7,
+          bottom: 6,
+          width: 20,
+          height: 20,
           borderRadius: '50%',
           background: '#0a111b',
           border: '1px solid #233247',
@@ -296,7 +314,7 @@ function Badge({ badge }: { badge: BadgeInfo }) {
           justifyContent: 'center',
         }}
       >
-        <CubeIcon size={13} />
+        <CubeIcon size={12} />
       </div>
     </a>
   )
