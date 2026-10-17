@@ -223,10 +223,8 @@ function RespectIcon() {
   )
 }
 
-// Size of the official HTB badge. The image HTB serves has empty space above and below the
-// card, so it is cropped to the visible card (object-fit: cover, centred). Tweak to taste.
+// Width of the official HTB badge image (height follows the image's own proportions).
 const BADGE_WIDTH = 260
-const BADGE_HEIGHT = 62
 
 function Badge({ badge }: { badge: BadgeInfo }) {
   const [imgFailed, setImgFailed] = useState(false)
@@ -245,16 +243,7 @@ function Badge({ badge }: { badge: BadgeInfo }) {
         href={badge.htbProfileUrl}
         target="_blank"
         rel="noopener noreferrer"
-        style={{
-          display: 'block',
-          lineHeight: 0,
-          flexShrink: 0,
-          width: BADGE_WIDTH,
-          maxWidth: '100%',
-          height: BADGE_HEIGHT,
-          overflow: 'hidden',
-          borderRadius: 6,
-        }}
+        style={{ display: 'block', lineHeight: 0, flexShrink: 0 }}
       >
         <img
           src={badgeSrc}
@@ -263,10 +252,12 @@ function Badge({ badge }: { badge: BadgeInfo }) {
           onError={() => setBadgeFailed(true)}
           style={{
             display: 'block',
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center',
+            width: BADGE_WIDTH,
+            maxWidth: '100%',
+            height: 'auto',
+            // the blog's typography styles add large top/bottom margins to <img>; cancel them
+            margin: 0,
+            borderRadius: 6,
           }}
         />
       </a>
@@ -298,7 +289,14 @@ function Badge({ badge }: { badge: BadgeInfo }) {
           alt=""
           referrerPolicy="no-referrer"
           onError={() => setImgFailed(true)}
-          style={{ width: 30, height: 30, borderRadius: 4, flexShrink: 0, objectFit: 'cover' }}
+          style={{
+            width: 30,
+            height: 30,
+            margin: 0,
+            borderRadius: 4,
+            flexShrink: 0,
+            objectFit: 'cover',
+          }}
         />
       ) : (
         <div
@@ -537,6 +535,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             style={{
               width: 50,
               height: 50,
+              margin: 0,
               borderRadius: 9,
               border: '2px solid ' + diffColor,
               objectFit: 'cover',
