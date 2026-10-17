@@ -660,8 +660,6 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 <div
                   style={{
                     borderLeft: '3px solid #e05c7a',
-                    background: '#150e13',
-                    borderRadius: '0 6px 6px 0',
                     padding: '9px 14px',
                     display: 'flex',
                     alignItems: 'center',
@@ -680,8 +678,6 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 <div
                   style={{
                     borderLeft: '3px solid #e05c7a',
-                    background: '#150e13',
-                    borderRadius: '0 6px 6px 0',
                     padding: '9px 14px',
                     display: 'flex',
                     alignItems: 'center',
