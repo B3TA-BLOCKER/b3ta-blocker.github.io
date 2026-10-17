@@ -1,0 +1,705 @@
+'use client'
+/* eslint-disable @next/next/no-img-element */
+
+import React, { useEffect, useState } from 'react'
+
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'insane'
+
+export interface BadgeInfo {
+  name: string
+  htbProfileUrl: string
+  avatarUrl?: string
+  /** Title shown next to the name, e.g. "Omniscient", "Guru". */
+  title?: string
+  /** Global rank number, e.g. "2" or "212". */
+  rank?: string
+  /** Respects count (blue diamond icon), e.g. 2389. */
+  respects?: number
+  /** Points / owns count (orange star icon), e.g. 524. */
+  points?: number
+}
+
+export interface BloodInfo extends BadgeInfo {
+  time: string
+}
+
+export interface RadarValues {
+  enumeration: number
+  realLife: number
+  cve: number
+  customExploitation: number
+  ctfLike: number
+}
+
+export interface BoxInfoCardProps {
+  name: string
+  iconUrl: string
+  /** Optional wide banner image shown as the header background. This is shared across every
+   *  writeup, so save one file once at public/static/images/htb/header-bg.jpg (1200x260px,
+   *  roughly 4.6:1) and pass headerBgUrl="/static/images/htb/header-bg.jpg" on every box.
+   *  Dark/moody art works best since it sits behind a translucent dark overlay. */
+  headerBgUrl?: string
+  /** Optional when htbMachine is set: pulled from HackTheBox. Anything you pass overrides it. */
+  difficulty?: Difficulty | string
+  os?: string
+  releaseDate?: string
+  retireDate?: string
+  /** Exact per-bar percentages from the box's "Rated Difficulty" histogram on HackTheBox — read them off the box page, don't estimate. Typically 7-10 bars. */
+  difficultyRatingBars?: number[]
+  /** Exact values (0-100) from the box's real HTB radar graph for each axis. */
+  radar?: RadarValues
+  /** Optional second (white) polygon, e.g. the community average. */
+  radarAverage?: RadarValues
+  /** HTB machine name, e.g. "Cap". When set, the difficulty bars and radar are loaded
+   *  from /htb-data/<name>.json (generated at build time) and override the static props above (which then act as a
+   *  fallback if the request fails). */
+  htbMachine?: string
+  officialUserTime?: string
+  officialRootTime?: string
+  creator?: Partial<BadgeInfo>
+  yourUserTime?: string
+  yourRootTime?: string
+  userBlood?: BloodInfo
+  rootBlood?: BloodInfo
+}
+
+const DIFF_COLOR: Record<Difficulty, string> = {
+  easy: '#5fd778',
+  medium: '#e0a526',
+  hard: '#e05c5c',
+  insane: '#b45cff',
+}
+
+/** Shared style for every section heading (Release Date, Radar Graph, First Blood, ...). */
+const HEADING_COLOR = '#a9b8cc'
+
+const SECTION_HEADING_STYLE: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 700,
+  color: HEADING_COLOR,
+  letterSpacing: 1.2,
+  textAlign: 'left',
+  marginBottom: 10,
+}
+
+const META_LABEL_STYLE: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  color: HEADING_COLOR,
+  letterSpacing: 1,
+  marginBottom: 4,
+}
+
+/** HTB colours the rating histogram by POSITION (left = easy, right = hard), not by value. */
+const BAR_GREEN = '#9fef00'
+const BAR_YELLOW = '#ffaf00'
+const BAR_RED = '#ff3e3e'
+const BAR_EMPTY = '#3a4658'
+const GREEN = '#9fef00'
+
+function barColor(index: number, total: number) {
+  const f = index / Math.max(1, total)
+  if (f < 0.4) return BAR_GREEN
+  if (f < 0.7) return BAR_YELLOW
+  return BAR_RED
+}
+
+interface LiveMachineData {
+  difficultyRatingBars?: number[]
+  radar?: RadarValues
+  radarAverage?: RadarValues
+  difficulty?: string
+  os?: string
+  releaseDate?: string
+  retireDate?: string
+  creator?: Partial<BadgeInfo>
+  userBlood?: Partial<BloodInfo>
+  rootBlood?: Partial<BloodInfo>
+}
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || ''
+
+/** Prefix site-relative asset paths (e.g. /htb-data/avatars/1.png) with the base path. */
+function withBase(blood?: Partial<BloodInfo>): Partial<BloodInfo> | undefined {
+  if (!blood) return blood
+  const url = blood.avatarUrl
+  if (url && url.startsWith('/') && !url.startsWith('//')) {
+    return { ...blood, avatarUrl: BASE_PATH + url }
+  }
+  return blood
+}
+
+function definedOnly<T extends object>(o?: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(o ?? {}).filter(([, v]) => v !== undefined && v !== '')
+  ) as Partial<T>
+}
+
+/** Live data fills in what you did not pass; anything you pass explicitly wins. */
+function mergeBlood(live?: Partial<BloodInfo>, own?: BloodInfo): BloodInfo | undefined {
+  if (!live && !own) return undefined
+  const defined = Object.fromEntries(
+    Object.entries(own ?? {}).filter(([, v]) => v !== undefined && v !== '')
+  )
+  const merged = { time: '--:--:--', ...live, ...defined } as BloodInfo
+  return merged.name && merged.htbProfileUrl ? merged : own
+}
+
+function useHtbMachine(name?: string) {
+  const [data, setData] = useState<LiveMachineData | null>(null)
+  useEffect(() => {
+    if (!name) return
+    let cancelled = false
+    fetch(BASE_PATH + '/htb-data/' + encodeURIComponent(name) + '.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!cancelled && j) {
+          const d = j as LiveMachineData
+          setData({ ...d, userBlood: withBase(d.userBlood), rootBlood: withBase(d.rootBlood) })
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [name])
+  return data
+}
+
+const RADAR_LABELS = ['Enumeration', 'Real-Life', 'CVE', 'Custom Exploitation', 'CTF-Like']
+
+function axisPoint(i: number, n: number, cx: number, cy: number, r: number) {
+  const angle = (Math.PI * 2 * i) / n - Math.PI / 2
+  return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) }
+}
+
+function radarPoints(r: RadarValues, cx: number, cy: number, maxR: number) {
+  const vals = [r.enumeration, r.realLife, r.cve, r.customExploitation, r.ctfLike]
+  return vals.map((v, i) => axisPoint(i, 5, cx, cy, (Math.max(0, Math.min(100, v)) / 100) * maxR))
+}
+
+function radarPolygon(r: RadarValues, cx: number, cy: number, maxR: number) {
+  return radarPoints(r, cx, cy, maxR)
+    .map((p) => p.x.toFixed(1) + ',' + p.y.toFixed(1))
+    .join(' ')
+}
+
+function CubeIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#9fef00"
+      strokeWidth={2.2}
+      strokeLinejoin="round"
+      strokeLinecap="round"
+    >
+      <path d="M12 2 21 7v10l-9 5-9-5V7z" />
+      <path d="M3 7l9 5 9-5M12 12v10" />
+    </svg>
+  )
+}
+
+function RespectIcon() {
+  return (
+    <svg
+      width={11}
+      height={11}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#4aa8e8"
+      strokeWidth={2.4}
+      strokeLinejoin="round"
+      strokeLinecap="round"
+    >
+      <path d="M12 3 21 12 12 21 3 12z" />
+      <path d="M12 8v8M8 12h8" />
+    </svg>
+  )
+}
+
+function Badge({ badge }: { badge: BadgeInfo }) {
+  return (
+    <a
+      href={badge.htbProfileUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        background: '#141f30',
+        border: '1px solid #233247',
+        borderRadius: 8,
+        padding: '10px 40px 10px 12px',
+        textDecoration: 'none',
+        minWidth: 240,
+      }}
+    >
+      {badge.avatarUrl ? (
+        <img
+          src={badge.avatarUrl}
+          alt=""
+          referrerPolicy="no-referrer"
+          style={{ width: 44, height: 44, borderRadius: 4, flexShrink: 0, objectFit: 'cover' }}
+        />
+      ) : (
+        <div
+          style={{ width: 44, height: 44, borderRadius: 4, background: '#1c2838', flexShrink: 0 }}
+        />
+      )}
+      <div style={{ lineHeight: 1.35, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span style={{ color: '#f1f5fb', fontSize: 13, fontWeight: 700 }}>{badge.name}</span>
+          {badge.title && (
+            <span style={{ color: '#aeb9c9', fontSize: 12, fontWeight: 500 }}>{badge.title}</span>
+          )}
+        </div>
+        {(badge.rank || badge.respects !== undefined || badge.points !== undefined) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11 }}>
+            {badge.rank && <span style={{ color: '#dce3ee' }}>Rank: {badge.rank}</span>}
+            {badge.respects !== undefined && (
+              <span
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#4aa8e8' }}
+              >
+                <RespectIcon />
+                {badge.respects}
+              </span>
+            )}
+            {badge.points !== undefined && (
+              <span
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: '#f0a020' }}
+              >
+                <span style={{ fontSize: 12 }}>★</span>
+                {badge.points}
+              </span>
+            )}
+          </div>
+        )}
+        <div style={{ color: '#9fef00', fontSize: 11 }}>hackthebox.com</div>
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          right: 8,
+          bottom: 8,
+          width: 22,
+          height: 22,
+          borderRadius: '50%',
+          background: '#0a111b',
+          border: '1px solid #233247',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CubeIcon size={13} />
+      </div>
+    </a>
+  )
+}
+
+function LcdTimer({ value, small }: { value: string; small?: boolean }) {
+  return (
+    <div
+      style={{
+        fontFamily: "'Courier New', monospace",
+        fontWeight: 700,
+        fontSize: small ? 15 : 20,
+        letterSpacing: 1.5,
+        color: '#4ef066',
+        background: '#081109',
+        border: '1px solid #163a1c',
+        borderRadius: 5,
+        padding: small ? '4px 9px' : '5px 12px',
+        textShadow: '0 0 6px rgba(78,240,102,0.5)',
+        display: 'inline-block',
+      }}
+    >
+      {value}
+    </div>
+  )
+}
+
+export default function BoxInfoCard(props: BoxInfoCardProps) {
+  const {
+    name,
+    iconUrl,
+    headerBgUrl,
+    difficulty: propDifficulty,
+    os: propOs,
+    releaseDate: propRelease,
+    retireDate: propRetire,
+    htbMachine,
+    difficultyRatingBars: propBars,
+    radar: propRadar,
+    radarAverage: propAvg,
+    creator: propCreator,
+    yourUserTime,
+    yourRootTime,
+    userBlood: propUserBlood,
+    rootBlood: propRootBlood,
+  } = props
+
+  const live = useHtbMachine(htbMachine)
+  const diffRaw = String(propDifficulty ?? live?.difficulty ?? 'easy').toLowerCase()
+  const difficulty: Difficulty = diffRaw in DIFF_COLOR ? (diffRaw as Difficulty) : 'easy'
+  const diffColor = DIFF_COLOR[difficulty]
+  const os = propOs ?? live?.os ?? ''
+  const releaseDate = propRelease ?? live?.releaseDate ?? ''
+  const retireDate = propRetire ?? live?.retireDate ?? ''
+  const creator: Partial<BadgeInfo> = { ...live?.creator, ...definedOnly(propCreator) }
+  const bars = live?.difficultyRatingBars ?? propBars ?? []
+  const radar: RadarValues = live?.radar ??
+    propRadar ?? { enumeration: 0, realLife: 0, cve: 0, customExploitation: 0, ctfLike: 0 }
+  const radarAvg = live?.radarAverage ?? propAvg
+  const maxBar = Math.max(1, ...bars)
+  const userBlood = mergeBlood(live?.userBlood, propUserBlood)
+  const rootBlood = mergeBlood(live?.rootBlood, propRootBlood)
+
+  const radarSize = 300
+  const cx = radarSize / 2
+  const cy = radarSize / 2
+  const maxR = radarSize / 2 - 58
+
+  return (
+    <div
+      style={{
+        background: '#0c1420',
+        border: '1px solid #1c2838',
+        borderRadius: 12,
+        overflow: 'hidden',
+        fontFamily: "'Courier New', monospace",
+        maxWidth: 560,
+        boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
+      }}
+    >
+      {/* header band: icon, name, creator, difficulty pill + bars (compact) */}
+      <div
+        style={{
+          position: 'relative',
+          backgroundImage: headerBgUrl
+            ? 'linear-gradient(135deg, rgba(10,16,26,0.86), rgba(10,16,26,0.93)), url(' +
+              headerBgUrl +
+              ')'
+            : 'linear-gradient(135deg, #142033 0%, #0f1822 60%, #0c1420 100%)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          padding: '6px 18px',
+          borderBottom: '1px solid #1c2838',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <img
+            src={iconUrl}
+            alt={name + ' icon'}
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: 9,
+              border: '2px solid ' + diffColor,
+              objectFit: 'cover',
+              flexShrink: 0,
+              background: '#060a10',
+            }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: '#f1f5fb', fontSize: 19, fontWeight: 700, lineHeight: 1.2 }}>
+              {name}
+            </div>
+            {creator.name && (
+              <a
+                href={creator.htbProfileUrl || undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: '#5a9bd8',
+                  fontSize: 11,
+                  textDecoration: 'none',
+                }}
+              >
+                by {creator.name}
+              </a>
+            )}
+          </div>
+          <div
+            style={{
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 3,
+                height: 26,
+              }}
+            >
+              {bars.map((v, i) =>
+                v <= 0 ? (
+                  <div
+                    key={i}
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: BAR_EMPTY,
+                      margin: '0 1px',
+                    }}
+                  />
+                ) : (
+                  <div
+                    key={i}
+                    style={{
+                      width: 7,
+                      height: Math.max(12, (v / maxBar) * 100) + '%',
+                      background: barColor(i, bars.length),
+                      borderRadius: '3px 3px 0 0',
+                    }}
+                  />
+                )
+              )}
+            </div>
+            <span
+              style={{
+                display: 'inline-block',
+                border: '1px solid ' + diffColor,
+                color: diffColor,
+                fontSize: 10,
+                fontWeight: 700,
+                padding: '4px 12px',
+                borderRadius: 999,
+                letterSpacing: 1,
+                textTransform: 'uppercase',
+              }}
+            >
+              {difficulty}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: '16px 20px' }}>
+        {/* meta strip */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: 10,
+            paddingBottom: 14,
+            marginBottom: 16,
+            borderBottom: '1px solid #1c2838',
+          }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <div style={META_LABEL_STYLE}>RELEASE DATE</div>
+            <div style={{ fontSize: 13, color: '#5fd778', fontWeight: 600 }}>{releaseDate}</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={META_LABEL_STYLE}>RETIRE DATE</div>
+            <div style={{ fontSize: 13, color: '#dce3ee', fontWeight: 600 }}>{retireDate}</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={META_LABEL_STYLE}>OS</div>
+            <div style={{ fontSize: 13, color: '#dce3ee', fontWeight: 600 }}>{os}</div>
+          </div>
+        </div>
+
+        {/* radar graph: heading left-aligned, chart itself stays centered */}
+        <div style={{ marginBottom: 18 }}>
+          <div style={SECTION_HEADING_STYLE}>RADAR GRAPH</div>
+          <svg
+            viewBox={'0 0 ' + radarSize + ' ' + radarSize}
+            style={{
+              width: '100%',
+              maxWidth: 300,
+              display: 'block',
+              margin: '0 auto',
+              overflow: 'visible',
+            }}
+          >
+            {[0.33, 0.66, 1].map((f, idx) => (
+              <polygon
+                key={idx}
+                points={Array.from({ length: 5 })
+                  .map((_, i) => {
+                    const p = axisPoint(i, 5, cx, cy, maxR * f)
+                    return p.x.toFixed(1) + ',' + p.y.toFixed(1)
+                  })
+                  .join(' ')}
+                fill="none"
+                stroke="#1c2838"
+                strokeWidth={1}
+              />
+            ))}
+            {Array.from({ length: 5 }).map((_, i) => {
+              const p = axisPoint(i, 5, cx, cy, maxR)
+              return (
+                <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#1c2838" strokeWidth={1} />
+              )
+            })}
+            {radarAvg && (
+              <>
+                <polygon
+                  points={radarPolygon(radarAvg, cx, cy, maxR)}
+                  fill="#ffffff"
+                  fillOpacity={0.12}
+                  stroke="#ffffff"
+                  strokeWidth={1.2}
+                />
+                {radarPoints(radarAvg, cx, cy, maxR).map((p, i) => (
+                  <circle key={'a' + i} cx={p.x} cy={p.y} r={3} fill="#ffffff" />
+                ))}
+              </>
+            )}
+            <polygon
+              points={radarPolygon(radar, cx, cy, maxR)}
+              fill={GREEN}
+              fillOpacity={0.25}
+              stroke={GREEN}
+              strokeWidth={1.6}
+            />
+            {radarPoints(radar, cx, cy, maxR).map((p, i) => (
+              <circle key={'m' + i} cx={p.x} cy={p.y} r={3.5} fill={GREEN} />
+            ))}
+            {RADAR_LABELS.map((label, i) => {
+              const p = axisPoint(i, 5, cx, cy, maxR + 30)
+              const words = label.split(' ')
+              return (
+                <foreignObject
+                  key={label}
+                  x={p.x - 65}
+                  y={p.y - 16}
+                  width={130}
+                  height={32}
+                  style={{ overflow: 'visible' }}
+                >
+                  <div
+                    style={{
+                      width: 130,
+                      textAlign: 'center',
+                      color: '#8cc8f0',
+                      fontSize: 14,
+                      fontWeight: 700,
+                      lineHeight: 1.2,
+                      fontFamily: "'Courier New', monospace",
+                    }}
+                  >
+                    {words.map((w, wi) => (
+                      <div key={wi}>{w}</div>
+                    ))}
+                  </div>
+                </foreignObject>
+              )
+            })}
+          </svg>
+        </div>
+
+        {/* first blood */}
+        {(userBlood || rootBlood) && (
+          <div
+            style={{
+              marginBottom: 18,
+              paddingTop: 16,
+              borderTop: '1px solid #1c2838',
+            }}
+          >
+            <div style={SECTION_HEADING_STYLE}>FIRST BLOOD</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {userBlood && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                  }}
+                >
+                  <span style={{ color: '#e0a0b0', fontSize: 12, fontWeight: 600 }}>
+                    USER · {userBlood.time}
+                  </span>
+                  <Badge badge={userBlood} />
+                </div>
+              )}
+              {rootBlood && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                  }}
+                >
+                  <span style={{ color: '#e0a0b0', fontSize: 12, fontWeight: 600 }}>
+                    ROOT · {rootBlood.time}
+                  </span>
+                  <Badge badge={rootBlood} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* my time, last */}
+        {(yourUserTime || yourRootTime) && (
+          <div
+            style={{
+              paddingTop: 16,
+              borderTop: '1px solid #1c2838',
+            }}
+          >
+            <div style={SECTION_HEADING_STYLE}>MY TIME</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {yourUserTime && (
+                <div
+                  style={{
+                    borderLeft: '3px solid #e05c7a',
+                    background: '#150e13',
+                    borderRadius: '0 6px 6px 0',
+                    padding: '9px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span
+                    style={{ color: '#e0a0b0', fontSize: 12, letterSpacing: 1, fontWeight: 700 }}
+                  >
+                    USER
+                  </span>
+                  <LcdTimer value={yourUserTime} small />
+                </div>
+              )}
+              {yourRootTime && (
+                <div
+                  style={{
+                    borderLeft: '3px solid #e05c7a',
+                    background: '#150e13',
+                    borderRadius: '0 6px 6px 0',
+                    padding: '9px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span
+                    style={{ color: '#e0a0b0', fontSize: 12, letterSpacing: 1, fontWeight: 700 }}
+                  >
+                    ROOT
+                  </span>
+                  <LcdTimer value={yourRootTime} small />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

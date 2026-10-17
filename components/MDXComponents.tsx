@@ -6,7 +6,9 @@ import TableWrapper from './TableWrapper'
 import LinkPreview from './LinkPreview'
 import ImageLightbox from './ImageLightbox'
 import Pre from './Pre'
+import BoxInfoCard from './BoxInfoCard'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const MdxImage = (props: any) => (
   <ImageLightbox
     {...props}
@@ -26,4 +28,5 @@ export const components: MDXComponents = {
   table: TableWrapper,
   BlogNewsletterForm,
   LinkPreview,
+  BoxInfoCard,
 }

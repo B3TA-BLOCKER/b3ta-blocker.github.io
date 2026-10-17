@@ -45,3 +45,6 @@ yarn-error.log*
 
 # Contentlayer
 .contentlayer
+
+# generated at build time from HackTheBox
+public/htb-data/
