@@ -223,7 +223,10 @@ function RespectIcon() {
   )
 }
 
-const BADGE_WIDTH = 260 // px width of the official HTB badge image; adjust to taste
+// Size of the official HTB badge. The image HTB serves has empty space above and below the
+// card, so it is cropped to the visible card (object-fit: cover, centred). Tweak to taste.
+const BADGE_WIDTH = 260
+const BADGE_HEIGHT = 62
 
 function Badge({ badge }: { badge: BadgeInfo }) {
   const [imgFailed, setImgFailed] = useState(false)
@@ -242,7 +245,16 @@ function Badge({ badge }: { badge: BadgeInfo }) {
         href={badge.htbProfileUrl}
         target="_blank"
         rel="noopener noreferrer"
-        style={{ display: 'block', lineHeight: 0, flexShrink: 0 }}
+        style={{
+          display: 'block',
+          lineHeight: 0,
+          flexShrink: 0,
+          width: BADGE_WIDTH,
+          maxWidth: '100%',
+          height: BADGE_HEIGHT,
+          overflow: 'hidden',
+          borderRadius: 6,
+        }}
       >
         <img
           src={badgeSrc}
@@ -251,10 +263,10 @@ function Badge({ badge }: { badge: BadgeInfo }) {
           onError={() => setBadgeFailed(true)}
           style={{
             display: 'block',
-            width: BADGE_WIDTH,
-            maxWidth: '100%',
-            height: 'auto',
-            borderRadius: 6,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center',
           }}
         />
       </a>
@@ -737,7 +749,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             }}
           >
             <div style={SECTION_HEADING_STYLE}>FIRST BLOOD</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {userBlood && (
                 <div
                   style={{
