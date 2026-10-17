@@ -9,6 +9,9 @@ export interface BadgeInfo {
   name: string
   htbProfileUrl: string
   avatarUrl?: string
+  /** Override for the official HTB badge image. Defaults to
+   *  https://www.hackthebox.com/badge/image/<user id> (id is read from htbProfileUrl). */
+  badgeImageUrl?: string
   /** Title shown next to the name, e.g. "Omniscient", "Guru". */
   title?: string
   /** Global rank number, e.g. "2" or "212". */
@@ -220,9 +223,45 @@ function RespectIcon() {
   )
 }
 
+const BADGE_WIDTH = 260 // px width of the official HTB badge image; adjust to taste
+
 function Badge({ badge }: { badge: BadgeInfo }) {
   const [imgFailed, setImgFailed] = useState(false)
+  const [badgeFailed, setBadgeFailed] = useState(false)
   const showImg = !!badge.avatarUrl && !imgFailed
+
+  // The official HTB badge image is rendered by HTB itself, so name, avatar, rank,
+  // respects and points always stay up to date with no work on our side.
+  const userId = badge.htbProfileUrl.match(/users\/(\d+)/)?.[1]
+  const badgeSrc =
+    badge.badgeImageUrl ?? (userId ? 'https://www.hackthebox.com/badge/image/' + userId : undefined)
+
+  if (badgeSrc && !badgeFailed) {
+    return (
+      <a
+        href={badge.htbProfileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ display: 'block', lineHeight: 0, flexShrink: 0 }}
+      >
+        <img
+          src={badgeSrc}
+          alt={badge.name + ' on Hack The Box'}
+          referrerPolicy="no-referrer"
+          onError={() => setBadgeFailed(true)}
+          style={{
+            display: 'block',
+            width: BADGE_WIDTH,
+            maxWidth: '100%',
+            height: 'auto',
+            borderRadius: 6,
+          }}
+        />
+      </a>
+    )
+  }
+
+  // Fallback: compact custom card, used only if the official badge fails to load.
   return (
     <a
       href={badge.htbProfileUrl}
@@ -236,9 +275,9 @@ function Badge({ badge }: { badge: BadgeInfo }) {
         background: '#141f30',
         border: '1px solid #233247',
         borderRadius: 7,
-        padding: '6px 32px 6px 8px',
+        padding: '5px 30px 5px 7px',
         textDecoration: 'none',
-        minWidth: 190,
+        minWidth: 180,
       }}
     >
       {showImg ? (
@@ -247,13 +286,13 @@ function Badge({ badge }: { badge: BadgeInfo }) {
           alt=""
           referrerPolicy="no-referrer"
           onError={() => setImgFailed(true)}
-          style={{ width: 34, height: 34, borderRadius: 4, flexShrink: 0, objectFit: 'cover' }}
+          style={{ width: 30, height: 30, borderRadius: 4, flexShrink: 0, objectFit: 'cover' }}
         />
       ) : (
         <div
           style={{
-            width: 34,
-            height: 34,
+            width: 30,
+            height: 30,
             borderRadius: 4,
             background: '#1c2838',
             flexShrink: 0,
