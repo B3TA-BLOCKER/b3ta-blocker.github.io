@@ -359,6 +359,75 @@ function Badge({ badge }: { badge: BadgeInfo }) {
   )
 }
 
+const BLOOD_RED = '#ff6b81'
+const BLOOD_BG = 'rgba(224, 92, 122, 0.22)'
+
+/** User-blood icon: flask with a drop inside. */
+function UserBloodIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={BLOOD_RED}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 3h6" />
+      <path d="M10 3v5.5L4.8 17.4A2.2 2.2 0 0 0 6.7 20.7h10.6a2.2 2.2 0 0 0 1.9-3.3L14 8.5V3" />
+      <path d="M12 12.2c1.3 1.6 2 2.6 2 3.6a2 2 0 0 1-4 0c0-1 .7-2 2-3.6z" />
+    </svg>
+  )
+}
+
+/** Root-blood icon: tilted drop. */
+function RootBloodIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={BLOOD_RED}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3c3.2 4.2 5.5 6.9 5.5 10a5.5 5.5 0 0 1-11 0C6.5 9.9 8.8 7.2 12 3z" />
+      <path d="M9.5 14a2.6 2.6 0 0 0 2.5 2.4" />
+    </svg>
+  )
+}
+
+function BloodTag({ kind, time }: { kind: 'user' | 'root'; time: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 7,
+          background: BLOOD_BG,
+          color: BLOOD_RED,
+          borderRadius: 999,
+          padding: '5px 13px',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: 0.5,
+          textTransform: 'uppercase',
+        }}
+        title={kind === 'user' ? 'User blood' : 'Root blood'}
+      >
+        {kind === 'user' ? <UserBloodIcon /> : <RootBloodIcon />}
+        {kind}
+      </span>
+      <span style={{ color: '#c9d4e3', fontSize: 12, fontWeight: 600 }}>{time}</span>
+    </div>
+  )
+}
+
 function LcdTimer({ value, small }: { value: string; small?: boolean }) {
   return (
     <div
@@ -678,9 +747,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                     gap: 10,
                   }}
                 >
-                  <span style={{ color: '#e0a0b0', fontSize: 12, fontWeight: 600 }}>
-                    USER · {userBlood.time}
-                  </span>
+                  <BloodTag kind="user" time={userBlood.time} />
                   <Badge badge={userBlood} />
                 </div>
               )}
@@ -693,9 +760,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                     gap: 10,
                   }}
                 >
-                  <span style={{ color: '#e0a0b0', fontSize: 12, fontWeight: 600 }}>
-                    ROOT · {rootBlood.time}
-                  </span>
+                  <BloodTag kind="root" time={rootBlood.time} />
                   <Badge badge={rootBlood} />
                 </div>
               )}
