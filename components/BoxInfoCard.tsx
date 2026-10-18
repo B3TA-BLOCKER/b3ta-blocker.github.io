@@ -57,6 +57,9 @@ export interface BoxInfoCardProps {
    *  from /htb-data/<name>.json (generated at build time) and override the static props above (which then act as a
    *  fallback if the request fails). */
   htbMachine?: string
+  /** Link target for the box name and icon. Defaults to the machine's page on HTB
+   *  (built from htbMachine, or name if htbMachine is not set). */
+  machineUrl?: string
   officialUserTime?: string
   officialRootTime?: string
   creator?: Partial<BadgeInfo>
@@ -77,16 +80,16 @@ const DIFF_COLOR: Record<Difficulty, string> = {
 const HEADING_COLOR = '#a9b8cc'
 
 const SECTION_HEADING_STYLE: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 16,
   fontWeight: 700,
   color: HEADING_COLOR,
   letterSpacing: 1.2,
   textAlign: 'left',
-  marginBottom: 10,
+  marginBottom: 8,
 }
 
 const META_LABEL_STYLE: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 13,
   fontWeight: 700,
   color: HEADING_COLOR,
   letterSpacing: 1,
@@ -470,6 +473,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
     releaseDate: propRelease,
     retireDate: propRetire,
     htbMachine,
+    machineUrl: propMachineUrl,
     difficultyRatingBars: propBars,
     radar: propRadar,
     radarAverage: propAvg,
@@ -484,6 +488,9 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
   const diffRaw = String(propDifficulty ?? live?.difficulty ?? 'easy').toLowerCase()
   const difficulty: Difficulty = diffRaw in DIFF_COLOR ? (diffRaw as Difficulty) : 'easy'
   const diffColor = DIFF_COLOR[difficulty]
+  const machineUrl =
+    propMachineUrl ??
+    'https://app.hackthebox.com/machines/' + encodeURIComponent(htbMachine ?? name)
   const os = propOs ?? live?.os ?? ''
   const releaseDate = propRelease ?? live?.releaseDate ?? ''
   const retireDate = propRetire ?? live?.retireDate ?? ''
@@ -529,30 +536,54 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img
-            src={iconUrl}
-            alt={name + ' icon'}
-            style={{
-              width: 50,
-              height: 50,
-              margin: 0,
-              borderRadius: 9,
-              border: '2px solid ' + diffColor,
-              objectFit: 'cover',
-              flexShrink: 0,
-              background: '#060a10',
-            }}
-          />
+          <a
+            href={machineUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={'Play ' + name + ' on Hack The Box'}
+            style={{ display: 'block', lineHeight: 0, flexShrink: 0, textDecoration: 'none' }}
+          >
+            <img
+              src={iconUrl}
+              alt={name + ' icon'}
+              style={{
+                width: 50,
+                height: 50,
+                margin: 0,
+                borderRadius: 9,
+                border: '2px solid ' + diffColor,
+                objectFit: 'cover',
+                flexShrink: 0,
+                background: '#060a10',
+              }}
+            />
+          </a>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#f1f5fb', fontSize: 19, fontWeight: 700, lineHeight: 1.2 }}>
+            <a
+              href={machineUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={'Play ' + name + ' on Hack The Box'}
+              style={{
+                display: 'block',
+                width: 'fit-content',
+                color: '#f1f5fb',
+                fontSize: 19,
+                fontWeight: 700,
+                lineHeight: 1.2,
+                textDecoration: 'none',
+              }}
+            >
               {name}
-            </div>
+            </a>
             {creator.name && (
               <a
                 href={creator.htbProfileUrl || undefined}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
+                  display: 'block',
+                  width: 'fit-content',
                   color: '#5a9bd8',
                   fontSize: 11,
                   textDecoration: 'none',
@@ -636,26 +667,26 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
         >
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>RELEASE DATE</div>
-            <div style={{ fontSize: 13, color: '#5fd778', fontWeight: 600 }}>{releaseDate}</div>
+            <div style={{ fontSize: 14, color: '#5fd778', fontWeight: 600 }}>{releaseDate}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>RETIRE DATE</div>
-            <div style={{ fontSize: 13, color: '#dce3ee', fontWeight: 600 }}>{retireDate}</div>
+            <div style={{ fontSize: 14, color: '#dce3ee', fontWeight: 600 }}>{retireDate}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>OS</div>
-            <div style={{ fontSize: 13, color: '#dce3ee', fontWeight: 600 }}>{os}</div>
+            <div style={{ fontSize: 14, color: '#dce3ee', fontWeight: 600 }}>{os}</div>
           </div>
         </div>
 
         {/* radar graph: heading left-aligned, chart itself stays centered */}
-        <div style={{ marginBottom: 18 }}>
+        <div style={{ marginBottom: 2 }}>
           <div style={SECTION_HEADING_STYLE}>RADAR GRAPH</div>
           <svg
-            viewBox={'0 0 ' + radarSize + ' ' + radarSize}
+            viewBox={'0 8 ' + radarSize + ' ' + (radarSize - 34)}
             style={{
               width: '100%',
-              maxWidth: 350,
+              maxWidth: 300,
               display: 'block',
               margin: '0 auto',
               overflow: 'visible',
@@ -743,7 +774,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
           <div
             style={{
               marginBottom: 18,
-              paddingTop: 16,
+              paddingTop: 12,
               borderTop: '1px solid #1c2838',
             }}
           >
@@ -800,7 +831,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                   }}
                 >
                   <span
-                    style={{ color: '#e0a0b0', fontSize: 12, letterSpacing: 1, fontWeight: 700 }}
+                    style={{ color: '#e0a0b0', fontSize: 14, letterSpacing: 1, fontWeight: 700 }}
                   >
                     USER
                   </span>
@@ -818,7 +849,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                   }}
                 >
                   <span
-                    style={{ color: '#e0a0b0', fontSize: 12, letterSpacing: 1, fontWeight: 700 }}
+                    style={{ color: '#e0a0b0', fontSize: 14, letterSpacing: 1, fontWeight: 700 }}
                   >
                     ROOT
                   </span>
