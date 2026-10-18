@@ -670,11 +670,10 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 width: 50,
                 height: 50,
                 margin: 0,
-                borderRadius: 9,
-                border: '2px solid ' + diffColor,
+                borderRadius: '50%',
                 objectFit: 'cover',
                 flexShrink: 0,
-                background: '#060a10',
+                background: 'transparent',
                 boxShadow: hoverIcon
                   ? '0 0 16px 2px ' + diffColor + ', 0 0 4px ' + diffColor
                   : '0 0 0 0 transparent',
