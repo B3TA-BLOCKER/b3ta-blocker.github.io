@@ -191,20 +191,28 @@ for (const name of MACHINES) {
     if (!radars.length && matrix) console.log("  raw matrix:", JSON.stringify(matrix.data).slice(0, 1500));
 
     console.log("  profile keys:", Object.keys(info).join(", "));
-    const makerRaw = info.maker ?? info.creator;
-    const creator =
-      makerRaw && makerRaw.name
-        ? {
-            name: makerRaw.name,
-            htbProfileUrl: makerRaw.id ? "https://app.hackthebox.com/users/" + makerRaw.id : undefined,
-          }
-        : undefined;
+    // Authors: HTB exposes the main author as `maker` and a co-author as `maker2`
+    // (some profiles may also carry a `makers` array). Collect them all, without duplicates.
+    const makerCandidates = [info.maker, info.maker2, ...(Array.isArray(info.makers) ? info.makers : [])];
+    if (!info.maker && info.creator) makerCandidates.push(info.creator);
+    const seen = new Set();
+    const creators = [];
+    for (const m of makerCandidates) {
+      if (!m || !m.name || seen.has(m.name)) continue;
+      seen.add(m.name);
+      creators.push({
+        name: m.name,
+        htbProfileUrl: m.id ? "https://app.hackthebox.com/users/" + m.id : undefined,
+      });
+    }
+    const creator = creators[0];
     const meta = {
       difficulty: typeof info.difficultyText === "string" ? info.difficultyText : undefined,
       os: typeof info.os === "string" ? info.os : undefined,
       releaseDate: fmtDate(info.release) ?? findDateByKey(info, /^release/i),
       retireDate: findDateByKey(info, /retire/i),
       creator,
+      creators,
     };
     console.log("  meta:", JSON.stringify(meta));
 

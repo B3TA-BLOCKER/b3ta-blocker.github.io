@@ -63,6 +63,9 @@ export interface BoxInfoCardProps {
   officialUserTime?: string
   officialRootTime?: string
   creator?: Partial<BadgeInfo>
+  /** Several authors, e.g. [{ name: 'A', htbProfileUrl: '...' }, { name: 'B', htbProfileUrl: '...' }].
+   *  Overrides the authors pulled from HTB. */
+  creators?: Partial<BadgeInfo>[]
   yourUserTime?: string
   yourRootTime?: string
   userBlood?: BloodInfo
@@ -193,6 +196,7 @@ interface LiveMachineData {
   releaseDate?: string
   retireDate?: string
   creator?: Partial<BadgeInfo>
+  creators?: Partial<BadgeInfo>[]
   userBlood?: Partial<BloodInfo>
   rootBlood?: Partial<BloodInfo>
 }
@@ -552,6 +556,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
     radar: propRadar,
     radarAverage: propAvg,
     creator: propCreator,
+    creators: propCreators,
     yourUserTime,
     yourRootTime,
     userBlood: propUserBlood,
@@ -585,7 +590,12 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
   const os = propOs ?? live?.os ?? ''
   const releaseDate = propRelease ?? live?.releaseDate ?? ''
   const retireDate = propRetire ?? live?.retireDate ?? ''
-  const creator: Partial<BadgeInfo> = { ...live?.creator, ...definedOnly(propCreator) }
+  const creators: Partial<BadgeInfo>[] = (
+    propCreators ??
+    (propCreator
+      ? [{ ...live?.creator, ...definedOnly(propCreator) }]
+      : (live?.creators ?? (live?.creator ? [live.creator] : [])))
+  ).filter((c) => c.name)
   const bars = live?.difficultyRatingBars ?? propBars ?? []
   const radar: RadarValues = live?.radar ??
     propRadar ?? { enumeration: 0, realLife: 0, cve: 0, customExploitation: 0, ctfLike: 0 }
@@ -677,21 +687,23 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             >
               {name}
             </a>
-            {creator.name && (
-              <a
-                href={creator.htbProfileUrl || undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'block',
-                  width: 'fit-content',
-                  color: '#5a9bd8',
-                  fontSize: 11,
-                  textDecoration: 'none',
-                }}
-              >
-                by {creator.name}
-              </a>
+            {creators.length > 0 && (
+              <div style={{ fontSize: 11, color: '#8a9bb3' }}>
+                by{' '}
+                {creators.map((c, idx) => (
+                  <React.Fragment key={(c.name ?? '') + idx}>
+                    {idx > 0 && (idx === creators.length - 1 ? ' & ' : ', ')}
+                    <a
+                      href={c.htbProfileUrl || undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#5a9bd8', textDecoration: 'none' }}
+                    >
+                      {c.name}
+                    </a>
+                  </React.Fragment>
+                ))}
+              </div>
             )}
           </div>
           <div
