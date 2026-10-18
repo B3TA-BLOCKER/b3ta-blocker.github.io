@@ -617,7 +617,9 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
         borderRadius: 12,
         overflow: 'hidden',
         fontFamily: "'Courier New', monospace",
+        width: '100%',
         maxWidth: 560,
+        margin: '0 auto', // centre the card in the page column
         boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
       }}
     >
