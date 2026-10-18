@@ -227,7 +227,12 @@ for (const name of MACHINES) {
     }
     const creator = creators[0];
     const meta = {
-      difficulty: typeof info.difficultyText === "string" ? info.difficultyText : undefined,
+      difficulty:
+        typeof info.difficultyText === "string"
+          ? info.difficultyText
+          : typeof info.difficulty === "string" && Number.isNaN(Number(info.difficulty))
+            ? info.difficulty
+            : undefined,
       os: typeof info.os === "string" ? info.os : undefined,
       releaseDate: fmtDate(info.release) ?? findDateByKey(info, /^release/i),
       retireDate: findDateByKey(info, /retire/i),

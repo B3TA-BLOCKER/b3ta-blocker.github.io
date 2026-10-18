@@ -25,7 +25,7 @@ twitterUrl: https://x.com/B3TA_BLOCKER/status/2109297568161423573
 
 ---
 
-## Summary
+# Summary
 
 DevHub is a Linux machine centered around a development environment exposing an MCP (Model Context Protocol) Inspector server. The attack chain starts with exploiting CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, to land a shell as `mcp-dev`. From there, a Jupyter Lab instance running as `analyst` is discovered on an internal port — its authentication token is exposed in plaintext via process arguments. Jupyter's REST API and WebSocket protocol are abused to execute code as `analyst` and read the user flag. Privilege escalation to root comes from a Flask-based internal service (`OPSMCP`) running as root, whose source code reveals a hardcoded API key and an undocumented admin endpoint that dumps root's SSH private key.
 

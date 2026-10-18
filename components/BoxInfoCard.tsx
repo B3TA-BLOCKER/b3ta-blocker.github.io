@@ -72,6 +72,8 @@ export interface BoxInfoCardProps {
   rootBlood?: BloodInfo
 }
 
+const NEUTRAL_COLOR = '#6fb8e8'
+
 /** Difficulty colours; used for the pill, the icon border and the hover glow. Edit freely. */
 const DIFF_COLOR: Record<Difficulty, string> = {
   veryeasy: '#a56cff', // purple
@@ -235,7 +237,13 @@ function useHtbMachine(name?: string) {
     if (!name) return
     let cancelled = false
     fetch(BASE_PATH + '/htb-data/' + encodeURIComponent(name) + '.json')
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (!r.ok) {
+          console.warn('[BoxInfoCard] no HTB data for "' + name + '" (HTTP ' + r.status + ')')
+          return null
+        }
+        return r.json()
+      })
       .then((j) => {
         if (!cancelled && j) {
           const d = j as LiveMachineData
@@ -579,11 +587,13 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
     onFocus: () => setHoverName(true),
     onBlur: () => setHoverName(false),
   }
-  const diffRaw = String(propDifficulty ?? live?.difficulty ?? 'easy')
+  // Difficulty comes from HTB (or the difficulty prop). If it is unknown we show NO pill and a
+  // neutral colour, instead of guessing "easy".
+  const diffRaw = String(propDifficulty ?? live?.difficulty ?? '')
     .toLowerCase()
     .replace(/[\s_-]/g, '')
-  const difficulty: Difficulty = diffRaw in DIFF_COLOR ? (diffRaw as Difficulty) : 'easy'
-  const diffColor = DIFF_COLOR[difficulty]
+  const difficulty: Difficulty | null = diffRaw in DIFF_COLOR ? (diffRaw as Difficulty) : null
+  const diffColor = difficulty ? DIFF_COLOR[difficulty] : NEUTRAL_COLOR
   const machineUrl =
     propMachineUrl ??
     'https://app.hackthebox.com/machines/' + encodeURIComponent(htbMachine ?? name)
@@ -749,21 +759,23 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 )
               )}
             </div>
-            <span
-              style={{
-                display: 'inline-block',
-                border: '1px solid ' + diffColor,
-                color: diffColor,
-                fontSize: 10,
-                fontWeight: 700,
-                padding: '4px 12px',
-                borderRadius: 999,
-                letterSpacing: 1,
-                textTransform: 'uppercase',
-              }}
-            >
-              {DIFF_LABEL[difficulty]}
-            </span>
+            {difficulty && (
+              <span
+                style={{
+                  display: 'inline-block',
+                  border: '1px solid ' + diffColor,
+                  color: diffColor,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: '4px 12px',
+                  borderRadius: 999,
+                  letterSpacing: 1,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {DIFF_LABEL[difficulty]}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -782,15 +794,27 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
         >
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>RELEASE DATE</div>
-            <div style={{ fontSize: 14, color: diffColor, fontWeight: 600 }}>{releaseDate}</div>
+            <div
+              style={{ fontSize: 14, color: releaseDate ? diffColor : '#6b7c93', fontWeight: 600 }}
+            >
+              {releaseDate || '—'}
+            </div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>RETIRE DATE</div>
-            <div style={{ fontSize: 14, color: '#dce3ee', fontWeight: 600 }}>{retireDate}</div>
+            <div
+              style={{ fontSize: 14, color: retireDate ? '#dce3ee' : '#6b7c93', fontWeight: 600 }}
+            >
+              {retireDate || '—'}
+            </div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>OS</div>
-            <OsLabel os={os} />
+            {os ? (
+              <OsLabel os={os} />
+            ) : (
+              <div style={{ fontSize: 14, color: '#6b7c93', fontWeight: 600 }}>—</div>
+            )}
           </div>
         </div>
 
