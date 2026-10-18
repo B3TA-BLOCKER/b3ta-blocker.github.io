@@ -559,12 +559,20 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
   } = props
 
   const live = useHtbMachine(htbMachine)
-  const [hoverMachine, setHoverMachine] = useState(false)
-  const hoverProps = {
-    onMouseEnter: () => setHoverMachine(true),
-    onMouseLeave: () => setHoverMachine(false),
-    onFocus: () => setHoverMachine(true),
-    onBlur: () => setHoverMachine(false),
+  // hover/focus state is tracked separately, so the icon and the name glow independently
+  const [hoverIcon, setHoverIcon] = useState(false)
+  const [hoverName, setHoverName] = useState(false)
+  const iconHoverProps = {
+    onMouseEnter: () => setHoverIcon(true),
+    onMouseLeave: () => setHoverIcon(false),
+    onFocus: () => setHoverIcon(true),
+    onBlur: () => setHoverIcon(false),
+  }
+  const nameHoverProps = {
+    onMouseEnter: () => setHoverName(true),
+    onMouseLeave: () => setHoverName(false),
+    onFocus: () => setHoverName(true),
+    onBlur: () => setHoverName(false),
   }
   const diffRaw = String(propDifficulty ?? live?.difficulty ?? 'easy')
     .toLowerCase()
@@ -625,7 +633,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             rel="noopener noreferrer"
             title={'Play ' + name + ' on Hack The Box'}
             style={{ display: 'block', lineHeight: 0, flexShrink: 0, textDecoration: 'none' }}
-            {...hoverProps}
+            {...iconHoverProps}
           >
             <img
               src={iconUrl}
@@ -639,7 +647,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 objectFit: 'cover',
                 flexShrink: 0,
                 background: '#060a10',
-                boxShadow: hoverMachine
+                boxShadow: hoverIcon
                   ? '0 0 16px 2px ' + diffColor + ', 0 0 4px ' + diffColor
                   : '0 0 0 0 transparent',
                 transition: 'box-shadow 0.2s ease',
@@ -655,17 +663,17 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
               style={{
                 display: 'block',
                 width: 'fit-content',
-                color: hoverMachine ? diffColor : '#f1f5fb',
+                color: hoverName ? diffColor : '#f1f5fb',
                 fontSize: 19,
                 fontWeight: 700,
                 lineHeight: 1.2,
                 textDecoration: 'none',
-                textShadow: hoverMachine
+                textShadow: hoverName
                   ? '0 0 8px ' + diffColor + ', 0 0 18px ' + diffColor
                   : '0 0 0 transparent',
                 transition: 'color 0.2s ease, text-shadow 0.2s ease',
               }}
-              {...hoverProps}
+              {...nameHoverProps}
             >
               {name}
             </a>
@@ -760,7 +768,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
         >
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>RELEASE DATE</div>
-            <div style={{ fontSize: 14, color: '#5fd778', fontWeight: 600 }}>{releaseDate}</div>
+            <div style={{ fontSize: 14, color: diffColor, fontWeight: 600 }}>{releaseDate}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>RETIRE DATE</div>
@@ -912,12 +920,12 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             }}
           >
             <div style={SECTION_HEADING_STYLE}>MY TIME</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {yourUserTime && (
                 <div
                   style={{
                     borderLeft: '3px solid #e05c7a',
-                    padding: '9px 14px',
+                    padding: '3px 12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -935,7 +943,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 <div
                   style={{
                     borderLeft: '3px solid #e05c7a',
-                    padding: '9px 14px',
+                    padding: '3px 12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
