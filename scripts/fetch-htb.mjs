@@ -1,10 +1,27 @@
 // Run at BUILD time (GitHub Actions or locally). Needs env var HTB_APP_TOKEN.
 // Writes public/htb-data/<Machine>.json (+ public/htb-data/avatars/*), which
 // BoxInfoCard loads as static files. Nothing secret ends up in those files.
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 
-// Add every machine you have a writeup for:
-const MACHINES = ["Cap"];
+// Extra machines to always fetch (optional). Machines used in your posts via
+// htbMachine="Name" are discovered automatically, so you normally never edit this.
+const EXTRA_MACHINES = [];
+
+// Scan your content for htbMachine="..." so every card gets data without touching this file.
+async function discoverMachines(dir = "data") {
+  const found = new Set();
+  try {
+    const files = await readdir(dir, { recursive: true });
+    for (const f of files) {
+      if (!/\.(mdx?|tsx?)$/i.test(f)) continue;
+      const text = await readFile(dir + "/" + f, "utf8").catch(() => "");
+      for (const m of text.matchAll(/htbMachine\s*=\s*["']([A-Za-z0-9_-]+)["']/g)) found.add(m[1]);
+    }
+  } catch (e) {
+    console.warn("Could not scan '" + dir + "' for htbMachine:", e.message);
+  }
+  return found;
+}
 
 const ORIGIN = "https://labs.hackthebox.com";
 const API = ORIGIN + "/api/v4";
@@ -151,6 +168,9 @@ function parseBloodTime(b) {
 
 // ---- main ------------------------------------------------------------------
 await mkdir("public/htb-data", { recursive: true });
+
+const MACHINES = [...new Set([...EXTRA_MACHINES, ...(await discoverMachines())])];
+console.log("Machines to fetch:", MACHINES.join(", ") || "(none)");
 
 for (const name of MACHINES) {
   console.log("==", name);
