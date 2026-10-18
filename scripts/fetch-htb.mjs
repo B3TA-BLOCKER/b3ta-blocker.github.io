@@ -15,7 +15,7 @@ async function discoverMachines(dir = "data") {
     for (const f of files) {
       if (!/\.(mdx?|tsx?)$/i.test(f)) continue;
       const text = await readFile(dir + "/" + f, "utf8").catch(() => "");
-      for (const m of text.matchAll(/htbMachine\s*=\s*["']([A-Za-z0-9_-]+)["']/g)) found.add(m[1]);
+      for (const m of text.matchAll(/htbMachine\s*=\s*["'`]?\s*[`]?([A-Za-z0-9_-]+)[`]?\s*["'`]?/g)) found.add(m[1]);
     }
   } catch (e) {
     console.warn("Could not scan '" + dir + "' for htbMachine:", e.message);

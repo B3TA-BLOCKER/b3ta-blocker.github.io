@@ -74,13 +74,18 @@ export interface BoxInfoCardProps {
 
 const NEUTRAL_COLOR = '#6fb8e8'
 
+/** Keep only characters that can appear in an HTB machine name (drops stray backticks, quotes, spaces). */
+function cleanMachine(v: string) {
+  return v.replace(/[^A-Za-z0-9_-]/g, '')
+}
+
 /** Difficulty colours; used for the pill, the icon border and the hover glow. Edit freely. */
 const DIFF_COLOR: Record<Difficulty, string> = {
   veryeasy: '#a56cff', // purple
   easy: '#5fd778', // green
   medium: '#e0a526', // orange / yellow
   hard: '#e05c5c', // red
-  insane: '#ff4fd8', // magenta
+  insane: '#cfc6e6', // silver
 }
 
 const DIFF_LABEL: Record<Difficulty, string> = {
@@ -571,7 +576,8 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
     rootBlood: propRootBlood,
   } = props
 
-  const live = useHtbMachine(htbMachine)
+  const machineKey = htbMachine ? cleanMachine(htbMachine) : undefined
+  const live = useHtbMachine(machineKey)
   // hover/focus state is tracked separately, so the icon and the name glow independently
   const [hoverIcon, setHoverIcon] = useState(false)
   const [hoverName, setHoverName] = useState(false)
@@ -596,7 +602,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
   const diffColor = difficulty ? DIFF_COLOR[difficulty] : NEUTRAL_COLOR
   const machineUrl =
     propMachineUrl ??
-    'https://app.hackthebox.com/machines/' + encodeURIComponent(htbMachine ?? name)
+    'https://www.hackthebox.com/machines/' + cleanMachine(machineKey ?? name).toLowerCase()
   const os = propOs ?? live?.os ?? ''
   const releaseDate = propRelease ?? live?.releaseDate ?? ''
   const retireDate = propRetire ?? live?.retireDate ?? ''
