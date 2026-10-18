@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react'
 
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'insane'
+export type Difficulty = 'veryeasy' | 'easy' | 'medium' | 'hard' | 'insane'
 
 export interface BadgeInfo {
   name: string
@@ -69,11 +69,85 @@ export interface BoxInfoCardProps {
   rootBlood?: BloodInfo
 }
 
+/** Difficulty colours; used for the pill, the icon border and the hover glow. Edit freely. */
 const DIFF_COLOR: Record<Difficulty, string> = {
-  easy: '#5fd778',
-  medium: '#e0a526',
-  hard: '#e05c5c',
-  insane: '#b45cff',
+  veryeasy: '#a56cff', // purple
+  easy: '#5fd778', // green
+  medium: '#e0a526', // orange / yellow
+  hard: '#e05c5c', // red
+  insane: '#ff4fd8', // magenta
+}
+
+const DIFF_LABEL: Record<Difficulty, string> = {
+  veryeasy: 'Very Easy',
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+  insane: 'Insane',
+}
+
+/** Operating-system logo + word, coloured with each OS's brand colours. */
+function WindowsLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 3h8.2v8.2H3z" fill="#F25022" />
+      <path d="M12.8 3H21v8.2h-8.2z" fill="#7FBA00" />
+      <path d="M3 12.8h8.2V21H3z" fill="#00A4EF" />
+      <path d="M12.8 12.8H21V21h-8.2z" fill="#FFB900" />
+    </svg>
+  )
+}
+
+function LinuxLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <ellipse cx="12" cy="14" rx="6.6" ry="8" fill="#3a3f47" stroke="#6b7580" strokeWidth="0.8" />
+      <ellipse cx="12" cy="7.5" rx="4.4" ry="5" fill="#3a3f47" stroke="#6b7580" strokeWidth="0.8" />
+      <ellipse cx="12" cy="15.2" rx="4" ry="5.6" fill="#f2f2f2" />
+      <circle cx="10.4" cy="6.4" r="1.1" fill="#fff" />
+      <circle cx="13.6" cy="6.4" r="1.1" fill="#fff" />
+      <circle cx="10.5" cy="6.5" r="0.5" fill="#111" />
+      <circle cx="13.5" cy="6.5" r="0.5" fill="#111" />
+      <path d="M10.3 8.2h3.4L12 10.4z" fill="#FCC624" />
+      <ellipse cx="8.4" cy="22" rx="2.6" ry="1.2" fill="#FCC624" />
+      <ellipse cx="15.6" cy="22" rx="2.6" ry="1.2" fill="#FCC624" />
+    </svg>
+  )
+}
+
+function OsLabel({ os }: { os: string }) {
+  const key = os.toLowerCase()
+  let color = '#dce3ee'
+  let logo: React.ReactNode = null
+  if (key.includes('windows')) {
+    color = '#00A4EF'
+    logo = <WindowsLogo />
+  } else if (key.includes('linux')) {
+    color = '#FCC624'
+    logo = <LinuxLogo />
+  } else if (key.includes('freebsd')) {
+    color = '#E04B47'
+  } else if (key.includes('openbsd')) {
+    color = '#F2CA30'
+  } else if (key.includes('android')) {
+    color = '#3DDC84'
+  }
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        fontSize: 14,
+        fontWeight: 700,
+        color,
+      }}
+    >
+      {logo}
+      {os}
+    </div>
+  )
 }
 
 /** Shared style for every section heading (Release Date, Radar Graph, First Blood, ...). */
@@ -485,7 +559,16 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
   } = props
 
   const live = useHtbMachine(htbMachine)
-  const diffRaw = String(propDifficulty ?? live?.difficulty ?? 'easy').toLowerCase()
+  const [hoverMachine, setHoverMachine] = useState(false)
+  const hoverProps = {
+    onMouseEnter: () => setHoverMachine(true),
+    onMouseLeave: () => setHoverMachine(false),
+    onFocus: () => setHoverMachine(true),
+    onBlur: () => setHoverMachine(false),
+  }
+  const diffRaw = String(propDifficulty ?? live?.difficulty ?? 'easy')
+    .toLowerCase()
+    .replace(/[\s_-]/g, '')
   const difficulty: Difficulty = diffRaw in DIFF_COLOR ? (diffRaw as Difficulty) : 'easy'
   const diffColor = DIFF_COLOR[difficulty]
   const machineUrl =
@@ -542,6 +625,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             rel="noopener noreferrer"
             title={'Play ' + name + ' on Hack The Box'}
             style={{ display: 'block', lineHeight: 0, flexShrink: 0, textDecoration: 'none' }}
+            {...hoverProps}
           >
             <img
               src={iconUrl}
@@ -555,6 +639,10 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 objectFit: 'cover',
                 flexShrink: 0,
                 background: '#060a10',
+                boxShadow: hoverMachine
+                  ? '0 0 16px 2px ' + diffColor + ', 0 0 4px ' + diffColor
+                  : '0 0 0 0 transparent',
+                transition: 'box-shadow 0.2s ease',
               }}
             />
           </a>
@@ -567,12 +655,17 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
               style={{
                 display: 'block',
                 width: 'fit-content',
-                color: '#f1f5fb',
+                color: hoverMachine ? diffColor : '#f1f5fb',
                 fontSize: 19,
                 fontWeight: 700,
                 lineHeight: 1.2,
                 textDecoration: 'none',
+                textShadow: hoverMachine
+                  ? '0 0 8px ' + diffColor + ', 0 0 18px ' + diffColor
+                  : '0 0 0 transparent',
+                transition: 'color 0.2s ease, text-shadow 0.2s ease',
               }}
+              {...hoverProps}
             >
               {name}
             </a>
@@ -647,7 +740,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 textTransform: 'uppercase',
               }}
             >
-              {difficulty}
+              {DIFF_LABEL[difficulty]}
             </span>
           </div>
         </div>
@@ -675,7 +768,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>OS</div>
-            <div style={{ fontSize: 14, color: '#dce3ee', fontWeight: 600 }}>{os}</div>
+            <OsLabel os={os} />
           </div>
         </div>
 
@@ -686,7 +779,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             viewBox={'0 8 ' + radarSize + ' ' + (radarSize - 34)}
             style={{
               width: '100%',
-              maxWidth: 350,
+              maxWidth: 300,
               display: 'block',
               margin: '0 auto',
               overflow: 'visible',
