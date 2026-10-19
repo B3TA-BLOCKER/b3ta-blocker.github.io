@@ -131,10 +131,10 @@ function OsLabel({ os }: { os: string }) {
   let logo: React.ReactNode = null
   if (key.includes('windows')) {
     color = '#00A4EF'
-    logo = <WindowsLogo />
+    logo = <WindowsLogo size={18} />
   } else if (key.includes('linux')) {
     color = '#FCC624'
-    logo = <LinuxLogo />
+    logo = <LinuxLogo size={18} />
   } else if (key.includes('freebsd')) {
     color = '#E04B47'
   } else if (key.includes('openbsd')) {
@@ -148,8 +148,8 @@ function OsLabel({ os }: { os: string }) {
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 6,
-        fontSize: 14,
+        gap: 7,
+        fontSize: 15,
         fontWeight: 700,
         color,
       }}
@@ -172,12 +172,19 @@ const SECTION_HEADING_STYLE: React.CSSProperties = {
   marginBottom: 8,
 }
 
+// Same size/weight as the section headings (RADAR GRAPH, FIRST BLOOD, MY TIME)
 const META_LABEL_STYLE: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: 16,
   fontWeight: 700,
   color: HEADING_COLOR,
-  letterSpacing: 1,
-  marginBottom: 4,
+  letterSpacing: 1.2,
+  marginBottom: 6,
+}
+
+// Same size/weight as the other values in the card (timers, USER/ROOT labels)
+const META_VALUE_STYLE: React.CSSProperties = {
+  fontSize: 15,
+  fontWeight: 700,
 }
 
 /** HTB colours the rating histogram by POSITION (left = easy, right = hard), not by value. */
@@ -698,8 +705,8 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
               src={iconUrl}
               alt={name + ' icon'}
               style={{
-                width: 50,
-                height: 50,
+                width: 64,
+                height: 64,
                 margin: 0,
                 borderRadius: '50%',
                 objectFit: 'cover',
@@ -722,7 +729,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 display: 'block',
                 width: 'fit-content',
                 color: hoverName ? diffColor : '#f1f5fb',
-                fontSize: 19,
+                fontSize: 25,
                 fontWeight: 700,
                 lineHeight: 1.2,
                 textDecoration: 'none',
@@ -736,7 +743,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
               {name}
             </a>
             {creators.length > 0 && (
-              <div style={{ fontSize: 11, color: '#8a9bb3' }}>
+              <div style={{ fontSize: 14, color: '#8a9bb3' }}>
                 by{' '}
                 {creators.map((c, idx) => (
                   <React.Fragment key={(c.name ?? '') + idx}>
@@ -767,7 +774,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                 display: 'flex',
                 alignItems: 'flex-end',
                 gap: 3,
-                height: 26,
+                height: 34,
               }}
             >
               {bars.map((v, i) =>
@@ -786,7 +793,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
                   <div
                     key={i}
                     style={{
-                      width: 7,
+                      width: 9,
                       height: Math.max(12, (v / maxBar) * 100) + '%',
                       background: barColor(i, bars.length),
                       borderRadius: '3px 3px 0 0',
@@ -798,18 +805,23 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             {difficulty && (
               <span
                 style={{
-                  display: 'inline-block',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   border: '1px solid ' + diffColor,
                   color: diffColor,
-                  fontSize: 10,
+                  fontSize: 13,
                   fontWeight: 700,
-                  padding: '4px 12px',
+                  lineHeight: 1,
+                  height: 34,
+                  padding: '0 18px',
                   borderRadius: 999,
                   letterSpacing: 1,
                   textTransform: 'uppercase',
                 }}
               >
-                {DIFF_LABEL[difficulty]}
+                {/* negative margin cancels the trailing letter-spacing so the text is truly centred */}
+                <span style={{ marginRight: -1 }}>{DIFF_LABEL[difficulty]}</span>
               </span>
             )}
           </div>
@@ -830,17 +842,13 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
         >
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>RELEASE DATE</div>
-            <div
-              style={{ fontSize: 14, color: releaseDate ? diffColor : '#6b7c93', fontWeight: 600 }}
-            >
+            <div style={{ ...META_VALUE_STYLE, color: releaseDate ? diffColor : '#6b7c93' }}>
               {releaseDate || '—'}
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={META_LABEL_STYLE}>RETIRE DATE</div>
-            <div
-              style={{ fontSize: 14, color: retireDate ? '#dce3ee' : '#6b7c93', fontWeight: 600 }}
-            >
+            <div style={{ ...META_VALUE_STYLE, color: retireDate ? '#dce3ee' : '#6b7c93' }}>
               {retireDate || '—'}
             </div>
           </div>
@@ -849,7 +857,7 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
             {os ? (
               <OsLabel os={os} />
             ) : (
-              <div style={{ fontSize: 14, color: '#6b7c93', fontWeight: 600 }}>—</div>
+              <div style={{ ...META_VALUE_STYLE, color: '#6b7c93' }}>—</div>
             )}
           </div>
         </div>
