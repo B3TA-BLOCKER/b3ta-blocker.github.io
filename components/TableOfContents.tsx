@@ -29,6 +29,19 @@ const LEVEL_WIDTH = 16
 const MAX_LEVEL = 4
 const LINE_CLASS = 'bg-gray-800 dark:bg-gray-700'
 
+// Sub-headings fade/slide in when their section opens. Defined here so no
+// extra CSS file has to be touched.
+const TOC_ANIMATION_CSS = `
+@keyframes toc-sub-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.toc-sub-in { animation: toc-sub-in 180ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .toc-sub-in { animation: none; }
+}
+`
+
 interface HeadingEntry {
   value: string
   id: string
@@ -87,6 +100,17 @@ function computeTreeRows(list: HeadingEntry[]): TreeRow[] {
     isLast: isLast[i],
     ancestorContinues: ancestorContinuesFor(i, levels[i]),
   }))
+}
+
+// For every row, the index of the top-level heading whose section it belongs
+// to (a top-level row belongs to itself). Rows that appear before any
+// top-level heading have no section (-1) and are always shown.
+function computeSectionOf(rows: TreeRow[]): number[] {
+  let current = -1
+  return rows.map((row, i) => {
+    if (row.level === 0) current = i
+    return current
+  })
 }
 
 export default function TableOfContents({ toc }: TableOfContentsProps) {
@@ -153,8 +177,14 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
     items ?? fallback.map((item) => ({ value: item.value, id: '', depth: item.depth }))
 
   const rows = useMemo(() => computeTreeRows(list), [list])
+  const sectionOf = useMemo(() => computeSectionOf(rows), [rows])
 
   if (rows.length === 0) return null
+
+  // The section that is currently being read: the top-level heading that owns
+  // the active heading. Only this section's sub-headings are shown; moving on
+  // to the next top-level heading closes it and opens the next one.
+  const activeSection = activeIndex >= 0 ? sectionOf[activeIndex] : -1
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, index: number) => {
     e.preventDefault()
@@ -170,6 +200,7 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
       className="toc-nav no-scrollbar max-h-[calc(100vh-9rem)] overflow-y-auto pr-2"
       aria-label="Table of contents"
     >
+      <style>{TOC_ANIMATION_CSS}</style>
       <h2 className="mb-4 font-mono text-sm font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
         <span className="text-primary-500">{'//'}</span> On this page
       </h2>
@@ -177,6 +208,11 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
         {rows.map((row, index) => {
           const isActive = activeIndex === index
           const isTopLevel = row.level === 0
+          const section = sectionOf[index]
+
+          // Collapsed: sub-headings of every section except the one being read.
+          if (!isTopLevel && section !== -1 && section !== activeSection) return null
+
           const size = isTopLevel ? 'text-base' : 'text-sm'
           const href = row.id ? `#${row.id}` : '#'
 
@@ -186,7 +222,7 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
           return (
             <li
               key={`${index}-${row.value}`}
-              className="relative"
+              className={`relative ${isTopLevel ? '' : 'toc-sub-in'}`}
               style={{ paddingLeft: contentPadding }}
             >
               {/* Ancestor trunk lines — keep running past this row for any
