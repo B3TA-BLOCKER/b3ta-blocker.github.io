@@ -265,6 +265,19 @@ function useHtbMachine(name?: string) {
 
 const RADAR_LABELS = ['Enumeration', 'Real-Life', 'CVE', 'Custom Exploitation', 'CTF-Like']
 
+// Radar label geometry: distance from the outer ring, box size, and which side of the anchor
+// point each label sits on (top, upper-right, lower-right, lower-left, upper-left).
+const LABEL_GAP = 9
+const LABEL_W = 130
+const LABEL_H = 36
+const LABEL_PLACEMENT: { h: 'left' | 'center' | 'right'; v: 'top' | 'middle' | 'bottom' }[] = [
+  { h: 'center', v: 'bottom' },
+  { h: 'left', v: 'middle' },
+  { h: 'center', v: 'top' },
+  { h: 'center', v: 'top' },
+  { h: 'right', v: 'middle' },
+]
+
 function axisPoint(i: number, n: number, cx: number, cy: number, r: number) {
   const angle = (Math.PI * 2 * i) / n - Math.PI / 2
   return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) }
@@ -845,10 +858,10 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
         <div style={{ marginBottom: 2 }}>
           <div style={SECTION_HEADING_STYLE}>RADAR GRAPH</div>
           <svg
-            viewBox={'0 8 ' + radarSize + ' ' + (radarSize - 34)}
+            viewBox={'-30 26 ' + (radarSize + 60) + ' 248'}
             style={{
               width: '100%',
-              maxWidth: 300,
+              maxWidth: 400,
               display: 'block',
               margin: '0 auto',
               overflow: 'visible',
@@ -899,21 +912,37 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
               <circle key={'m' + i} cx={p.x} cy={p.y} r={3.5} fill={GREEN} />
             ))}
             {RADAR_LABELS.map((label, i) => {
-              const p = axisPoint(i, 5, cx, cy, maxR + 30)
+              // Each label is anchored just outside its own vertex (LABEL_GAP px away) and
+              // grows away from the chart, so there is no dead space between label and edge.
+              const p = axisPoint(i, 5, cx, cy, maxR + LABEL_GAP)
               const words = label.split(' ')
+              const place = LABEL_PLACEMENT[i]
+              const x =
+                place.h === 'center' ? p.x - LABEL_W / 2 : place.h === 'left' ? p.x : p.x - LABEL_W
+              const y =
+                place.v === 'middle' ? p.y - LABEL_H / 2 : place.v === 'top' ? p.y : p.y - LABEL_H
               return (
                 <foreignObject
                   key={label}
-                  x={p.x - 65}
-                  y={p.y - 16}
-                  width={130}
-                  height={32}
+                  x={x}
+                  y={y}
+                  width={LABEL_W}
+                  height={LABEL_H}
                   style={{ overflow: 'visible' }}
                 >
                   <div
                     style={{
-                      width: 130,
-                      textAlign: 'center',
+                      width: LABEL_W,
+                      height: LABEL_H,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent:
+                        place.v === 'middle'
+                          ? 'center'
+                          : place.v === 'top'
+                            ? 'flex-start'
+                            : 'flex-end',
+                      textAlign: place.h,
                       color: '#8cc8f0',
                       fontSize: 14,
                       fontWeight: 700,
