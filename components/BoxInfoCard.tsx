@@ -505,29 +505,47 @@ function RootBloodIcon({ size = 16 }: { size?: number }) {
   )
 }
 
-function BloodTag({ kind, time }: { kind: 'user' | 'root'; time: string }) {
+function BloodTag({ kind }: { kind: 'user' | 'root' }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 7,
-          background: BLOOD_BG,
-          color: BLOOD_RED,
-          borderRadius: 999,
-          padding: '5px 13px',
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: 0.5,
-          textTransform: 'uppercase',
-        }}
-        title={kind === 'user' ? 'User blood' : 'Root blood'}
-      >
-        {kind === 'user' ? <UserBloodIcon /> : <RootBloodIcon />}
-        {kind}
-      </span>
-      <span style={{ color: '#c9d4e3', fontSize: 12, fontWeight: 600 }}>{time}</span>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 7,
+        flexShrink: 0,
+        background: BLOOD_BG,
+        color: BLOOD_RED,
+        borderRadius: 999,
+        padding: '5px 13px',
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
+      }}
+      title={kind === 'user' ? 'User blood' : 'Root blood'}
+    >
+      {kind === 'user' ? <UserBloodIcon /> : <RootBloodIcon />}
+      {kind}
+    </span>
+  )
+}
+
+/** One First Blood row: pill on the left, LCD clock in the middle, HTB profile card on the right. */
+function BloodRow({ kind, blood }: { kind: 'user' | 'root'; blood: BloodInfo }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 10,
+      }}
+    >
+      <BloodTag kind={kind} />
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: 110 }}>
+        <LcdTimer value={blood.time} small />
+      </div>
+      <Badge badge={blood} />
     </div>
   )
 }
@@ -924,32 +942,8 @@ export default function BoxInfoCard(props: BoxInfoCardProps) {
           >
             <div style={SECTION_HEADING_STYLE}>FIRST BLOOD</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {userBlood && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                  }}
-                >
-                  <BloodTag kind="user" time={userBlood.time} />
-                  <Badge badge={userBlood} />
-                </div>
-              )}
-              {rootBlood && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                  }}
-                >
-                  <BloodTag kind="root" time={rootBlood.time} />
-                  <Badge badge={rootBlood} />
-                </div>
-              )}
+              {userBlood && <BloodRow kind="user" blood={userBlood} />}
+              {rootBlood && <BloodRow kind="root" blood={rootBlood} />}
             </div>
           </div>
         )}
