@@ -162,30 +162,49 @@ input:-webkit-autofill:focus {
   display: inline-block;
   vertical-align: middle;
 }
-/* Glitch text: two clipped, sideways-shifted copies of the text sit on top of it,
-   which slices the letters horizontally. Put the same text in data-text. */
+/* Glitch text: a thin red/cyan fringe either side of the letters, with a short
+   flicker every few seconds (not constant movement). Colors are set via the two
+   variables so they are easy to retheme. */
 .glitch-text {
-  position: relative;
-  display: inline-block;
-  white-space: nowrap;
+  --glitch-a: #fb2c36;
+  --glitch-b: #06b6d4;
+  text-shadow:
+    -1.5px 0 var(--glitch-a),
+    1.5px 0 var(--glitch-b);
+  animation: glitch-flicker 6s infinite;
 }
-.glitch-text::before,
-.glitch-text::after {
-  content: attr(data-text);
-  content: attr(data-text) / ''; /* empty alt text: screen readers skip the copy */
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.dark .glitch-text {
+  --glitch-b: #22d3ee;
 }
-.glitch-text::before {
-  transform: translateX(-0.1em);
-  clip-path: inset(18% 0 62% 0);
+@keyframes glitch-flicker {
+  0%,
+  92%,
+  100% {
+    text-shadow:
+      -1.5px 0 var(--glitch-a),
+      1.5px 0 var(--glitch-b);
+  }
+  94% {
+    text-shadow:
+      -5px 0 var(--glitch-a),
+      5px 0 var(--glitch-b);
+  }
+  96% {
+    text-shadow:
+      4px 0 var(--glitch-a),
+      -4px 0 var(--glitch-b);
+  }
+  98% {
+    text-shadow:
+      -2.5px 0 var(--glitch-a),
+      2.5px 0 var(--glitch-b);
+  }
 }
-.glitch-text::after {
-  transform: translateX(0.1em);
-  clip-path: inset(58% 0 22% 0);
+@media (prefers-reduced-motion: reduce) {
+  .glitch-text {
+    animation: none;
+  }
 }
-
 @keyframes blink {
   0%,
   100% {

@@ -41,17 +41,17 @@ const Header = () => {
           so nav content still lines up with the rest of the page. */}
       <header className="mx-auto flex max-w-4xl items-center justify-between px-4 py-10 sm:px-6 xl:max-w-6xl xl:px-0">
         {isHome ? (
-          <div className="inline-flex items-center gap-3 text-green-700 dark:text-green-500">
-            <span
-              className="h-2 w-2 rounded-full bg-green-700 dark:bg-green-500"
-              style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
-            />
+          <div className="inline-flex items-center gap-2.5 rounded-md border border-green-600/40 bg-green-600/10 px-3 py-1.5 sm:gap-3 sm:px-4 sm:py-2 dark:border-green-500/35 dark:bg-green-500/[0.07]">
+            {/* Live dot: solid core with a soft ring that pulses outward */}
+            <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-600 opacity-60 motion-reduce:animate-none dark:bg-green-400" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-600 dark:bg-green-400" />
+            </span>
             {relativeTime && (
-              <span
-                className="font-glitch glitch-text text-lg leading-none tracking-wide uppercase min-[500px]:text-2xl lg:text-3xl lg:tracking-wider"
-                data-text={`Latest post — ${relativeTime}`}
-              >
-                {`Latest post — ${relativeTime}`}
+              <span className="font-glitch glitch-text text-sm leading-none tracking-[0.12em] text-gray-900 uppercase min-[500px]:text-base lg:text-lg lg:tracking-[0.14em] dark:text-gray-100">
+                {/* On small phones only the time is shown, so it fits beside the icons */}
+                <span className="max-[499px]:sr-only">Latest post — </span>
+                {relativeTime}
               </span>
             )}
           </div>
