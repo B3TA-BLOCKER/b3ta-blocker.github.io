@@ -9,6 +9,7 @@ import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import TableOfContents from '@/components/TableOfContents'
+import { ViewTracker } from '@/components/ViewCount'
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -52,6 +53,7 @@ export default function PostLayout({
   return (
     <SectionContainer>
       <ScrollTopAndComment />
+      <ViewTracker slug={path} />
       <article>
         <div className="xl:divide-y xl:divide-gray-800 xl:dark:divide-gray-700">
           <header className="pt-6 xl:pb-6">

@@ -83,9 +83,9 @@ export default function Home({ posts }) {
                           </div>
                         )}
                       </div>
-                      <dd className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                      <div className="mt-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
-                      </dd>
+                      </div>
                     </Link>
                     <div className="flex-1 space-y-3">
                       <div>

@@ -6,6 +6,7 @@ import { CoreContent } from 'pliny/utils/contentlayer'
 import type { Blog } from 'contentlayer/generated'
 import Link from '@/components/Link'
 import Tag from '@/components/Tag'
+import PostMeta from '@/components/PostMeta'
 import siteMetadata from '@/data/siteMetadata'
 import Image from 'next/image'
 
@@ -82,7 +83,7 @@ export default function ListLayoutWithTags({
         <div className="pt-2 pb-2" />
         <ul className="divide-y divide-gray-800 dark:divide-gray-700">
           {displayPosts.map((post) => {
-            const { path, date, title, summary, tags, images, locked } = post
+            const { path, date, title, summary, tags, images, locked, readingTime } = post
             return (
               <li key={path} className="py-5">
                 <article className="flex items-center gap-4">
@@ -140,9 +141,10 @@ export default function ListLayoutWithTags({
                       ))}
                     </div>
                     <p className="prose max-w-none text-gray-500 dark:text-gray-400">{summary}</p>
+                    <PostMeta slug={path} minutes={readingTime?.minutes} />
                     <Link
                       href={`/${path}`}
-                      className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium"
+                      className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 inline-block pt-1 text-sm font-medium"
                       aria-label={`Read more: "${title}"`}
                     >
                       {locked ? 'View details →' : 'Read more →'}
