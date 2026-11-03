@@ -25,9 +25,10 @@ function Tag({
   tone?: 'gray' | 'green' | 'red'
 }) {
   const tones = {
-    gray: 'border-gray-800 bg-gray-900/60 text-gray-200',
-    green: 'border-green-500/30 bg-green-500/5 text-green-400',
-    red: 'border-red-500/30 bg-red-500/5 text-red-400',
+    gray: 'border-gray-300 bg-gray-100 text-gray-800 dark:border-gray-800 dark:bg-gray-900/60 dark:text-gray-200',
+    green:
+      'border-green-600/40 bg-green-600/5 text-green-700 dark:border-green-500/30 dark:bg-green-500/5 dark:text-green-400',
+    red: 'border-red-600/40 bg-red-600/5 text-red-700 dark:border-red-500/30 dark:bg-red-500/5 dark:text-red-400',
   }
   return (
     <span className={`rounded border px-4 py-1.5 font-mono text-base ${tones[tone]}`}>
@@ -52,10 +53,10 @@ function TimelineItem({
   bullets?: string[]
 }) {
   return (
-    <div className="relative border-l border-gray-800 pl-6">
+    <div className="relative border-l border-gray-300 pl-6 dark:border-gray-800">
       <span className="absolute top-1.5 -left-[5px] h-2.5 w-2.5 rounded-full bg-green-500" />
       <div className="mb-1 font-mono text-sm text-gray-500">{date}</div>
-      <h3 className="text-xl font-bold text-gray-100">
+      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
         {role}
         {org &&
           (href ? (
@@ -63,20 +64,23 @@ function TimelineItem({
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-normal text-gray-400 hover:text-red-400"
+              className="font-normal text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
             >
               {' '}
               · {org}
             </a>
           ) : (
-            <span className="font-normal text-gray-400"> · {org}</span>
+            <span className="font-normal text-gray-600 dark:text-gray-400"> · {org}</span>
           ))}
       </h3>
-      {note && <p className="mt-1 text-base text-gray-500">{note}</p>}
+      {note && <p className="mt-1 text-base text-gray-600 dark:text-gray-500">{note}</p>}
       {bullets && (
         <ul className="mt-3 space-y-1.5">
           {bullets.map((b, i) => (
-            <li key={i} className="flex gap-2 text-base leading-relaxed text-gray-400">
+            <li
+              key={i}
+              className="flex gap-2 text-base leading-relaxed text-gray-700 dark:text-gray-400"
+            >
               <span className="mt-0.5 text-red-500">›</span>
               <span>{b}</span>
             </li>
@@ -155,7 +159,7 @@ export function AboutMiddleContent() {
           {certifications.map((c) => (
             <div
               key={c.name}
-              className="inline-flex items-center gap-2 rounded border border-yellow-600/30 bg-yellow-600/5 px-4 py-2 font-mono text-base text-yellow-500"
+              className="inline-flex items-center gap-2 rounded border border-yellow-600/40 bg-yellow-600/5 px-4 py-2 font-mono text-base text-yellow-700 dark:border-yellow-600/30 dark:text-yellow-500"
             >
               <svg
                 className="h-4 w-4 shrink-0"
@@ -182,9 +186,9 @@ export function AboutMiddleContent() {
           {projects.map((p) => (
             <div
               key={p.file}
-              className="overflow-hidden rounded-lg border border-gray-800 bg-gray-900/40"
+              className="overflow-hidden rounded-lg border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900/40"
             >
-              <div className="flex items-center gap-1.5 border-b border-gray-800 bg-gray-900/60 px-3 py-2">
+              <div className="flex items-center gap-1.5 border-b border-gray-300 bg-gray-100 px-3 py-2 dark:border-gray-800 dark:bg-gray-900/60">
                 <span className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
                 <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/70" />
                 <span className="h-2.5 w-2.5 rounded-full bg-green-500/70" />
@@ -192,15 +196,17 @@ export function AboutMiddleContent() {
               </div>
               <div className="p-4">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <h3 className="text-lg font-bold text-gray-100">{p.name}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{p.name}</h3>
                   <span className="shrink-0 font-mono text-xs text-gray-600">{p.tag}</span>
                 </div>
-                <p className="mb-3 text-base leading-relaxed text-gray-400">{p.desc}</p>
+                <p className="mb-3 text-base leading-relaxed text-gray-700 dark:text-gray-400">
+                  {p.desc}
+                </p>
                 <a
                   href={p.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-mono text-sm text-red-500 hover:text-red-400"
+                  className="inline-flex items-center gap-1 font-mono text-sm text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400"
                 >
                   view project
                   <svg
@@ -230,11 +236,11 @@ export function AboutMiddleContent() {
           {community.map((c, i) => (
             <div
               key={i}
-              className="flex flex-col gap-0.5 border-b border-gray-900 pb-4 last:border-0 last:pb-0 sm:flex-row sm:items-baseline sm:justify-between"
+              className="flex flex-col gap-0.5 border-b border-gray-200 pb-4 last:border-0 last:pb-0 sm:flex-row sm:items-baseline sm:justify-between dark:border-gray-900"
             >
               <div>
-                <span className="text-lg font-bold text-gray-100">{c.role}</span>
-                <span className="text-gray-500"> · {c.org}</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{c.role}</span>
+                <span className="text-gray-600 dark:text-gray-500"> · {c.org}</span>
                 {c.note && <p className="text-base text-gray-600">{c.note}</p>}
               </div>
               <span className="shrink-0 font-mono text-sm text-gray-600">{c.date}</span>
