@@ -159,7 +159,7 @@ export default async function Page() {
       <div className="space-y-10 pb-16">
         {sections.map((section) => (
           <div key={section.label}>
-            <p className="mb-4 font-mono text-xs tracking-widest text-gray-500 uppercase dark:text-gray-500">
+            <p className="mb-4 font-mono text-base font-semibold tracking-widest text-gray-700 uppercase sm:text-lg dark:text-gray-300">
               <span className="text-primary-500">#</span> {section.label}
             </p>
             <div className="flex flex-wrap gap-3">
