@@ -8,29 +8,61 @@ export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I 
 // --- Category definitions -------------------------------------------------
 // Tags are matched against these lists (exact match on the raw tag key from
 // tag-data.json). Anything that doesn't match a list, and doesn't match the
-// CVE regex below, falls into "Other".
+// CVE regex below, falls into "other".
+//
+// Section order on the page = order of this array.
+// Tags inside a section are sorted by post count (desc), then alphabetically,
+// unless the category defines `order`, which pins an explicit order.
+//
+// Legacy/duplicate tags (eternalblue, python-sandbox-escape, js2py, git,
+// sql-database) are still mapped so the page stays clean until the posts are
+// retagged. Once retagged, they can be deleted from these lists.
 
-const CATEGORIES: { label: string; tags: string[] }[] = [
+type Category = { label: string; tags: string[]; order?: boolean }
+
+const CATEGORIES: Category[] = [
   {
-    label: 'vulnerability classes',
+    label: 'content type',
+    tags: ['machine', 'challenge', 'coding'],
+  },
+  {
+    label: 'source',
+    tags: ['hackthebox', 'vulnhub'],
+  },
+  {
+    label: 'difficulty',
+    tags: ['very-easy', 'easy', 'medium', 'hard'],
+    order: true, // keep this exact order, not count-based
+  },
+  {
+    label: 'os & environment',
+    tags: ['linux', 'windows', 'active-directory'],
+  },
+  {
+    label: 'web',
     tags: [
-      'privilege-escalation',
-      'sudo-exploitation',
-      'rce',
+      'web-exploitation',
       'sql-injection',
       'lfi',
       'path-traversal',
       'file-upload',
+      'idor',
+      'virtual-host',
+    ],
+  },
+  {
+    label: 'privilege escalation',
+    tags: ['privilege-escalation', 'sudo-exploitation', 'suid', 'incron', 'linux-capabilities'],
+  },
+  {
+    label: 'exploitation & access',
+    tags: [
+      'rce',
+      'reverse-shell',
       'sandbox-escape',
       'python-sandbox-escape',
       'lateral-movement',
       'credential-reuse',
-      'reverse-shell',
-      'suid',
-      'incron',
-      'virtual-host',
-      'web-exploitation',
-      'malicious-model',
     ],
   },
   {
@@ -38,75 +70,64 @@ const CATEGORIES: { label: string; tags: string[] }[] = [
     tags: ['ms17-010', 'eternalblue'],
   },
   {
-    label: 'platforms',
-    tags: ['linux', 'windows', 'active-directory'],
+    label: 'software & targets',
+    tags: ['jenkins', 'jupyter', 'freepbx', 'boltwire', 'krayin-crm', 'craftcms', 'sql-database'],
   },
   {
-    label: 'tools & targets',
-    tags: [
-      'hackthebox',
-      'machine',
-      'vulnhub',
-      'metasploit',
-      'jenkins',
-      'jupyter',
-      'mcp',
-      'git-dumper',
-      'boltwire',
-      'freepbx',
-      'tensorflow',
-      'javascript',
-      'js2py',
-      'cpp',
-      'coding',
-      'challenge',
-    ],
+    label: 'tools',
+    tags: ['metasploit', 'git-dumper', 'git'],
   },
   {
-    label: 'difficulty',
-    tags: ['easy', 'medium', 'hard', 'very-easy'],
+    label: 'ai / ml',
+    tags: ['tensorflow', 'malicious-model', 'mcp'],
+  },
+  {
+    label: 'languages & services',
+    tags: ['javascript', 'js2py', 'cpp', 'telnet'],
   },
 ]
 
 const CVE_PATTERN = /^cve-\d{4}-\d+$/i
+const CVE_LABEL = 'cves & named exploits'
 
-function categorizeTags(tagKeys: string[]) {
+function categorizeTags(tagKeys: string[], tagCounts: Record<string, number>) {
   const remaining = new Set(tagKeys)
-  const sections: { label: string; tags: string[] }[] = []
+  const sections: { label: string; tags: string[]; order?: boolean }[] = []
 
   for (const category of CATEGORIES) {
     const matched = category.tags.filter((t) => remaining.has(t))
     matched.forEach((t) => remaining.delete(t))
-    if (matched.length > 0) {
-      sections.push({ label: category.label, tags: matched })
-    }
+    sections.push({ label: category.label, tags: matched, order: category.order })
   }
 
+  // CVE tags are matched by pattern so new ones are picked up automatically
   const cveMatches = Array.from(remaining).filter((t) => CVE_PATTERN.test(t))
-  if (cveMatches.length > 0) {
-    const cveSection = sections.find((s) => s.label === 'cves & named exploits')
-    if (cveSection) {
-      cveSection.tags.push(...cveMatches)
-    } else {
-      sections.push({ label: 'cves & named exploits', tags: cveMatches })
-    }
-    cveMatches.forEach((t) => remaining.delete(t))
-  }
+  cveMatches.forEach((t) => remaining.delete(t))
+  const cveSection = sections.find((s) => s.label === CVE_LABEL)
+  if (cveSection) cveSection.tags.push(...cveMatches)
+
+  // Count desc, then alphabetical; sections with `order` keep their listed order
+  sections.forEach((s) => {
+    if (s.order) return
+    s.tags.sort((a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b))
+  })
+
+  const result = sections.filter((s) => s.tags.length > 0)
 
   if (remaining.size > 0) {
-    sections.push({ label: 'other', tags: Array.from(remaining) })
+    const other = Array.from(remaining).sort(
+      (a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b)
+    )
+    result.push({ label: 'other', tags: other })
   }
 
-  return sections
+  return result
 }
 
 export default async function Page() {
   const tagCounts = tagData as Record<string, number>
   const tagKeys = Object.keys(tagCounts)
-  const sections = categorizeTags(tagKeys)
-
-  // Sort tags within each section by post count, descending
-  sections.forEach((s) => s.tags.sort((a, b) => tagCounts[b] - tagCounts[a]))
+  const sections = categorizeTags(tagKeys, tagCounts)
 
   return (
     <div>
