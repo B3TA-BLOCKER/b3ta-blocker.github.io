@@ -9,7 +9,7 @@
   --font-sans:
     var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-cursive: var(--font-satisfy), cursive;
+  --font-glitch: var(--font-anton), Impact, 'Arial Narrow Bold', sans-serif;
   /* Colors */
   --color-primary-50: oklch(0.971 0.014 27);
   --color-primary-100: oklch(0.948 0.028 27);
@@ -162,6 +162,30 @@ input:-webkit-autofill:focus {
   display: inline-block;
   vertical-align: middle;
 }
+/* Glitch text: two clipped, sideways-shifted copies of the text sit on top of it,
+   which slices the letters horizontally. Put the same text in data-text. */
+.glitch-text {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  content: attr(data-text) / ''; /* empty alt text: screen readers skip the copy */
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.glitch-text::before {
+  transform: translateX(-0.1em);
+  clip-path: inset(18% 0 62% 0);
+}
+.glitch-text::after {
+  transform: translateX(0.1em);
+  clip-path: inset(58% 0 22% 0);
+}
+
 @keyframes blink {
   0%,
   100% {

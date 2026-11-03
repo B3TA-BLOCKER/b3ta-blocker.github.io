@@ -41,13 +41,18 @@ const Header = () => {
           so nav content still lines up with the rest of the page. */}
       <header className="mx-auto flex max-w-4xl items-center justify-between px-4 py-10 sm:px-6 xl:max-w-6xl xl:px-0">
         {isHome ? (
-          <div className="font-cursive inline-flex items-center gap-2 text-2xl font-bold tracking-wide text-green-700 dark:text-green-500">
+          <div className="inline-flex items-center gap-3 text-green-700 dark:text-green-500">
             <span
               className="h-2 w-2 rounded-full bg-green-700 dark:bg-green-500"
               style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
             />
             {relativeTime && (
-              <span className="font-cursive">{`Latest post — ${relativeTime}`}</span>
+              <span
+                className="font-glitch glitch-text text-lg leading-none tracking-wide uppercase min-[500px]:text-2xl lg:text-3xl lg:tracking-wider"
+                data-text={`Latest post — ${relativeTime}`}
+              >
+                {`Latest post — ${relativeTime}`}
+              </span>
             )}
           </div>
         ) : (
