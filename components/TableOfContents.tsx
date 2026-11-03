@@ -197,11 +197,11 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
 
   return (
     <nav
-      className="toc-nav no-scrollbar max-h-[calc(100vh-9rem)] overflow-y-auto pr-2"
+      className="toc-nav no-scrollbar max-h-[calc(100vh-9rem)] overflow-y-auto"
       aria-label="Table of contents"
     >
       <style>{TOC_ANIMATION_CSS}</style>
-      <h2 className="mb-4 font-mono text-sm font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+      <h2 className="mb-2 flex h-10 items-center gap-2 font-mono text-sm font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
         <span className="text-primary-500">{'//'}</span> On this page
       </h2>
       <ul className="space-y-2.5">

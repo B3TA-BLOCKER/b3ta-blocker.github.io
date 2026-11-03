@@ -116,7 +116,7 @@ export default function PostLayout({
               of the post instead of running out of room early. */}
           <div
             className={`grid-rows-[auto_1fr] divide-y divide-gray-800 pb-8 xl:grid xl:items-start xl:gap-x-8 xl:divide-y-0 dark:divide-gray-700 ${
-              hasToc ? 'xl:grid-cols-[13rem_minmax(0,1fr)_13.5rem]' : 'xl:grid-cols-[13rem_1fr]'
+              hasToc ? 'xl:grid-cols-[13rem_minmax(0,1fr)_12rem]' : 'xl:grid-cols-[13rem_1fr]'
             }`}
           >
             {/* Left rail — author, tags, prev/next, back link */}
@@ -237,7 +237,9 @@ export default function PostLayout({
 
             {/* Center — the article itself */}
             <div className="divide-y divide-gray-800 xl:pb-0 dark:divide-gray-700">
-              <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
+              <div className="prose dark:prose-invert max-w-none pt-16 pb-8 [&>:first-child]:mt-0 [&>:first-child>:first-child]:mt-0">
+                {children}
+              </div>
               {twitterUrl && (
                 <div className="pt-6 pb-6">
                   <Link
@@ -284,9 +286,10 @@ export default function PostLayout({
               )}
             </div>
 
-            {/* Right rail — table of contents, top-aligned with the left rail */}
+            {/* Right rail — table of contents. Offset = left rail pt-10 + author pt-6,
+                so the heading row lines up with the author avatar row. */}
             {hasToc && (
-              <div className="hidden xl:sticky xl:top-28 xl:block xl:pt-10">
+              <div className="hidden xl:sticky xl:top-28 xl:block xl:pt-16">
                 <TableOfContents toc={toc!} />
               </div>
             )}
