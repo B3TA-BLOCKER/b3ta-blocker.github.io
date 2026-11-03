@@ -9,7 +9,7 @@
   --font-sans:
     var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-glitch: var(--font-anton), Impact, 'Arial Narrow Bold', sans-serif;
+  --font-glitch: var(--font-bebas), 'Arial Narrow', sans-serif;
   /* Colors */
   --color-primary-50: oklch(0.971 0.014 27);
   --color-primary-100: oklch(0.948 0.028 27);
@@ -169,8 +169,8 @@ input:-webkit-autofill:focus {
   --glitch-a: #fb2c36;
   --glitch-b: #06b6d4;
   text-shadow:
-    -1.5px 0 var(--glitch-a),
-    1.5px 0 var(--glitch-b);
+    -1px 0 var(--glitch-a),
+    1px 0 var(--glitch-b);
   animation: glitch-flicker 6s infinite;
 }
 .dark .glitch-text {
@@ -181,23 +181,23 @@ input:-webkit-autofill:focus {
   92%,
   100% {
     text-shadow:
-      -1.5px 0 var(--glitch-a),
-      1.5px 0 var(--glitch-b);
+      -1px 0 var(--glitch-a),
+      1px 0 var(--glitch-b);
   }
   94% {
     text-shadow:
-      -5px 0 var(--glitch-a),
-      5px 0 var(--glitch-b);
+      -4px 0 var(--glitch-a),
+      4px 0 var(--glitch-b);
   }
   96% {
     text-shadow:
-      4px 0 var(--glitch-a),
-      -4px 0 var(--glitch-b);
+      3px 0 var(--glitch-a),
+      -3px 0 var(--glitch-b);
   }
   98% {
     text-shadow:
-      -2.5px 0 var(--glitch-a),
-      2.5px 0 var(--glitch-b);
+      -2px 0 var(--glitch-a),
+      2.4px 0 var(--glitch-b);
   }
 }
 @media (prefers-reduced-motion: reduce) {

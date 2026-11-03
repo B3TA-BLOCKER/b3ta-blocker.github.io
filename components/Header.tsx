@@ -44,11 +44,12 @@ const Header = () => {
           <div className="inline-flex items-center gap-3">
             {/* Live dot: fades and glows in and out (dotglow keyframes in tailwind.css) */}
             <span
-              className="h-2 w-2 shrink-0 animate-[dotglow_1.4s_ease-in-out_infinite] rounded-full bg-green-700 motion-reduce:animate-none dark:bg-green-500"
+              className="h-2 w-2 shrink-0 rounded-full bg-green-700 dark:bg-green-500"
+              style={{ animation: 'dotglow 1.4s ease-in-out infinite' }}
               aria-hidden="true"
             />
             {relativeTime && (
-              <span className="font-glitch glitch-text text-sm leading-none tracking-[0.12em] text-gray-900 uppercase min-[500px]:text-base lg:text-lg lg:tracking-[0.14em] dark:text-gray-100">
+              <span className="font-glitch glitch-text text-base leading-none font-normal tracking-[0.14em] text-gray-900 uppercase min-[500px]:text-xl lg:text-[22px] lg:tracking-[0.16em] dark:text-gray-100">
                 {/* On small phones only the time is shown, so it fits beside the icons */}
                 <span className="max-[499px]:sr-only">Latest post — </span>
                 {relativeTime}

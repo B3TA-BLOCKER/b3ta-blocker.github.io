@@ -2,7 +2,7 @@ import 'css/tailwind.css'
 import 'pliny/search/algolia.css'
 import 'remark-github-blockquote-alert/alert.css'
 
-import { Space_Grotesk, Anton } from 'next/font/google'
+import { Space_Grotesk, Bebas_Neue } from 'next/font/google'
 import { Analytics, AnalyticsConfig } from 'pliny/analytics'
 import { SearchProvider, SearchConfig } from 'pliny/search'
 import Header from '@/components/Header'
@@ -19,13 +19,13 @@ const space_grotesk = Space_Grotesk({
 })
 
 // Condensed display font used only for the "Latest post — ..." badge in the
-// header (with a glitch effect, see .glitch-text in tailwind.css) — a
+// header (with a glitch fringe, see .glitch-text in tailwind.css) — a
 // deliberate one-off accent, not the site's body font.
-const anton = Anton({
+const bebas = Bebas_Neue({
   subsets: ['latin'],
   display: 'swap',
   weight: '400',
-  variable: '--font-anton',
+  variable: '--font-bebas',
 })
 
 export const metadata: Metadata = {
@@ -74,7 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang={siteMetadata.language}
-      className={`${space_grotesk.variable} ${anton.variable} scroll-smooth`}
+      className={`${space_grotesk.variable} ${bebas.variable} scroll-smooth`}
       suppressHydrationWarning
     >
       <link
