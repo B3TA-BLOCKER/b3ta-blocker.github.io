@@ -53,7 +53,7 @@ export default function PostLayout({
     <SectionContainer>
       <ScrollTopAndComment />
       <article>
-        <div>
+        <div className="xl:divide-y xl:divide-gray-800 xl:dark:divide-gray-700">
           <header className="pt-6 xl:pb-6">
             {cover ? (
               // Cover banner: blurred, darkened copy of the machine logo as the backdrop
@@ -237,9 +237,7 @@ export default function PostLayout({
 
             {/* Center — the article itself */}
             <div className="divide-y divide-gray-800 xl:pb-0 dark:divide-gray-700">
-              <div className="prose dark:prose-invert max-w-none pt-10 pb-8 xl:pt-16 xl:[&>p:first-child>img:first-child]:mt-0">
-                {children}
-              </div>
+              <div className="prose dark:prose-invert max-w-none pt-10 pb-8">{children}</div>
               {twitterUrl && (
                 <div className="pt-6 pb-6">
                   <Link
@@ -288,7 +286,7 @@ export default function PostLayout({
 
             {/* Right rail — table of contents, top-aligned with the left rail */}
             {hasToc && (
-              <div className="hidden xl:sticky xl:top-28 xl:block xl:pt-16">
+              <div className="hidden xl:sticky xl:top-28 xl:block xl:pt-10">
                 <TableOfContents toc={toc!} />
               </div>
             )}
