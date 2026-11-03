@@ -10,7 +10,8 @@ export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I 
 // tag-data.json). Anything that doesn't match a list, and doesn't match the
 // CVE regex below, falls into "other".
 //
-// Section order on the page = order of this array.
+// Section order on the page: sections with the most tags come first, smaller
+// sections last ("other" is always last). Ties keep the order of this array.
 // Tags inside a section are sorted by post count (desc), then alphabetically,
 // unless the category defines `order`, which pins an explicit order.
 //
@@ -23,7 +24,20 @@ type Category = { label: string; tags: string[]; order?: boolean }
 const CATEGORIES: Category[] = [
   {
     label: 'content type',
-    tags: ['machine', 'challenge', 'coding'],
+    tags: ['machine', 'challenge', 'room'],
+  },
+  {
+    label: 'challenge category',
+    tags: [
+      'coding',
+      'pwn',
+      'crypto',
+      'forensics',
+      'reverse-engineering',
+      'steganography',
+      'osint',
+      'misc',
+    ],
   },
   {
     label: 'source',
@@ -31,7 +45,7 @@ const CATEGORIES: Category[] = [
   },
   {
     label: 'difficulty',
-    tags: ['very-easy', 'easy', 'medium', 'hard'],
+    tags: ['very-easy', 'easy', 'medium', 'hard', 'insane'],
     order: true, // keep this exact order, not count-based
   },
   {
@@ -112,7 +126,11 @@ function categorizeTags(tagKeys: string[], tagCounts: Record<string, number>) {
     s.tags.sort((a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b))
   })
 
-  const result = sections.filter((s) => s.tags.length > 0)
+  // Drop empty sections, then put the biggest sections first.
+  // Array.prototype.sort is stable, so ties keep CATEGORIES order.
+  const result = sections
+    .filter((s) => s.tags.length > 0)
+    .sort((a, b) => b.tags.length - a.tags.length)
 
   if (remaining.size > 0) {
     const other = Array.from(remaining).sort(
