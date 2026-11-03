@@ -42,7 +42,10 @@ export default function PostLayout({
   toc,
   children,
 }: LayoutProps) {
-  const { path, date, title, tags, twitterUrl } = content
+  const { path, date, title, tags, twitterUrl, images } = content
+  // First entry of `images` in the post frontmatter is the machine logo
+  const cover = Array.isArray(images) ? images[0] : images
+  const formattedDate = new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)
   const basePath = path.split('/')[0]
   const hasToc = Boolean(toc && toc.length > 1)
 
@@ -52,21 +55,58 @@ export default function PostLayout({
       <article>
         <div className="xl:divide-y xl:divide-gray-800 xl:dark:divide-gray-700">
           <header className="pt-6 xl:pb-6">
-            <div className="space-y-1 text-center">
-              <dl className="space-y-10">
-                <div>
-                  <dt className="sr-only">Published on</dt>
-                  <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
-                    <time dateTime={date}>
-                      {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
-                    </time>
-                  </dd>
+            {cover ? (
+              // Cover banner: blurred, darkened copy of the machine logo as the backdrop
+              // (hides the low resolution of small logos), crisp logo on the right.
+              <div className="relative isolate overflow-hidden rounded-2xl border border-gray-800/60 bg-gray-950 shadow-lg dark:border-gray-700">
+                <Image
+                  src={cover}
+                  alt=""
+                  fill
+                  priority
+                  aria-hidden="true"
+                  sizes="100vw"
+                  className="-z-20 scale-150 object-cover opacity-80 blur-3xl saturate-150"
+                />
+                <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
+                <div className="flex flex-col items-center gap-8 px-6 py-12 text-center sm:px-10 md:flex-row md:justify-between md:py-16 md:text-left">
+                  <div className="min-w-0 flex-1 space-y-4">
+                    <dl>
+                      <dt className="sr-only">Published on</dt>
+                      <dd className="text-base leading-6 font-medium tracking-wide text-gray-300">
+                        <time dateTime={date}>{formattedDate}</time>
+                      </dd>
+                    </dl>
+                    <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-white sm:text-4xl sm:leading-10 md:text-5xl md:leading-14">
+                      {title}
+                    </h1>
+                  </div>
+                  <div className="relative hidden h-40 w-40 shrink-0 sm:block lg:h-52 lg:w-52">
+                    <Image
+                      src={cover}
+                      alt={`${title} logo`}
+                      fill
+                      sizes="208px"
+                      className="object-contain drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
+                    />
+                  </div>
                 </div>
-              </dl>
-              <div>
-                <PageTitle>{title}</PageTitle>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-1 text-center">
+                <dl className="space-y-10">
+                  <div>
+                    <dt className="sr-only">Published on</dt>
+                    <dd className="text-base leading-6 font-medium text-gray-500 dark:text-gray-400">
+                      <time dateTime={date}>{formattedDate}</time>
+                    </dd>
+                  </div>
+                </dl>
+                <div>
+                  <PageTitle>{title}</PageTitle>
+                </div>
+              </div>
+            )}
           </header>
 
           {/* Single-row 3-column grid: left rail | article | TOC rail.
