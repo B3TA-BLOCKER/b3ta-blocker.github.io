@@ -19,17 +19,24 @@ summary: 'Compromise of a Linux HackTheBox machine via a js2py sandbox escape (C
 images: ['/static/images/codetwo/preview.png']
 ---
 
-# CodePartTwo Machine (HackTheBox) — Step-by-Step Walkthrough
+# Machine information:
 
-![CodeTwo](/static/images/codetwo/result.png)
-
----
-
-# Machine info:
-
-| IP Address  | Difficulty | Points | Operating System |
-| ----------- | ---------- | ------ | ---------------- |
-| 10.10.11.82 | Easy       | 20     | Linux            |
+<BoxInfoCard
+  htbMachine="CodePartTwo"
+  name="CodePartTwo"
+  iconUrl="/static/images/codetwo/preview.png"
+  retireDate="32 Jan 2026"
+  userBlood={{
+    name: 'NLTE',
+    htbProfileUrl: 'https://app.hackthebox.com/users/260094',
+    time: '00:03:02',
+  }}
+  rootBlood={{
+    name: 'celesian',
+    htbProfileUrl: 'https://app.hackthebox.com/users/114435',
+    time: '00:06:48',
+  }}
+/>
 
 # Pinging:
 
@@ -342,3 +349,5 @@ marco@codetwo:~$
 ```
 
 Root Flag : **`4aff940b07fccd30e5972c5ba9075f6a`**
+
+![CodeTwo](/static/images/codetwo/result.png)

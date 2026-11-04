@@ -9,8 +9,6 @@ images: ['/static/images/cap/cap.png']
 twitterUrl: https://x.com/B3TA_BLOCKER/status/2108660166745010257
 ---
 
-![victory](/static/images/cap/victory.png)
-
 # Overview
 
 **Cap** is an Easy-rated Linux machine that centers around two distinct, easy-to-understand misconfigurations rather than any complex exploit chain, making it a great box for beginners learning the basics of web and Linux privilege escalation.
@@ -20,8 +18,6 @@ The attack path starts with a custom "Security Dashboard" web app on port 80 tha
 Once on the box as a low-privileged user, privilege escalation to root comes down to a single misconfigured **Linux capability**: the `cap_setuid` flag set on the system's Python 3 binary. That one setting lets any user who can run Python call `setuid(0)` and spawn a root shell — no sudo rights, no kernel exploit, no password needed.
 
 `**In short**: **web IDOR → leaked creds → user access → abused binary capability → root.**`
-
----
 
 # Machine Info
 
@@ -239,3 +235,5 @@ Finally, I grabbed the root flag:
 root@cap:/var/www/html# cat /root/root.txt
 e584391d70bdebf0a72d057ce3cc7a9a
 ```
+
+![victory](/static/images/cap/victory.png)

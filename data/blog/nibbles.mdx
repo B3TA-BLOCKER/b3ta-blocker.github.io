@@ -19,18 +19,26 @@ summary: 'Compromise of a Linux HackTheBox machine running Nibbleblog 4.0.3, exp
 images: ['/static/images/nibbles/preview.png']
 ---
 
-![Nibbles](/static/images/nibbles/head.png)
-
 # Machine information:
 
-| Machine Name         | Nibbles                                        |
-| -------------------- | ---------------------------------------------- |
-| Creator              | mrb3n                                          |
-| Operating System     | Linux                                          |
-| Difficulty           | Easy                                           |
-| User Path            | Web                                            |
-| Privilege Escalation | World-writable File / Sudoers Misconfiguration |
-| ip address           | 10.129.167.47                                  |
+<BoxInfoCard
+  htbMachine="Nibbles"
+  name="Nibbles"
+  iconUrl="/static/images/nibbles/preview.png"
+  retireDate="04 May 2024"
+  userBlood={{
+    name: 'm0noc',
+    htbProfileUrl: 'https://app.hackthebox.com/users/4365',
+    time: '00:20:53',
+  }}
+  rootBlood={{
+    name: 'm0noc',
+    htbProfileUrl: 'https://app.hackthebox.com/users/4365',
+    time: '00:24:34',
+  }}
+/>
+
+--
 
 # Pinging:
 
@@ -423,3 +431,5 @@ Now on the other terminal I’ll setup my listener on the **`port 6969`** and ex
 ![Nibbles](/static/images/nibbles/image%2015.png)
 
 Root Flag : **`de5e5d6619862a8aa5b9b212314e0cdd`**
+
+![Nibbles](/static/images/nibbles/head.png)
