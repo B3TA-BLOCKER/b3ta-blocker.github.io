@@ -9,8 +9,6 @@ images: ['/static/images/nexus/nexus.png']
 twitterUrl: https://x.com/B3TA_BLOCKER/status/2115779026124202076
 ---
 
-![HackTheBox "You have solved Nexus!" confirmation banner](/static/images/nexus/image%2020.png)
-
 # Overview
 
 Nexus is a solid easy-rated box that chains together credential leakage through version control history, a real-world CRM RCE, and a creative abuse of an automated root-level sync job driven by attacker-controlled Git object paths. The key takeaway is that any process extracting file paths from Git metadata — or any user-controlled source — must treat those paths as untrusted input and strictly validate them before joining them onto a filesystem destination.
@@ -821,3 +819,5 @@ root@nexus:~#
 cat root.txt
 4a5e534e3dd2d1d2412b486e01cb4981
 ```
+
+![HackTheBox "You have solved Nexus!" confirmation banner](/static/images/nexus/image%2020.png)
