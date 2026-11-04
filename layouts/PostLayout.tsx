@@ -128,11 +128,11 @@ export default function PostLayout({
               of the post instead of running out of room early. */}
           <div
             className={`grid-rows-[auto_1fr] divide-y divide-gray-800 pb-8 xl:grid xl:items-start xl:gap-x-8 xl:divide-y-0 dark:divide-gray-700 ${
-              hasToc ? 'xl:grid-cols-[13rem_minmax(0,1fr)_12rem]' : 'xl:grid-cols-[13rem_1fr]'
+              hasToc ? 'xl:grid-cols-[13rem_minmax(0,1fr)_11rem]' : 'xl:grid-cols-[13rem_1fr]'
             }`}
           >
             {/* Left rail — author, tags, prev/next, back link */}
-            <div className="xl:sticky xl:top-28 xl:pt-10">
+            <div className="xl:sticky xl:top-28 xl:pt-2">
               <dl className="border-b border-gray-800 pt-6 pb-10 dark:border-gray-700">
                 <dt className="sr-only">Authors</dt>
                 <dd>
@@ -249,7 +249,7 @@ export default function PostLayout({
 
             {/* Center — the article itself */}
             <div className="divide-y divide-gray-800 xl:pb-0 dark:divide-gray-700">
-              <div className="prose dark:prose-invert max-w-none pt-16 pb-8 [&>:first-child]:mt-0 [&>:first-child>:first-child]:mt-0">
+              <div className="prose dark:prose-invert max-w-none pt-8 pb-8 [&>:first-child]:mt-0 [&>:first-child>:first-child]:mt-0">
                 {children}
               </div>
               {twitterUrl && (
@@ -298,10 +298,12 @@ export default function PostLayout({
               )}
             </div>
 
-            {/* Right rail — table of contents. Offset = left rail pt-10 + author pt-6,
-                so the heading row lines up with the author avatar row. */}
+            {/* Right rail — table of contents. Offset (pt-8) = left rail pt-2 + author pt-6,
+                so the heading row lines up with the author avatar row. The column is
+                11rem but -ml-4 lets the block reach back 16px into the grid gap, so it
+                is still 12rem wide, ends on the right margin, and the article gets +1rem. */}
             {hasToc && (
-              <div className="hidden xl:sticky xl:top-28 xl:block xl:pt-16">
+              <div className="hidden xl:sticky xl:top-28 xl:-ml-4 xl:block xl:pt-8">
                 <TableOfContents toc={toc!} />
               </div>
             )}
