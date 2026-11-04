@@ -35,6 +35,15 @@ interface LayoutProps {
   children: ReactNode
 }
 
+// Heading shown inside the post banner.
+// 1. If the post sets `bannerTitle` in its frontmatter, that is used as-is.
+// 2. Otherwise it is the part of `title` before the first " (" or " — ", e.g.
+//    "Nexus Machine (HackTheBox) — Step-by-Step Walkthrough" becomes "Nexus Machine".
+//    Titles with neither (e.g. "Primed for Action") are unchanged.
+// The full `title` is still used for the page <title>, post lists, SEO and image alt text.
+const getBannerTitle = (title: string, bannerTitle?: string) =>
+  bannerTitle?.trim() || title.split(/\s+\(|\s+—\s+/)[0].trim() || title
+
 export default function PostLayout({
   content,
   authorDetails,
@@ -43,7 +52,8 @@ export default function PostLayout({
   toc,
   children,
 }: LayoutProps) {
-  const { path, date, title, tags, twitterUrl, images } = content
+  const { path, date, title, bannerTitle, tags, twitterUrl, images } = content
+  const heading = getBannerTitle(title, bannerTitle)
   // First entry of `images` in the post frontmatter is the machine logo
   const cover = Array.isArray(images) ? images[0] : images
   const formattedDate = new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)
@@ -80,7 +90,7 @@ export default function PostLayout({
                       </dd>
                     </dl>
                     <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-white sm:text-4xl sm:leading-10 md:text-5xl md:leading-14">
-                      {title}
+                      {heading}
                     </h1>
                   </div>
                   <div className="relative hidden h-40 w-40 shrink-0 sm:block lg:h-52 lg:w-52">
@@ -105,7 +115,7 @@ export default function PostLayout({
                   </div>
                 </dl>
                 <div>
-                  <PageTitle>{title}</PageTitle>
+                  <PageTitle>{heading}</PageTitle>
                 </div>
               </div>
             )}

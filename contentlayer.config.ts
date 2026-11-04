@@ -130,6 +130,8 @@ export const Blog = defineDocumentType(() => ({
     bibliography: { type: 'string' },
     canonicalUrl: { type: 'string' },
     twitterUrl: { type: 'string' },
+    // Optional: heading shown inside the post banner. Falls back to the title's name part.
+    bannerTitle: { type: 'string' },
   },
   computedFields: {
     ...computedFields,
