@@ -1,8 +1,10 @@
 <div align="center">
 
-# Bukhari's Archive
+[![Typing SVG](https://readme-typing-svg.herokuapp.com?font=DotGothic16&size=90&width=900&height=110&lines=Bukhari%27s+Archive&center=true&vCenter=true&color=2EC866)](https://b3ta-blocker.github.io/)
 
 </div>
+
+---
 
 ### `$ cat identity.txt`
 
