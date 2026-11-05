@@ -65,8 +65,8 @@ export default function PostLayout({
       <ScrollTopAndComment />
       <ViewTracker slug={path} />
       <article>
-        <div className="xl:divide-y xl:divide-gray-800 xl:dark:divide-gray-700">
-          <header className="pt-6 xl:pb-6">
+        <div>
+          <header className="pt-6 pb-2">
             {cover ? (
               // Cover banner: blurred, darkened copy of the machine logo as the backdrop
               // (hides the low resolution of small logos), crisp logo on the right.
@@ -120,6 +120,12 @@ export default function PostLayout({
               </div>
             )}
           </header>
+
+          {/* Glowing divider between banner and content */}
+          <div
+            aria-hidden="true"
+            className="mx-auto mt-2 h-px w-full bg-gradient-to-r from-transparent via-white/80 to-transparent shadow-[0_10px_30px_4px_rgba(255,255,255,0.18)]"
+          />
 
           {/* Single-row 3-column grid: left rail | article | TOC rail.
               All three cells sit in row 1, so CSS Grid's default stretch
