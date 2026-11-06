@@ -5,16 +5,17 @@ date: '2025-08-27'
 draft: false
 tags:
   [
-    'linux',
-    'javascript',
-    'js2py',
-    'cve-2024-28397',
-    'sandbox-escape',
-    'reverse-shell',
-    'privilege-escalation',
+    'Linux',
+    'Machine',
     'Easy',
     'HackTheBox',
-    'Machine',
+    'js2py',
+    'CVE-2024-28397',
+    'Sandbox Escape',
+    'SQLite',
+    'Hash Cracking',
+    'npbackup-cli',
+    'Sudo Misconfiguration',
   ]
 summary: 'Compromise of a Linux HackTheBox machine via a js2py sandbox escape (CVE-2024-28397) in a web-based JavaScript editor to gain a shell, followed by credential extraction from a SQLite database and privilege escalation by abusing sudo npbackup-cli to read the root flag.'
 images: ['/static/images/codetwo/preview.png']
@@ -198,13 +199,13 @@ let out = proc.communicate()[0].decode("utf-8")
 
 ![CodeTwo](/static/images/codetwo/image%205.png)
 
-## Reverse Shell
+# Reverse Shell
 
 I executed the **reverse shell**, and it worked successfully. This gave me a **shell on the target machine.**
 
 ![CodeTwo](/static/images/codetwo/image%206.png)
 
-### Make the Shell Stable:
+## Make the Shell Stable:
 
 ![CodeTwo](/static/images/codetwo/image%207.png)
 
@@ -253,7 +254,7 @@ marco’s hash : **`649c9d65a206a75f5abe509fe128bce5`**
 
 password : **`sweetangelbabylove`**
 
-### SSH login
+## SSH login
 
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HackThBox/CodeTwo/app]
@@ -293,7 +294,7 @@ Last login: Wed Aug 27 19:00:47 2025 from 10.10.16.80
 marco@codetwo:~$
 ```
 
-## User Flag:
+# User Flag:
 
 ```bash
 marco@codetwo:~$ ls
@@ -305,7 +306,7 @@ marco@codetwo:~$
 
 User Flag : **`ab17d77653f9d09b9c693554b26eaa4b`**
 
-## Root Flag:
+# Root Flag:
 
 ![CodeTwo](/static/images/codetwo/image%209.png)
 

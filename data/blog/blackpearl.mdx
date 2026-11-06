@@ -4,7 +4,20 @@ bannerTitle: TCM Security Machine — Blackpearl Walkthrough
 date: '2025-12-07'
 draft: false
 locked: false
-tags: ['linux', 'easy', 'Machine', 'virtual-host', 'suid', 'privilege-escalation']
+tags:
+  [
+    'Linux',
+    'Machine',
+    'Easy',
+    'Virtual Host Routing',
+    'Navigate CMS',
+    'Metasploit',
+    'Remote Code Execution',
+    'LinPEAS',
+    'SUID',
+    'GTFOBins',
+    'Privilege-Escalation',
+  ]
 summary: 'Compromise of a Linux machine via DNS reconnaissance to discover a virtual host running Navigate CMS v2.8, exploited through an unauthenticated RCE vulnerability, followed by privilege escalation via a SUID misconfiguration on php7.3.'
 images: ['/static/images/blackpearl/blackpearl.png']
 ---
@@ -45,13 +58,13 @@ Nmap done: 1 IP address (1 host up) scanned in 22.16 seconds
 
 The host was confirmed to be **`alive and reachable`**, with minimal latency observed. Out of **`65,535 TCP ports`**, only **`three ports`** were found open, indicating a relatively small external attack surface.
 
-### **Identified Services**
+## **Identified Services**
 
 - **`Port 22/tcp — SSH`**
 - **`Port 53/tcp — DNS`**
 - **`Port 80/tcp — HTTP`**
 
-### **Host Information**
+## **Host Information**
 
 - Operating System: Linux
 - MAC Address: `08:00:27:AF:9D:B3`
@@ -196,7 +209,7 @@ With the CMS and version confirmed, I conducted targeted vulnerability research.
 
 [Rapid7](https://www.rapid7.com/db/modules/exploit/multi/http/navigate_cms_rce/)
 
-### **Exploitation — Navigate CMS v2.8**
+# **Exploitation — Navigate CMS v2.8**
 
 I loaded the following Metasploit module:
 
@@ -285,7 +298,7 @@ whoami
 www-data
 ```
 
-### **Initial Access Confirmation**
+## **Initial Access Confirmation**
 
 After spawning a shell from the Meterpreter session, I verified the execution context:
 
@@ -306,7 +319,7 @@ www-data@blackpearl:~/blackpearl.tcm/navigate$
 
 This resulted in a stable interactive shell as **`www-data`**, enabling reliable execution of enumeration and privilege escalation techniques.
 
-### **Privilege Escalation**
+# **Privilege Escalation**
 
 After gaining an initial foothold as **`www-data`**, I proceeded with local privilege escalation enumeration using **`LinPEAS`**.
 
@@ -344,7 +357,7 @@ www-data@blackpearl:/tmp$
 
 With the script successfully transferred, I executed LinPEAS to identify potential privilege escalation vectors.
 
-### **SUID Enumeration**
+## **SUID Enumeration**
 
 LinPEAS revealed the presence of multiple **SUID binaries**. To validate this, I manually enumerated SUID files:
 
@@ -378,7 +391,7 @@ Notable SUID binaries included:
 
 The presence of **`php7.3` with the SUID bit set** stood out as a high-risk misconfiguration.
 
-### **SUID Abuse via PHP**
+# **SUID Abuse via PHP**
 
 I researched the identified SUID binaries on **`GTFOBins`** and confirmed that **`PHP`** can be abused to spawn a shell while preserving elevated privileges.
 

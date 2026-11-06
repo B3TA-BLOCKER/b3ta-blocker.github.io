@@ -3,7 +3,21 @@ title: 'Soulmate (HackTheBox) — Step-by-Step Walkthrough'
 bannerTitle: HackTheBox Machine — Soulmate Walkthrough
 date: '2025-09-21'
 draft: false
-tags: ['linux', 'Machine', 'Easy', 'cve-2025-31161', 'privilege-escalation', 'HackTheBox']
+tags:
+  [
+    'Linux',
+    'Machine',
+    'Easy',
+    'HackTheBox',
+    'CVE-2025-31161',
+    'CrushFTP',
+    'Authentication Bypass',
+    'PHP Reverse Shell',
+    'SQLite',
+    'Hardcoded Credentials',
+    'Erlang',
+    'Eshell',
+  ]
 summary: 'Compromise of a Linux HackTheBox machine via CVE-2025-31161 authentication bypass on CrushFTP to gain admin access, followed by PHP reverse shell upload, credential extraction from a hardcoded Erlang script, and root flag retrieval through an exposed Erlang shell on port 2222.'
 images: ['/static/images/soulmate/preview.png']
 ---
@@ -70,7 +84,7 @@ Nmap done: 1 IP address (1 host up) scanned in 37.49 seconds
 
 Two ports were open. With no credentials provided, I focused on the web service running on port 80.
 
-# Add the domain to `/etc/hosts`:
+### Add the domain to `/etc/hosts`:
 
 ```bash
 ┌──(kali㉿kali)-[~]
@@ -82,7 +96,7 @@ Two ports were open. With no credentials provided, I focused on the web service 
 
 # Web Enumeration:
 
-### Directory Discovery:
+## Directory Discovery:
 
 ```bash
 
@@ -149,7 +163,7 @@ I browsed to `http://soulmate.htb`. The site presented a signup/login page. I cr
 
 This yielded nothing useful, so I moved on to subdomain enumeration.
 
-### Sub-Domian Discovery:
+## Sub-Domian Discovery:
 
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HTB]
@@ -250,7 +264,7 @@ options:
   --password PASSWORD   Password for the new user
 ```
 
-### Exploitation:
+## Exploitation:
 
 ```bash
 ┌──(kali㉿kali)-[~/Desktop/HTB/CVE-2025-31161]
@@ -312,7 +326,7 @@ COPYING.GPL  LICENSE                    README.md
 
 Before uploading, open the php file and replace the placeholder LHOST/LPORT with your machine's IP and listener port.
 
-### **File Upload:**
+## **File Upload:**
 
 ![soulmate](/static/images/soulmate/image%209.png)
 
@@ -324,7 +338,7 @@ Before running `curl`, make sure your listener is started and actively listening
 
 Got the reverse Shell.
 
-### Making the Shell stable:
+## Making the Shell stable:
 
 ```bash
 $  python3 -c 'import pty; pty.spawn("/bin/bash")'
@@ -346,7 +360,7 @@ I then downloaded `linpeas.sh` into `/tmp`.
 
 ![soulmate](/static/images/soulmate/image%2012.png)
 
-### Linpeas Findings
+# Linpeas Findings
 
 ![soulmate](/static/images/soulmate/image%2013.png)
 
@@ -431,7 +445,7 @@ Found nothing useful so far, so I decided to run `linpeas.sh`
 
 ![soulmate](/static/images/soulmate/image%2017.png)
 
-### Active ports
+## Active ports
 
 ![soulmate](/static/images/soulmate/image%2018.png)
 
@@ -439,7 +453,7 @@ Nmap showed only two _standard_ open ports (80 and 22), but I also found these e
 
 **`8448`, `2222`, `4369`, `53`, `9090`, `33907`, `34495`**.
 
-### **I tried connecting to port 2222 using SSH with:**
+## **I tried connecting to port 2222 using SSH with:**
 
 ```bash
 ben@soulmate:~$ ssh -p 2222 ben@localhost

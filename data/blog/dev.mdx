@@ -3,7 +3,18 @@ title: 'Dev Machine (TCM Security) — Step-by-Step Walkthrough'
 bannerTitle: TCM Security Machine — Dev Walkthrough
 date: '2025-11-30'
 draft: false
-tags: ['linux', 'Machine', 'lfi', 'privilege-escalation', 'boltwire']
+tags:
+  [
+    'Linux',
+    'Machine',
+    'Easy',
+    'NFS',
+    'Zip Crack',
+    'BoltWire',
+    'Local File Inclusion',
+    'GTFOBins',
+    'Sudo Misconfiguration',
+  ]
 summary: 'Compromise of a Linux machine via NFS enumeration, zip password cracking, and a BoltWire LFI vulnerability to obtain SSH credentials, followed by privilege escalation using a sudo zip GTFOBins exploit.'
 images: ['/static/images/dev/preview.png']
 ---
@@ -217,7 +228,7 @@ From this output, I identified a user named jeanpaul on the system.
 
 Now that I know the username '(jeanpaul)' and have the 'id_rsa' private key, I’ll attempt to establish an SSH connection to the target.
 
-## Exploitation:
+# Exploitation:
 
 ```bash
 ┌──(kali㉿kali)-[/mnt/dev]
