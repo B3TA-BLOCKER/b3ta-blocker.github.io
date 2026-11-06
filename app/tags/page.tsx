@@ -1,23 +1,19 @@
-import Link from '@/components/Link'
-import { slug } from 'github-slugger'
+import TagExplorer from '@/components/TagExplorer'
 import tagData from 'app/tag-data.json'
 import { genPageMetadata } from 'app/seo'
 
 export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I blog about' })
 
 // --- Category definitions -------------------------------------------------
-// Tags are matched against these lists (exact match on the raw tag key from
-// tag-data.json). Anything that doesn't match a list, and doesn't match the
-// CVE regex below, falls into "other".
+// Tags are matched against these lists (exact match on the slugified tag key
+// from tag-data.json, e.g. "Remote Code Execution" -> remote-code-execution).
+// Anything that doesn't match a list, and doesn't match the CVE regex below,
+// falls into "other" — if a tag lands there, add it to the right list here.
 //
 // Section order on the page: sections with the most tags come first, smaller
 // sections last ("other" is always last). Ties keep the order of this array.
 // Tags inside a section are sorted by post count (desc), then alphabetically,
 // unless the category defines `order`, which pins an explicit order.
-//
-// Legacy/duplicate tags (eternalblue, python-sandbox-escape, js2py, git,
-// sql-database) are still mapped so the page stays clean until the posts are
-// retagged. Once retagged, they can be deleted from these lists.
 
 type Category = { label: string; tags: string[]; order?: boolean }
 
@@ -53,51 +49,130 @@ const CATEGORIES: Category[] = [
     tags: ['linux', 'windows', 'active-directory'],
   },
   {
-    label: 'web',
+    label: 'web exploitation',
     tags: [
-      'web-exploitation',
-      'sql-injection',
-      'lfi',
-      'path-traversal',
+      'authentication-bypass',
       'file-upload',
+      'unrestricted-file-upload',
+      'local-file-inclusion',
+      'path-traversal',
+      'sql-injection',
       'idor',
-      'virtual-host',
+      'filter-bypass',
+      'virtual-host-routing',
+      'git-dump',
+    ],
+  },
+  {
+    label: 'code execution',
+    tags: [
+      'remote-code-execution',
+      'rce',
+      'php-reverse-shell',
+      'reverse-shell',
+      'buffer-overflow',
+      'sandbox-escape',
+      'groovy-script',
     ],
   },
   {
     label: 'privilege escalation',
-    tags: ['privilege-escalation', 'sudo-exploitation', 'suid', 'incron', 'linux-capabilities'],
-  },
-  {
-    label: 'exploitation & access',
     tags: [
-      'rce',
-      'reverse-shell',
-      'sandbox-escape',
-      'python-sandbox-escape',
-      'lateral-movement',
-      'credential-reuse',
+      'privilege-escalation',
+      'sudo-misconfiguration',
+      'suid',
+      'linux-capabilities',
+      'cap_setuid',
+      'incron',
+      'cron-job',
+      'systemd-timer',
+      'unquoted-service-path',
+      'gtfobins',
     ],
   },
   {
-    label: 'cves & named exploits',
-    tags: ['ms17-010', 'eternalblue'],
+    label: 'credentials & cracking',
+    tags: [
+      'hash-cracking',
+      'zip-crack',
+      'weak-credentials',
+      'hardcoded-credentials',
+      'plaintext-credentials',
+      'password-reuse',
+      'credential-leak',
+      'environment-file-leak',
+      'ssh-key',
+      'anonymous-login',
+    ],
   },
   {
-    label: 'software & targets',
-    tags: ['jenkins', 'jupyter', 'freepbx', 'boltwire', 'krayin-crm', 'craftcms', 'sql-database'],
+    label: 'active directory attacks',
+    tags: ['kerberoasting', 'ntlm', 'adcs', 'esc16', 'shadow-credentials'],
+  },
+  {
+    label: 'cves & named exploits',
+    tags: ['ms17-010', 'eternalblue', 'trans2open'],
+  },
+  {
+    label: 'cms & web apps',
+    tags: [
+      'cms',
+      'craft-cms',
+      'backdrop-cms',
+      'navigate-cms',
+      'getsimple-cms',
+      'nibbleblog',
+      'boltwire',
+      'krayin-crm',
+      'freepbx',
+      'jenkins',
+      'jupyter',
+      'gitea',
+      'crushftp',
+      'flask',
+      'mcp-inspector',
+      'backrest',
+      'python-code-editor',
+      'backysh',
+    ],
+  },
+  {
+    label: 'services & protocols',
+    tags: [
+      'ftp',
+      'smb',
+      'samba',
+      'nfs',
+      'telnet',
+      'websocket',
+      'mysql',
+      'sqlite',
+      'port-forwarding',
+    ],
   },
   {
     label: 'tools',
-    tags: ['metasploit', 'git-dumper', 'git'],
+    tags: [
+      'metasploit',
+      'msfvenom',
+      'linpeas',
+      'winpeas',
+      'pspy',
+      'bloodhound',
+      'evil-winrm',
+      'pcap-analysis',
+      'restic',
+      'npbackup-cli',
+      'git-dumper',
+    ],
   },
   {
     label: 'ai / ml',
-    tags: ['tensorflow', 'malicious-model', 'mcp'],
+    tags: ['machine-learning', 'tensorflow', 'keras-model-rce', 'pickle-deserialization'],
   },
   {
-    label: 'languages & services',
-    tags: ['javascript', 'js2py', 'cpp', 'telnet'],
+    label: 'languages & runtimes',
+    tags: ['cpp', 'javascript', 'js2py', 'erlang', 'eshell'],
   },
 ]
 
@@ -142,42 +217,31 @@ function categorizeTags(tagKeys: string[], tagCounts: Record<string, number>) {
   return result
 }
 
+// Sections that describe *what kind of post* it is rather than *what it covers*.
+// They are left out of the "most written about" leaderboard.
+const META_SECTIONS = new Set([
+  'content type',
+  'challenge category',
+  'source',
+  'difficulty',
+  'os & environment',
+])
+
 export default async function Page() {
   const tagCounts = tagData as Record<string, number>
-  const tagKeys = Object.keys(tagCounts)
-  const sections = categorizeTags(tagKeys, tagCounts)
+  const sections = categorizeTags(Object.keys(tagCounts), tagCounts)
+
+  const top = sections
+    .filter((s) => !META_SECTIONS.has(s.label))
+    .flatMap((s) => s.tags)
+    .sort((a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b))
+    .slice(0, 6)
 
   return (
-    <div>
-      <div className="space-y-2 pt-6 pb-8">
-        <h1 className="text-3xl leading-9 font-extrabold tracking-tight text-gray-900 sm:text-4xl sm:leading-10 md:text-6xl md:leading-14 dark:text-gray-100">
-          Tags
-        </h1>
-      </div>
-      {tagKeys.length === 0 && <p className="pt-10 text-gray-500">No tags found.</p>}
-
-      <div className="space-y-10 pb-16">
-        {sections.map((section) => (
-          <div key={section.label}>
-            <p className="mb-4 font-mono text-base font-semibold tracking-widest text-gray-700 uppercase sm:text-lg dark:text-gray-300">
-              <span className="text-primary-500">#</span> {section.label}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {section.tags.map((t) => (
-                <Link
-                  key={t}
-                  href={`/tags/${slug(t)}`}
-                  aria-label={`View posts tagged ${t}`}
-                  className="group border-primary-900/40 hover:border-primary-500 hover:bg-primary-500/5 flex items-center gap-2 rounded border px-3 py-1.5 font-mono text-sm transition-colors dark:border-gray-800"
-                >
-                  <span className="text-primary-500 uppercase">{t.split(' ').join('-')}</span>
-                  <span className="text-xs text-gray-600 dark:text-gray-600">{tagCounts[t]}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <TagExplorer
+      sections={sections.map(({ label, tags }) => ({ label, tags }))}
+      counts={tagCounts}
+      top={top}
+    />
   )
 }
