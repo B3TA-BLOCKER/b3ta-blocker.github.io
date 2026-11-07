@@ -1,604 +1,530 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from '@/components/Link'
 import { formatDate } from 'pliny/utils/formatDate'
 import siteMetadata from '@/data/siteMetadata'
+import {
+  popularTags,
+  recentDocs,
+  resultHref,
+  searchDocs,
+  type Range,
+  type SearchDoc,
+  type SearchResult,
+} from '@/lib/searchEngine'
+import { serializeTerms } from '@/lib/searchQuery'
 
-interface SearchDoc {
-  title: string
-  date: string
-  summary: string
-  tags: string[]
-  path: string
-  images?: string[]
-  body?: string // plain-text article content, added by contentlayer.config.ts
-}
+// Search modal: full-text search over titles, tags, headings, summaries, article
+// text and code blocks (lib/searchEngine.ts). Opening a result jumps to — and
+// highlights — the matching spot in the article (components/SearchHighlighter.tsx).
 
-// ---------------------------------------------------------------------------
-// Fuzzy search: exact-substring fast path + subsequence fallback (fzf/VSCode
-// style), scored with word-boundary and consecutive-run bonuses. Multi-word
-// queries require every word to match somewhere (AND semantics). Fields are
-// weighted so a title hit always outranks a tag or summary hit.
-// ---------------------------------------------------------------------------
+const INDEX_URL =
+  (siteMetadata.search as { kbarConfig?: { searchDocumentsPath?: string } } | undefined)?.kbarConfig
+    ?.searchDocumentsPath || '/search.json'
 
-const BOUNDARY = /[\s\-_/(]/
+let docsCache: SearchDoc[] | null = null
+let docsPromise: Promise<SearchDoc[]> | null = null
 
-interface FieldMatch {
-  score: number
-  matchedIdx: number[]
-}
-
-function scoreField(query: string, text: string): FieldMatch | null {
-  if (!query) return { score: 0, matchedIdx: [] }
-  const q = query.toLowerCase()
-  const t = text.toLowerCase()
-
-  const exactIdx = t.indexOf(q)
-  if (exactIdx !== -1) {
-    const atBoundary = exactIdx === 0 || BOUNDARY.test(t[exactIdx - 1])
-    const idx = Array.from({ length: q.length }, (_, i) => exactIdx + i)
-    return { score: 100 + (atBoundary ? 20 : 0) - exactIdx * 0.05, matchedIdx: idx }
+function loadDocs(): Promise<SearchDoc[]> {
+  if (docsCache) return Promise.resolve(docsCache)
+  if (!docsPromise) {
+    docsPromise = fetch(INDEX_URL)
+      .then((r) => r.json())
+      .then((d: SearchDoc[]) => (docsCache = d))
+      .catch((e) => {
+        docsPromise = null
+        throw e
+      })
   }
-
-  let qi = 0
-  let score = 0
-  let lastMatch = -1
-  let consecutive = 0
-  const matchedIdx: number[] = []
-
-  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
-    if (t[ti] === q[qi]) {
-      matchedIdx.push(ti)
-      const boundary = ti === 0 || BOUNDARY.test(t[ti - 1])
-      consecutive = ti === lastMatch + 1 ? consecutive + 1 : 0
-      score += 3 + consecutive * 2 + (boundary ? 6 : 0)
-      lastMatch = ti
-      qi++
-    }
-  }
-
-  if (qi < q.length) return null // not every query char found, in order
-  score -= (t.length - matchedIdx.length) * 0.15
-  return { score, matchedIdx }
+  return docsPromise
 }
 
-// Body text is potentially thousands of characters, so it's matched by plain
-// substring per word (not fuzzy subsequence) — fuzzy matching over that much
-// text would find "matches" almost everywhere and produce noise. It's also
-// weighted lowest, so a body-only hit never outranks a title or tag match.
-function bodySubstringScore(word: string, bodyLower: string): number | null {
-  const idx = bodyLower.indexOf(word)
-  if (idx === -1) return null
-  const atBoundary = idx === 0 || BOUNDARY.test(bodyLower[idx - 1])
-  return 20 + (atBoundary ? 8 : 0)
+interface Row {
+  doc: SearchDoc
+  href: string
+  result?: SearchResult
 }
 
-interface BodyExcerpt {
-  snippet: string
-  ranges: [number, number][]
-  leadingEllipsis: boolean
-  trailingEllipsis: boolean
-}
+const MARK =
+  'rounded-sm bg-red-500/15 px-0.5 font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-400'
 
-// Builds a ~140-char window of body text centered on the earliest matching
-// query word, snapped to word boundaries, with every matched word's position
-// recorded (in snippet-local coordinates) for highlighting.
-function buildExcerpt(body: string, words: string[]): BodyExcerpt | null {
-  if (!body) return null
-  const lower = body.toLowerCase()
-
-  let anchor = -1
-  let anchorLen = 0
-  for (const w of words) {
-    const idx = lower.indexOf(w)
-    if (idx !== -1 && (anchor === -1 || idx < anchor)) {
-      anchor = idx
-      anchorLen = w.length
-    }
-  }
-  if (anchor === -1) return null
-
-  const RADIUS = 70
-  let start = Math.max(0, anchor - RADIUS)
-  let end = Math.min(body.length, anchor + anchorLen + RADIUS)
-  while (start > 0 && !/\s/.test(body[start])) start--
-  while (end < body.length && !/\s/.test(body[end])) end++
-
-  const snippet = body.slice(start, end).trim()
-  const snippetLower = snippet.toLowerCase()
-
-  const ranges: [number, number][] = []
-  for (const w of words) {
-    let from = 0
-    let idx: number
-    while ((idx = snippetLower.indexOf(w, from)) !== -1) {
-      ranges.push([idx, idx + w.length])
-      from = idx + w.length
-    }
-  }
-
-  return {
-    snippet,
-    ranges,
-    leadingEllipsis: start > 0,
-    trailingEllipsis: end < body.length,
-  }
-}
-
-function mergeRanges(ranges: [number, number][]): [number, number][] {
-  if (ranges.length === 0) return []
-  const sorted = [...ranges].sort((a, b) => a[0] - b[0])
-  const merged: [number, number][] = [sorted[0]]
-  for (let i = 1; i < sorted.length; i++) {
-    const last = merged[merged.length - 1]
-    const cur = sorted[i]
-    if (cur[0] <= last[1]) last[1] = Math.max(last[1], cur[1])
-    else merged.push(cur)
-  }
-  return merged
-}
-
-function renderExcerpt(excerpt: BodyExcerpt) {
-  const merged = mergeRanges(excerpt.ranges)
-  const nodes: React.ReactNode[] = []
+function Highlighted({ text, ranges }: { text: string; ranges: Range[] }) {
+  if (ranges.length === 0) return <>{text}</>
+  const out: React.ReactNode[] = []
   let cursor = 0
-  merged.forEach(([s, e], i) => {
-    if (s > cursor) nodes.push(excerpt.snippet.slice(cursor, s))
-    nodes.push(
-      <mark
-        key={i}
-        className="rounded-sm bg-transparent font-semibold"
-        style={{ color: '#f85149' }}
-      >
-        {excerpt.snippet.slice(s, e)}
+  ranges.forEach(([s, e], i) => {
+    if (s > cursor) out.push(text.slice(cursor, s))
+    out.push(
+      <mark key={i} className={MARK}>
+        {text.slice(s, e)}
       </mark>
     )
     cursor = e
   })
-  if (cursor < excerpt.snippet.length) nodes.push(excerpt.snippet.slice(cursor))
+  if (cursor < text.length) out.push(text.slice(cursor))
+  return <>{out}</>
+}
+
+const Kbd = ({ children }: { children: React.ReactNode }) => (
+  <kbd className="rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+    {children}
+  </kbd>
+)
+
+const SearchIcon = ({ className }: { className: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={1.75}
+    stroke="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+    />
+  </svg>
+)
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      {excerpt.leadingEllipsis && '… '}
-      {nodes}
-      {excerpt.trailingEllipsis && ' …'}
-    </>
+    <p className="px-5 pt-4 pb-2 font-mono text-xs tracking-widest text-gray-500 uppercase">
+      <span className="text-red-500">#</span> {children}
+    </p>
   )
 }
 
-interface RankedDoc extends SearchDoc {
-  _titleMatches: number[]
-  _tagMatches: Set<string>
-  _excerpt: BodyExcerpt | null
+function Thumb({ doc }: { doc: SearchDoc }) {
+  return (
+    <div className="relative mt-0.5 h-10 w-10 shrink-0 overflow-hidden rounded-full border border-gray-300 bg-gray-100 dark:border-gray-800 dark:bg-gray-900">
+      {doc.images?.[0] ? (
+        <Image src={doc.images[0]} alt="" fill className="object-cover" />
+      ) : (
+        <div className="flex h-full items-center justify-center font-mono text-sm text-gray-500">
+          ◆
+        </div>
+      )}
+    </div>
+  )
 }
 
-function searchDocs(docs: SearchDoc[], query: string): RankedDoc[] {
-  const trimmed = query.trim()
-  if (!trimmed)
-    return docs.map((d) => ({
-      ...d,
-      _titleMatches: [],
-      _tagMatches: new Set<string>(),
-      _excerpt: null,
-    }))
-
-  const words = trimmed.toLowerCase().split(/\s+/)
-  const scored: {
-    doc: SearchDoc
-    score: number
-    titleMatches: number[]
-    tagMatches: Set<string>
-    excerpt: BodyExcerpt | null
-  }[] = []
-
-  for (const doc of docs) {
-    let total = 0
-    let matchedAllWords = true
-    const titleMatches: number[] = []
-    const tagMatches = new Set<string>()
-
-    const bodyLower = (doc.body || '').toLowerCase()
-
-    for (const word of words) {
-      const titleRes = scoreField(word, doc.title)
-      const tagRes = scoreField(word, doc.tags.join(' '))
-      const summaryRes = scoreField(word, doc.summary || '')
-      const bodyScore = bodySubstringScore(word, bodyLower)
-
-      const best = Math.max(
-        titleRes ? titleRes.score * 3 : -1,
-        tagRes ? tagRes.score * 2 : -1,
-        summaryRes ? summaryRes.score * 1 : -1,
-        bodyScore !== null ? bodyScore * 0.4 : -1
-      )
-
-      if (best < 0) {
-        matchedAllWords = false
-        break
-      }
-      total += best
-
-      if (titleRes) titleMatches.push(...titleRes.matchedIdx)
-      doc.tags.forEach((tag) => {
-        if (tag.toLowerCase().includes(word)) tagMatches.add(tag)
-      })
-    }
-
-    if (matchedAllWords) {
-      const excerpt = buildExcerpt(doc.body || '', words)
-      scored.push({ doc, score: total, titleMatches, tagMatches, excerpt })
-    }
-  }
-
-  return scored
-    .sort((a, b) => b.score - a.score)
-    .map((s) => ({
-      ...s.doc,
-      _titleMatches: s.titleMatches,
-      _tagMatches: s.tagMatches,
-      _excerpt: s.excerpt,
-    }))
-}
-
-function highlightTitle(title: string, matches: number[]) {
-  if (matches.length === 0) return title
-  const hit = new Set(matches)
-  return title.split('').map((ch, i) =>
-    hit.has(i) ? (
-      <mark
-        key={i}
-        className="rounded-sm bg-transparent font-semibold"
-        style={{ color: '#f85149' }}
-      >
-        {ch}
-      </mark>
-    ) : (
-      <span key={i}>{ch}</span>
-    )
+function Where({ r }: { r: SearchResult }) {
+  const bits: string[] = []
+  if (r.excerpt?.heading) bits.push(`§ ${r.excerpt.heading}`)
+  if (r.titleRanges.length) bits.push('title')
+  if (r.tagHits.size) bits.push(r.tagHits.size === 1 ? 'tag' : `${r.tagHits.size} tags`)
+  if (r.inHeading && !r.excerpt?.heading) bits.push('heading')
+  if (r.bodyHits) bits.push(`${r.bodyHits}× in text`)
+  if (r.codeHits) bits.push(`${r.codeHits}× in code`)
+  if (r.partial) bits.push('partial match')
+  if (bits.length === 0) return null
+  return (
+    <p className="mt-1.5 truncate font-mono text-xs text-gray-500">
+      <span className="mr-1.5 text-red-500">↳</span>
+      {bits.join(' · ')}
+    </p>
   )
 }
 
 export default function CustomSearch() {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [allDocs, setAllDocs] = useState<SearchDoc[]>([])
+  const [docs, setDocs] = useState<SearchDoc[]>(docsCache ?? [])
+  const [loading, setLoading] = useState(false)
+  const [failed, setFailed] = useState(false)
   const [selected, setSelected] = useState(0)
+  const [isMac, setIsMac] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const itemRefs = useRef<(HTMLLIElement | null)[]>([])
+  const listRef = useRef<HTMLUListElement>(null)
   const router = useRouter()
 
-  const ranked = useMemo(() => {
-    if (!query.trim()) {
-      return [...allDocs]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 4)
-        .map((d) => ({
-          ...d,
-          _titleMatches: [] as number[],
-          _tagMatches: new Set<string>(),
-          _excerpt: null as BodyExcerpt | null,
-        }))
-    }
-    return searchDocs(allDocs, query).slice(0, 8)
-  }, [query, allDocs])
-
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setIsOpen(true)
-      }
-      if (e.key === 'Escape') setIsOpen(false)
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent))
   }, [])
 
+  const open = useCallback(() => setIsOpen(true), [])
+  const close = useCallback(() => setIsOpen(false), [])
+
+  // Load (once) when first opened.
   useEffect(() => {
-    if (isOpen) {
-      fetch('/search.json')
-        .then((res) => res.json())
-        .then((data) => setAllDocs(data))
-      setTimeout(() => inputRef.current?.focus(), 50)
-    } else {
+    if (!isOpen) {
       setQuery('')
       setSelected(0)
+      return
+    }
+    if (!docsCache) {
+      setLoading(true)
+      setFailed(false)
+      loadDocs()
+        .then(setDocs)
+        .catch(() => setFailed(true))
+        .finally(() => setLoading(false))
+    }
+    const t = requestAnimationFrame(() => inputRef.current?.focus())
+    return () => cancelAnimationFrame(t)
+  }, [isOpen])
+
+  // Lock page scroll while the modal is open.
+  useEffect(() => {
+    if (!isOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
     }
   }, [isOpen])
+
+  const results = useMemo(() => (query.trim() ? searchDocs(docs, query, 10) : []), [docs, query])
+
+  const rows: Row[] = useMemo(() => {
+    if (query.trim()) {
+      return results.map((r) => ({ doc: r.doc, result: r, href: resultHref(r, serializeTerms) }))
+    }
+    return recentDocs(docs, 4).map((d) => ({ doc: d, href: `/${d.path}/` }))
+  }, [docs, query, results])
+
+  const suggestions = useMemo(() => popularTags(docs, 6), [docs])
 
   useEffect(() => setSelected(0), [query])
 
   useEffect(() => {
-    itemRefs.current[selected]?.scrollIntoView({ block: 'nearest' })
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-row="${selected}"]`)
+      ?.scrollIntoView({ block: 'nearest' })
   }, [selected])
 
+  const go = useCallback(
+    (row: Row) => {
+      setIsOpen(false)
+      router.push(row.href)
+      // Same-article searches don't remount the page, so tell the highlighter.
+      window.setTimeout(() => window.dispatchEvent(new Event('search:navigate')), 160)
+    },
+    [router]
+  )
+
+  // Global shortcuts: Ctrl/⌘+K toggles, "/" opens (when not typing somewhere).
   useEffect(() => {
-    if (!isOpen) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
-        setSelected((s) => Math.min(s + 1, ranked.length - 1))
+        setIsOpen((o) => !o)
+        return
       }
-      if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setSelected((s) => Math.max(s - 1, 0))
-      }
-      if (e.key === 'Enter') {
-        const doc = ranked[selected]
-        if (doc) {
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const el = e.target as HTMLElement | null
+        const typing = el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))
+        if (!typing) {
           e.preventDefault()
-          setIsOpen(false)
-          router.push(`/${doc.path}`)
+          setIsOpen(true)
         }
       }
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isOpen, ranked, selected, router])
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
-  if (!isOpen) {
-    return (
-      <button aria-label="Search" onClick={() => setIsOpen(true)}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className="hover:text-primary-500 dark:hover:text-primary-400 h-7 w-7 text-gray-900 dark:text-gray-100"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-          />
-        </svg>
-      </button>
-    )
-  }
+  // Keys while the modal is open.
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        close()
+      } else if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n')) {
+        e.preventDefault()
+        setSelected((s) => Math.min(s + 1, rows.length - 1))
+      } else if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'p')) {
+        e.preventDefault()
+        setSelected((s) => Math.max(s - 1, 0))
+      } else if (e.key === 'Enter' && !e.isComposing) {
+        const row = rows[selected]
+        if (row) {
+          e.preventDefault()
+          go(row)
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isOpen, rows, selected, go, close])
+
+  const hasQuery = query.trim().length > 0
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 px-4 pt-[10vh] backdrop-blur-sm"
-      onClick={() => setIsOpen(false)}
-    >
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div
-        className="w-full max-w-xl overflow-hidden rounded-2xl shadow-2xl"
-        style={{ background: '#0d1117', border: '1px solid #21262d' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Search input */}
-        <div className="flex items-center gap-3.5 px-5 py-4">
-          <svg
-            style={{ color: '#6e7681' }}
-            className="shrink-0"
-            width="18"
-            height="18"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.75"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-            />
-          </svg>
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search articles, tags..."
-            className="flex-1 bg-transparent text-[15px] font-medium outline-none"
-            style={{ color: '#e6edf3', caretColor: '#f85149' }}
-          />
-          <kbd
-            className="shrink-0 font-mono"
-            style={{
-              fontSize: '11px',
-              color: '#6e7681',
-              border: '1px solid #30363d',
-              borderRadius: '6px',
-              padding: '2px 7px',
-            }}
-          >
-            ESC
-          </kbd>
-        </div>
+    <>
+      {/* Navbar trigger: a command-palette pill on wide screens, an icon otherwise */}
+      <div className="flex items-center">
+        <button
+          type="button"
+          aria-label="Search"
+          onClick={open}
+          className="group hidden items-center gap-2.5 rounded-md border border-gray-300 bg-white/60 py-1.5 pr-2 pl-3 font-mono text-sm text-gray-500 transition-colors hover:border-red-500/60 hover:text-gray-900 lg:inline-flex dark:border-gray-800 dark:bg-gray-900/40 dark:hover:text-gray-100"
+        >
+          <SearchIcon className="h-4 w-4" />
+          <span className="pr-6">Search</span>
+          <Kbd>{isMac ? '⌘ K' : 'Ctrl K'}</Kbd>
+        </button>
+        <button
+          type="button"
+          aria-label="Search"
+          onClick={open}
+          className="hover:text-primary-500 dark:hover:text-primary-400 text-gray-900 lg:hidden dark:text-gray-100"
+        >
+          <SearchIcon className="h-6 w-6" />
+        </button>
+      </div>
 
-        <div style={{ height: '1px', background: '#21262d' }} />
-
-        {/* Label */}
-        <div className="px-5 pt-3.5 pb-2">
-          <p
-            style={{ fontSize: '11px', color: '#6e7681', letterSpacing: '0.06em' }}
-            className="font-semibold uppercase"
+      {isOpen &&
+        createPortal(
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div
+            className="fixed inset-0 z-[100] flex items-start justify-center bg-gray-900/40 px-3 pt-[7vh] backdrop-blur-sm sm:px-6 sm:pt-[11vh] dark:bg-black/70"
+            onMouseDown={(e) => e.target === e.currentTarget && close()}
           >
-            {query.trim()
-              ? `${ranked.length} result${ranked.length !== 1 ? 's' : ''} found`
-              : 'Recent articles'}
-          </p>
-        </div>
-
-        {/* Results */}
-        {ranked.length > 0 && (
-          <ul className="max-h-[26rem] overflow-y-auto px-2 pb-2">
-            {ranked.map((doc, idx) => (
-              <li
-                key={doc.path}
-                ref={(el) => {
-                  itemRefs.current[idx] = el
-                }}
-              >
-                <Link
-                  href={`/${doc.path}`}
-                  onClick={() => setIsOpen(false)}
-                  onMouseEnter={() => setSelected(idx)}
-                  className="group flex items-center gap-3.5 rounded-xl py-2.5 pr-3 pl-2.5 no-underline transition-colors"
-                  style={{
-                    borderLeft: idx === selected ? '2px solid #f85149' : '2px solid transparent',
-                    background: idx === selected ? 'rgba(255,255,255,0.04)' : 'transparent',
-                  }}
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Search articles"
+              className="flex max-h-[78vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-gray-300 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950"
+            >
+              {/* Title bar */}
+              <div className="flex items-center gap-1.5 border-b border-gray-300 bg-gray-100 px-3 py-2 dark:border-gray-800 dark:bg-gray-900/60">
+                <span className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-green-500/70" />
+                <span className="ml-2 font-mono text-xs text-gray-500">search.sh</span>
+                <span className="ml-auto font-mono text-xs text-gray-500">
+                  {docs.length > 0 ? `${docs.length} articles indexed` : ''}
+                </span>
+                <button
+                  type="button"
+                  onClick={close}
+                  aria-label="Close search"
+                  className="ml-2 hover:opacity-70"
                 >
-                  <div
-                    className="relative shrink-0 overflow-hidden rounded-[10px]"
-                    style={{
-                      height: '38px',
-                      width: '38px',
-                      border: '1px solid #21262d',
-                      background: '#161b22',
-                    }}
-                  >
-                    {doc.images?.[0] ? (
-                      <Image src={doc.images[0]} alt={doc.title} fill className="object-cover" />
-                    ) : (
-                      <div
-                        className="flex h-full items-center justify-center"
-                        style={{ color: '#484f58', fontSize: '15px' }}
-                      >
-                        ◆
-                      </div>
-                    )}
-                  </div>
+                  <Kbd>esc</Kbd>
+                </button>
+              </div>
 
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className="overflow-hidden text-ellipsis whitespace-nowrap"
-                      style={{ fontSize: '14px', fontWeight: 500, color: '#e6edf3' }}
+              {/* Prompt */}
+              <div className="flex items-center gap-3 border-b border-gray-300 px-5 py-4 dark:border-gray-800">
+                <span className="font-mono text-base font-bold text-red-600 dark:text-red-500">
+                  $
+                </span>
+                <span className="hidden font-mono text-base text-gray-500 sm:inline dark:text-gray-400">
+                  grep -ri
+                </span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  role="combobox"
+                  aria-expanded={rows.length > 0}
+                  aria-controls="search-results"
+                  aria-activedescendant={rows[selected] ? `search-row-${selected}` : undefined}
+                  aria-label="Search articles"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="search articles, tags, text, code…"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="min-w-0 flex-1 border-0 bg-transparent p-0 font-mono text-base text-gray-900 caret-red-500 placeholder:text-gray-400 focus:border-transparent focus:ring-0 focus:outline-none dark:text-gray-100"
+                />
+                {hasQuery && (
+                  <>
+                    <span className="shrink-0 font-mono text-xs text-gray-500 tabular-nums">
+                      {results.length} {results.length === 1 ? 'result' : 'results'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery('')
+                        inputRef.current?.focus()
+                      }}
+                      aria-label="Clear search"
+                      className="shrink-0 font-mono text-sm text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                     >
-                      {highlightTitle(doc.title, doc._titleMatches)}
+                      ✕
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Results */}
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                {loading && (
+                  <p className="px-5 py-8 font-mono text-sm text-gray-500">
+                    indexing articles…
+                    <span
+                      className="ml-1 inline-block w-[3px] bg-red-500 align-middle"
+                      style={{ height: '1em', animation: 'blink 1s step-end infinite' }}
+                    />
+                  </p>
+                )}
+                {failed && (
+                  <p className="px-5 py-8 font-mono text-sm text-red-600 dark:text-red-400">
+                    $ error: couldn&apos;t load the search index. Try again in a moment.
+                  </p>
+                )}
+
+                {!loading && !failed && !hasQuery && (
+                  <>
+                    <SectionLabel>recent articles</SectionLabel>
+                  </>
+                )}
+
+                {!loading && !failed && hasQuery && rows.length === 0 && (
+                  <div className="px-5 py-8 font-mono text-sm">
+                    <p className="text-gray-900 dark:text-gray-100">
+                      <span className="mr-2 text-red-600 dark:text-red-500">$</span>
+                      grep: no matches for &quot;{query.trim()}&quot;
                     </p>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <span style={{ fontSize: '12px', color: '#6e7681', marginRight: '2px' }}>
-                        {formatDate(doc.date, siteMetadata.locale)}
-                      </span>
-                      {doc.tags?.slice(0, 4).map((tag) => (
-                        <span
-                          key={tag}
-                          className="font-mono"
-                          style={{
-                            fontSize: '10.5px',
-                            padding: '1px 6px',
-                            borderRadius: '5px',
-                            border: doc._tagMatches.has(tag)
-                              ? '1px solid rgba(248,81,73,0.35)'
-                              : '1px solid #21262d',
-                            background: doc._tagMatches.has(tag)
-                              ? 'rgba(248,81,73,0.12)'
-                              : 'rgba(255,255,255,0.02)',
-                            color: doc._tagMatches.has(tag) ? '#f85149' : '#8b949e',
-                          }}
+                    <p className="mt-2 text-gray-500">
+                      # Try fewer words, a tag name, or a command like{' '}
+                      <span className="text-gray-700 dark:text-gray-300">sudo -l</span>.
+                    </p>
+                  </div>
+                )}
+
+                {rows.length > 0 && (
+                  <ul
+                    id="search-results"
+                    role="listbox"
+                    ref={listRef}
+                    className="space-y-0.5 px-2 pb-2"
+                  >
+                    {rows.map((row, i) => {
+                      const r = row.result
+                      const active = i === selected
+                      const ex = r?.excerpt
+                      return (
+                        <li
+                          key={row.doc.path}
+                          id={`search-row-${i}`}
+                          role="option"
+                          aria-selected={active}
+                          data-row={i}
+                          onMouseMove={() => setSelected(i)}
                         >
-                          {tag}
-                        </span>
+                          <Link
+                            href={row.href}
+                            onClick={(e) => {
+                              if (e.metaKey || e.ctrlKey || e.shiftKey) return
+                              e.preventDefault()
+                              go(row)
+                            }}
+                            className={`flex gap-3.5 rounded-lg border-l-2 px-3 py-3 transition-colors ${
+                              active
+                                ? 'border-red-500 bg-gray-100 dark:bg-gray-900/70'
+                                : 'border-transparent'
+                            }`}
+                          >
+                            <Thumb doc={row.doc} />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline justify-between gap-3">
+                                <h3 className="text-base leading-snug font-bold text-gray-900 dark:text-gray-100">
+                                  <Highlighted text={row.doc.title} ranges={r?.titleRanges ?? []} />
+                                </h3>
+                                <span className="hidden shrink-0 font-mono text-xs text-gray-500 sm:inline">
+                                  {formatDate(row.doc.date, siteMetadata.locale)}
+                                </span>
+                              </div>
+
+                              {row.doc.tags.length > 0 && (
+                                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                  {row.doc.tags.slice(0, 5).map((t) => (
+                                    <span
+                                      key={t}
+                                      className={`rounded border px-1.5 py-0.5 font-mono text-[11px] ${
+                                        r?.tagHits.has(t)
+                                          ? 'border-red-500/50 bg-red-500/10 text-red-700 dark:text-red-400'
+                                          : 'border-gray-300 text-gray-600 dark:border-gray-800 dark:text-gray-400'
+                                      }`}
+                                    >
+                                      {t}
+                                    </span>
+                                  ))}
+                                  {row.doc.tags.length > 5 && (
+                                    <span className="px-1 font-mono text-[11px] text-gray-500">
+                                      +{row.doc.tags.length - 5}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
+                              {ex && (
+                                <p
+                                  className={`mt-2 line-clamp-2 leading-relaxed break-words text-gray-700 dark:text-gray-400 ${
+                                    ex.source === 'code'
+                                      ? 'rounded border border-gray-200 bg-gray-50 px-2 py-1 font-mono text-xs dark:border-gray-800 dark:bg-gray-900/60'
+                                      : 'text-sm'
+                                  }`}
+                                >
+                                  {ex.before && '… '}
+                                  <Highlighted text={ex.text} ranges={ex.ranges} />
+                                  {ex.after && ' …'}
+                                </p>
+                              )}
+                              {r && <Where r={r} />}
+                            </div>
+                          </Link>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+
+                {!loading && !failed && !hasQuery && suggestions.length > 0 && (
+                  <>
+                    <SectionLabel>try</SectionLabel>
+                    <div className="flex flex-wrap gap-2 px-5 pb-4">
+                      {suggestions.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            setQuery(t)
+                            inputRef.current?.focus()
+                          }}
+                          className="rounded border border-gray-300 px-2.5 py-1 font-mono text-sm text-gray-700 transition-colors hover:border-red-500/60 hover:text-red-700 dark:border-gray-800 dark:text-gray-300 dark:hover:text-red-400"
+                        >
+                          {t}
+                        </button>
                       ))}
                     </div>
-                    {doc._excerpt && (
-                      <p
-                        className="mt-1.5 overflow-hidden text-ellipsis whitespace-nowrap"
-                        style={{ fontSize: '12px', color: '#8b949e', fontStyle: 'italic' }}
-                      >
-                        {renderExcerpt(doc._excerpt)}
-                      </p>
-                    )}
-                  </div>
+                    <p className="px-5 pb-4 font-mono text-xs text-gray-500">
+                      # Searches titles, tags, article text and code. Use &quot;quotes&quot; for an
+                      exact phrase; small typos are forgiven.
+                    </p>
+                  </>
+                )}
+              </div>
 
-                  <svg
-                    className="shrink-0 transition-opacity"
-                    style={{
-                      color: '#6e7681',
-                      opacity: idx === selected ? 1 : 0,
-                    }}
-                    width="15"
-                    height="15"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  >
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </Link>
-              </li>
-            ))}
-          </ul>
+              {/* Footer hints */}
+              <div className="flex items-center gap-4 border-t border-gray-300 bg-gray-100 px-4 py-2 font-mono text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-900/60">
+                <span className="flex items-center gap-1.5">
+                  <Kbd>↑</Kbd>
+                  <Kbd>↓</Kbd> navigate
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Kbd>↵</Kbd> open &amp; jump to match
+                </span>
+                <span className="ml-auto hidden items-center gap-1.5 sm:flex">
+                  <Kbd>esc</Kbd> close
+                </span>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
-
-        {/* No results */}
-        {query.trim() && ranked.length === 0 && (
-          <div className="px-5 py-12 text-center">
-            <p style={{ fontSize: '13px', color: '#8b949e' }}>
-              No results for <span style={{ color: '#e6edf3' }}>&ldquo;{query}&rdquo;</span>
-            </p>
-            <p style={{ fontSize: '11px', color: '#484f58', marginTop: '4px' }}>
-              try a different title, tag, or topic
-            </p>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div
-          className="flex items-center gap-4 px-5 py-2.5"
-          style={{ borderTop: '1px solid #21262d', fontSize: '11.5px', color: '#6e7681' }}
-        >
-          <span>
-            <kbd
-              style={{
-                border: '1px solid #30363d',
-                borderRadius: '4px',
-                padding: '1px 5px',
-                marginRight: '4px',
-              }}
-            >
-              ↑
-            </kbd>
-            <kbd
-              style={{
-                border: '1px solid #30363d',
-                borderRadius: '4px',
-                padding: '1px 5px',
-                marginRight: '6px',
-              }}
-            >
-              ↓
-            </kbd>
-            navigate
-          </span>
-          <span>
-            <kbd
-              style={{
-                border: '1px solid #30363d',
-                borderRadius: '4px',
-                padding: '1px 5px',
-                marginRight: '6px',
-              }}
-            >
-              ↵
-            </kbd>
-            open
-          </span>
-          <span>
-            <kbd
-              style={{
-                border: '1px solid #30363d',
-                borderRadius: '4px',
-                padding: '1px 5px',
-                marginRight: '6px',
-              }}
-            >
-              esc
-            </kbd>
-            close
-          </span>
-        </div>
-      </div>
-    </div>
+    </>
   )
 }

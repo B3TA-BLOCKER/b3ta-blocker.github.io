@@ -10,6 +10,7 @@ import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import TableOfContents from '@/components/TableOfContents'
 import { ViewTracker } from '@/components/ViewCount'
+import SearchHighlighter from '@/components/SearchHighlighter'
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
   weekday: 'long',
@@ -64,6 +65,7 @@ export default function PostLayout({
     <SectionContainer>
       <ScrollTopAndComment />
       <ViewTracker slug={path} />
+      <SearchHighlighter />
       <article>
         <div>
           <header className="pt-6 pb-2">
@@ -255,7 +257,10 @@ export default function PostLayout({
 
             {/* Center — the article itself */}
             <div className="divide-y divide-gray-800 xl:pb-0 dark:divide-gray-700">
-              <div className="prose dark:prose-invert max-w-none pt-8 pb-8 [&>:first-child]:mt-0 [&>:first-child>:first-child]:mt-0">
+              <div
+                data-search-root
+                className="prose dark:prose-invert max-w-none pt-8 pb-8 [&>:first-child]:mt-0 [&>:first-child>:first-child]:mt-0"
+              >
                 {children}
               </div>
               {twitterUrl && (

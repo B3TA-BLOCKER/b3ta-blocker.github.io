@@ -328,3 +328,42 @@ h6 {
   border: 1px solid #30363d;
   border-radius: 6px;
 }
+
+/* ============================================
+   SEARCH HITS (post page, opened from the search modal)
+   ============================================ */
+
+/* CSS Custom Highlight API — paints hits without touching the DOM */
+::highlight(search-hit) {
+  background-color: rgb(250 204 21 / 0.45);
+  color: inherit;
+}
+::highlight(search-hit-active) {
+  background-color: rgb(249 115 22 / 0.6);
+  color: inherit;
+}
+.dark ::highlight(search-hit) {
+  background-color: rgb(248 81 73 / 0.32);
+  color: inherit;
+}
+.dark ::highlight(search-hit-active) {
+  background-color: rgb(248 81 73 / 0.7);
+  color: #fff;
+}
+
+/* Fallback for browsers without the Highlight API */
+mark.search-hit {
+  background-color: rgb(250 204 21 / 0.45);
+  color: inherit;
+  border-radius: 2px;
+}
+mark.search-hit.search-hit-active {
+  background-color: rgb(249 115 22 / 0.6);
+}
+.dark mark.search-hit {
+  background-color: rgb(248 81 73 / 0.32);
+}
+.dark mark.search-hit.search-hit-active {
+  background-color: rgb(248 81 73 / 0.7);
+  color: #fff;
+}

@@ -21,6 +21,7 @@ import rehypeCitation from 'rehype-citation'
 import rehypePrismPlus from 'rehype-prism-plus'
 import rehypePresetMinify from 'rehype-preset-minify'
 import siteMetadata from './data/siteMetadata'
+import { extractSearchText } from './lib/searchText'
 import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer.js'
 import prettier from 'prettier'
 
@@ -74,21 +75,6 @@ async function createTagCount(allBlogs) {
   writeFileSync('./app/tag-data.json', formatted)
 }
 
-// Strips MDX/markdown syntax down to plain readable text so it's safe
-// (and reasonably compact) to ship inside public/search.json.
-function stripMdx(raw: string): string {
-  return raw
-    .replace(/```[\s\S]*?```/g, ' ') // fenced code blocks
-    .replace(/`([^`]+)`/g, '$1') // inline code
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ') // images
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // [text](url) -> text
-    .replace(/<\/?[^>]+>/g, ' ') // stray html/jsx tags
-    .replace(/^#{1,6}\s+/gm, '') // heading markers
-    .replace(/[*_~>#]/g, ' ') // leftover md symbols
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
 function createSearchIndex(allBlogs) {
   if (
     siteMetadata?.search?.provider === 'kbar' &&
@@ -96,11 +82,17 @@ function createSearchIndex(allBlogs) {
   ) {
     // Match by `path` rather than array index, since allCoreContent(sortPosts(...))
     // re-sorts the list and would otherwise pair posts with the wrong body text.
-    const bodyByPath = new Map(allBlogs.map((b) => [b.path, stripMdx(b.body.raw)]))
+    const textByPath = new Map<string, ReturnType<typeof extractSearchText>>(
+      allBlogs.map((b): [string, ReturnType<typeof extractSearchText>] => [
+        b.path,
+        extractSearchText(b.body.raw),
+      ])
+    )
 
     const withBody = allCoreContent(sortPosts(allBlogs)).map((post) => ({
       ...post,
-      body: bodyByPath.get(post.path) ?? '',
+      body: textByPath.get(post.path)?.text ?? '',
+      code: textByPath.get(post.path)?.code ?? '',
     }))
 
     writeFileSync(
