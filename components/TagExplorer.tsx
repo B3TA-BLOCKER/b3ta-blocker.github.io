@@ -117,12 +117,9 @@ function Chip({ tag, count }: { tag: string; count: number }) {
     <Link
       href={`/tags/${slug(tag)}`}
       aria-label={`View ${count} post${count === 1 ? '' : 's'} tagged ${tag}`}
-      className={`inline-flex items-center gap-2 rounded border px-2.5 py-1 font-mono text-xs text-gray-700 transition-colors duration-150 dark:text-gray-300 ${HEAT[heat].chip}`}
+      className={`inline-flex items-center gap-2 rounded border px-3 py-1.5 font-mono text-sm text-gray-700 transition-colors duration-150 dark:text-gray-300 ${HEAT[heat].chip}`}
     >
-      <span
-        aria-hidden="true"
-        className={`h-1.5 w-1.5 shrink-0 rounded-full ${HEAT[heat].dotFlat}`}
-      />
+      <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${HEAT[heat].dotFlat}`} />
       <span>{tag}</span>
       <span className={`tabular-nums ${HEAT[heat].count}`}>{count}</span>
     </Link>
@@ -303,13 +300,13 @@ export default function TagExplorer({ sections, counts, top }: Props) {
               return (
                 <div
                   key={section.label}
-                  className="grid gap-x-6 gap-y-2.5 py-3.5 first:pt-0 last:pb-0 sm:grid-cols-[13rem_1fr]"
+                  className="grid gap-x-6 gap-y-2.5 py-4 first:pt-0 last:pb-0 sm:grid-cols-[16rem_1fr]"
                 >
-                  <h2 className="font-mono text-xs font-semibold tracking-widest text-gray-700 uppercase sm:pt-1.5 dark:text-gray-300">
+                  <h2 className="font-mono text-sm font-semibold tracking-wider text-gray-700 uppercase sm:pt-2 dark:text-gray-300">
                     <span className="text-red-500">#</span> {section.label}
                     <span className="ml-2 font-normal text-gray-500">{section.tags.length}</span>
                   </h2>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {list.map((t) => (
                       <Chip key={t} tag={t} count={counts[t]} />
                     ))}
@@ -320,7 +317,7 @@ export default function TagExplorer({ sections, counts, top }: Props) {
                         onClick={() =>
                           setOpen((o) => ({ ...o, [section.label]: !o[section.label] }))
                         }
-                        className="rounded border border-dashed border-gray-300 px-2.5 py-1 font-mono text-xs text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-800 dark:border-gray-700 dark:hover:text-gray-200"
+                        className="rounded border border-dashed border-gray-300 px-3 py-1.5 font-mono text-sm text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-800 dark:border-gray-700 dark:hover:text-gray-200"
                       >
                         {expanded ? 'show less' : `+${hidden} more`}
                       </button>
