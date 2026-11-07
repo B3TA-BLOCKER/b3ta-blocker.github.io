@@ -130,6 +130,13 @@ export default function TagExplorer({ sections, counts, top }: Props) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const q = query.trim().toLowerCase().replace(/\s+/g, '-')
+  // Category names are matched on a looser slug so "cves & named" or
+  // "privilege escalation" both find their category.
+  const qLabel = query
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
 
   const totalTags = useMemo(() => sections.reduce((n, s) => n + s.tags.length, 0), [sections])
 
@@ -142,12 +149,16 @@ export default function TagExplorer({ sections, counts, top }: Props) {
   const visible = useMemo(
     () =>
       sections
-        .map((s) => ({
-          ...s,
-          tags: q ? s.tags.filter((t) => t.includes(q)) : s.tags,
-        }))
+        .map((s) => {
+          if (!q) return s
+          // A matching category name shows the whole category; otherwise
+          // narrow the row down to the tags that match.
+          const labelSlug = s.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+          const categoryHit = qLabel !== '' && labelSlug.includes(qLabel)
+          return { ...s, tags: categoryHit ? s.tags : s.tags.filter((t) => t.includes(q)) }
+        })
         .filter((s) => s.tags.length > 0),
-    [sections, q]
+    [sections, q, qLabel]
   )
 
   const shown = visible.reduce((n, s) => n + s.tags.length, 0)
@@ -185,7 +196,7 @@ export default function TagExplorer({ sections, counts, top }: Props) {
 
       {/* Filter prompt */}
       <p className="mb-2 font-mono text-base text-gray-600 dark:text-gray-400/60">
-        # Live filter: type a keyword and the index below is grepped as you type.
+        # Live filter: type a tag or a category and the index below is grepped as you type.
       </p>
       <label className="focus-within:border-primary-500 mb-8 flex items-center gap-3 rounded-lg border border-gray-300 bg-white/60 px-4 py-3 font-mono text-base transition-colors dark:border-gray-800 dark:bg-gray-900/40">
         <span className="text-primary-600 dark:text-primary-500 font-bold">$</span>
@@ -194,8 +205,8 @@ export default function TagExplorer({ sections, counts, top }: Props) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="filter tags…"
-          aria-label="Filter tags"
+          placeholder="filter tags or categories…"
+          aria-label="Filter tags and categories"
           autoComplete="off"
           spellCheck={false}
           className="min-w-0 flex-1 border-0 bg-transparent p-0 text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:ring-0 focus:outline-none dark:text-gray-100"
@@ -331,7 +342,9 @@ export default function TagExplorer({ sections, counts, top }: Props) {
       )}
 
       {q && visible.length === 0 && (
-        <p className="font-mono text-gray-500">$ no tags match &quot;{query.trim()}&quot;</p>
+        <p className="font-mono text-gray-500">
+          $ no tags or categories match &quot;{query.trim()}&quot;
+        </p>
       )}
     </div>
   )
