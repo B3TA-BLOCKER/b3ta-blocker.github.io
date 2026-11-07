@@ -27,42 +27,53 @@ const HEAT_ORDER: Heat[] = ['hot', 'warm', 'cool']
 
 const HEAT: Record<
   Heat,
-  { range: string; chip: string; badge: string; dot: string; bar: string; text: string }
+  {
+    range: string
+    chip: string
+    count: string
+    dot: string
+    dotFlat: string
+    bar: string
+    text: string
+  }
 > = {
   hot: {
     range: `${HOT_MIN}+ posts`,
-    chip: 'border-red-500/60 bg-red-500/10 text-red-700 shadow-[0_0_16px_rgba(239,68,68,0.25)] hover:bg-red-500/20 dark:text-red-400',
-    badge: 'bg-red-500/20 text-red-700 dark:text-red-300',
+    chip: 'border-red-500/40 hover:border-red-500/70 hover:text-red-700 dark:hover:text-red-400',
+    count: 'text-red-600 dark:text-red-400',
     dot: 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.7)]',
+    dotFlat: 'bg-red-500',
     bar: 'from-red-700 to-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]',
     text: 'text-red-700 dark:text-red-400',
   },
   warm: {
     range: `${WARM_MIN}–${HOT_MIN - 1} posts`,
-    chip: 'border-amber-500/60 bg-amber-500/10 text-amber-700 shadow-[0_0_14px_rgba(245,158,11,0.18)] hover:bg-amber-500/20 dark:text-amber-400',
-    badge: 'bg-amber-500/20 text-amber-800 dark:text-amber-300',
+    chip: 'border-amber-500/40 hover:border-amber-500/70 hover:text-amber-700 dark:hover:text-amber-400',
+    count: 'text-amber-700 dark:text-amber-400',
     dot: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)]',
+    dotFlat: 'bg-amber-500',
     bar: 'from-amber-600 to-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.55)]',
     text: 'text-amber-700 dark:text-amber-400',
   },
   cool: {
     range: `1–${WARM_MIN - 1} posts`,
-    chip: 'border-sky-500/40 bg-sky-500/5 text-sky-700 hover:border-sky-500/70 hover:bg-sky-500/10 dark:text-sky-400',
-    badge: 'bg-sky-500/15 text-sky-800 dark:text-sky-300',
+    chip: 'border-gray-300 hover:border-sky-500/60 hover:text-sky-700 dark:border-gray-800 dark:hover:text-sky-400',
+    count: 'text-gray-500',
     dot: 'bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.7)]',
+    dotFlat: 'bg-sky-500/60',
     bar: 'from-sky-600 to-sky-400 shadow-[0_0_10px_rgba(14,165,233,0.5)]',
     text: 'text-sky-700 dark:text-sky-400',
   },
 }
 
+// Quiet by default: neutral chips with a small heat dot. Colour only shows up
+// as a hairline border on hot/warm tags and on hover.
+const ROW_LIMIT = 10
+
 const SEGMENT: Record<Heat, string> = {
   hot: 'bg-red-500',
   warm: 'bg-amber-500',
   cool: 'bg-sky-500',
-}
-
-function fileName(label: string) {
-  return `${label.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}.tags`
 }
 
 function Window({
@@ -106,21 +117,21 @@ function Chip({ tag, count }: { tag: string; count: number }) {
     <Link
       href={`/tags/${slug(tag)}`}
       aria-label={`View ${count} post${count === 1 ? '' : 's'} tagged ${tag}`}
-      className={`inline-flex items-center gap-2 rounded border px-3 py-1.5 font-mono text-sm transition-all duration-200 hover:-translate-y-0.5 ${HEAT[heat].chip}`}
+      className={`inline-flex items-center gap-2 rounded border px-2.5 py-1 font-mono text-xs text-gray-700 transition-colors duration-150 dark:text-gray-300 ${HEAT[heat].chip}`}
     >
-      <span>
-        <span className="opacity-60">#</span>
-        {tag}
-      </span>
-      <span className={`rounded px-1.5 py-0.5 text-xs tabular-nums ${HEAT[heat].badge}`}>
-        {count}
-      </span>
+      <span
+        aria-hidden="true"
+        className={`h-1.5 w-1.5 shrink-0 rounded-full ${HEAT[heat].dotFlat}`}
+      />
+      <span>{tag}</span>
+      <span className={`tabular-nums ${HEAT[heat].count}`}>{count}</span>
     </Link>
   )
 }
 
 export default function TagExplorer({ sections, counts, top }: Props) {
   const [query, setQuery] = useState('')
+  const [open, setOpen] = useState<Record<string, boolean>>({})
   const q = query.trim().toLowerCase().replace(/\s+/g, '-')
 
   const totalTags = useMemo(() => sections.reduce((n, s) => n + s.tags.length, 0), [sections])
@@ -136,7 +147,6 @@ export default function TagExplorer({ sections, counts, top }: Props) {
       sections
         .map((s) => ({
           ...s,
-          size: s.tags.length,
           tags: q ? s.tags.filter((t) => t.includes(q)) : s.tags,
         }))
         .filter((s) => s.tags.length > 0),
@@ -278,24 +288,50 @@ export default function TagExplorer({ sections, counts, top }: Props) {
         </div>
       )}
 
-      {/* Category windows */}
-      <div className="grid items-start gap-5 md:grid-cols-2">
-        {visible.map((section) => (
-          <Window
-            key={section.label}
-            title={fileName(section.label)}
-            meta={`${section.tags.length} tag${section.tags.length === 1 ? '' : 's'}`}
-            className={section.size > 8 ? 'md:col-span-2' : ''}
-          >
-            <WindowHeading>{section.label}</WindowHeading>
-            <div className="flex flex-wrap gap-2.5">
-              {section.tags.map((t) => (
-                <Chip key={t} tag={t} count={counts[t]} />
-              ))}
-            </div>
-          </Window>
-        ))}
-      </div>
+      {/* Category index: one compact window, one row per category */}
+      {visible.length > 0 && (
+        <Window title="index.tags" meta={`${visible.length} categories`}>
+          <p className="mb-4 font-mono text-sm font-bold">
+            <span className="mr-2 text-red-600 dark:text-red-500">$</span>
+            <span className="text-gray-900 dark:text-gray-100">tags --by-category</span>
+          </p>
+          <div className="divide-y divide-gray-200 dark:divide-gray-800/70">
+            {visible.map((section) => {
+              const expanded = !!q || !!open[section.label]
+              const list = expanded ? section.tags : section.tags.slice(0, ROW_LIMIT)
+              const hidden = section.tags.length - list.length
+              return (
+                <div
+                  key={section.label}
+                  className="grid gap-x-6 gap-y-2.5 py-3.5 first:pt-0 last:pb-0 sm:grid-cols-[13rem_1fr]"
+                >
+                  <h2 className="font-mono text-xs font-semibold tracking-widest text-gray-700 uppercase sm:pt-1.5 dark:text-gray-300">
+                    <span className="text-red-500">#</span> {section.label}
+                    <span className="ml-2 font-normal text-gray-500">{section.tags.length}</span>
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {list.map((t) => (
+                      <Chip key={t} tag={t} count={counts[t]} />
+                    ))}
+                    {!q && section.tags.length > ROW_LIMIT && (
+                      <button
+                        type="button"
+                        aria-expanded={expanded}
+                        onClick={() =>
+                          setOpen((o) => ({ ...o, [section.label]: !o[section.label] }))
+                        }
+                        className="rounded border border-dashed border-gray-300 px-2.5 py-1 font-mono text-xs text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-800 dark:border-gray-700 dark:hover:text-gray-200"
+                      >
+                        {expanded ? 'show less' : `+${hidden} more`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Window>
+      )}
 
       {q && visible.length === 0 && (
         <p className="font-mono text-gray-500">$ no tags match &quot;{query.trim()}&quot;</p>
