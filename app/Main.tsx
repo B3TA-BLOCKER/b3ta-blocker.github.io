@@ -139,7 +139,7 @@ export default function Home({ posts }) {
       </div>
 
       {posts.length > MAX_DISPLAY && (
-        <div className="flex justify-end text-base leading-6 font-medium">
+        <div className="flex justify-end border-t border-gray-800 pt-6 text-base leading-6 font-medium dark:border-gray-700">
           <Link
             href="/blog"
             className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
@@ -151,7 +151,7 @@ export default function Home({ posts }) {
       )}
 
       <div className="mt-8">
-        <NewsletterForm />
+        <NewsletterForm topDivider={posts.length <= MAX_DISPLAY} />
       </div>
     </>
   )

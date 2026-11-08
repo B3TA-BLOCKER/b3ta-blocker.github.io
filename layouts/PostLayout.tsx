@@ -123,10 +123,10 @@ export default function PostLayout({
             )}
           </header>
 
-          {/* Glowing divider between banner and content */}
+          {/* Glowing divider between banner and content (dark line in light mode, white in dark) */}
           <div
             aria-hidden="true"
-            className="mx-auto mt-2 h-px w-full bg-gradient-to-r from-transparent via-white/80 to-transparent shadow-[0_10px_30px_4px_rgba(255,255,255,0.18)]"
+            className="mx-auto mt-2 h-px w-full bg-gradient-to-r from-transparent via-gray-900/60 to-transparent shadow-[0_10px_30px_4px_rgba(17,24,39,0.12)] dark:via-white/80 dark:shadow-[0_10px_30px_4px_rgba(255,255,255,0.18)]"
           />
 
           {/* Single-row 3-column grid: left rail | article | TOC rail.
