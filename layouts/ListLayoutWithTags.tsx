@@ -9,7 +9,7 @@ import Tag from '@/components/Tag'
 import PostMeta from '@/components/PostMeta'
 import siteMetadata from '@/data/siteMetadata'
 import Image from 'next/image'
-import { glowColorForTags, ICON_GLOW_CLASS } from '@/lib/difficulty'
+import { glowColorForTags, ICON_GLOW_CLASS, TITLE_GLOW_CLASS } from '@/lib/difficulty'
 
 interface PaginationProps {
   totalPages: number
@@ -119,7 +119,8 @@ export default function ListLayoutWithTags({
                     <h2 className="flex items-center gap-2 text-xl leading-8 font-bold tracking-tight">
                       <Link
                         href={`/${path}`}
-                        className="hover:text-primary-500 dark:hover:text-primary-400 text-gray-900 dark:text-gray-100"
+                        className={`text-gray-900 dark:text-gray-100 ${TITLE_GLOW_CLASS}`}
+                        style={{ '--glow': glowColorForTags(tags) } as React.CSSProperties}
                       >
                         {title}
                       </Link>

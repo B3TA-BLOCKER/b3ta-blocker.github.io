@@ -4,7 +4,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import Image from 'next/image'
 import NewsletterForm from '@/components/NewsletterForm'
-import { glowColorForTags, ICON_GLOW_CLASS } from '@/lib/difficulty'
+import { glowColorForTags, ICON_GLOW_CLASS, TITLE_GLOW_CLASS } from '@/lib/difficulty'
 
 const MAX_DISPLAY = 3
 
@@ -91,7 +91,11 @@ export default function Home({ posts }) {
                     <div className="flex-1 space-y-3">
                       <div>
                         <h2 className="flex items-center gap-2 text-2xl leading-8 font-bold tracking-tight">
-                          <Link href={`/blog/${slug}`} className="text-gray-900 dark:text-gray-100">
+                          <Link
+                            href={`/blog/${slug}`}
+                            className={`text-gray-900 dark:text-gray-100 ${TITLE_GLOW_CLASS}`}
+                            style={{ '--glow': glowColorForTags(tags) } as React.CSSProperties}
+                          >
                             {title}
                           </Link>
                           {locked && (

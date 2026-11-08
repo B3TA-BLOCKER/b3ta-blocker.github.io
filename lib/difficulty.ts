@@ -1,6 +1,6 @@
 // Single source of truth for HackTheBox difficulty colours. Used by the machine
-// info card (BoxInfoCard) and by the post icons in the home / blog lists, so the
-// icon glow on hover always matches the difficulty colour on the machine card.
+// info card (BoxInfoCard) and by the post icons and titles in the home / blog lists,
+// so the hover glow always matches the difficulty colour on the machine card.
 
 export type Difficulty = 'veryeasy' | 'easy' | 'medium' | 'hard' | 'insane'
 
@@ -47,3 +47,13 @@ export function glowColorForTags(tags: string[] | undefined): string {
  */
 export const ICON_GLOW_CLASS =
   'transition-[filter] duration-200 [filter:drop-shadow(0_0_0_transparent)_drop-shadow(0_0_0_transparent)] hover:[filter:drop-shadow(0_0_3px_var(--glow))_drop-shadow(0_0_12px_var(--glow))] group-focus-visible:[filter:drop-shadow(0_0_3px_var(--glow))_drop-shadow(0_0_12px_var(--glow))]'
+
+/**
+ * Hover/focus glow for a post title, same recipe as the machine name on the info
+ * card: the text takes the difficulty colour (read from the --glow CSS variable)
+ * and gets a soft two-layer halo. Set --glow on the same element.
+ * In light mode only the halo is shown, because pale difficulty colours
+ * (e.g. silver for Insane) would be unreadable as text on white.
+ */
+export const TITLE_GLOW_CLASS =
+  'transition-[color,text-shadow] duration-200 hover:[text-shadow:0_0_10px_var(--glow)] focus-visible:[text-shadow:0_0_10px_var(--glow)] dark:hover:text-[color:var(--glow)] dark:hover:[text-shadow:0_0_8px_var(--glow),0_0_18px_var(--glow)] dark:focus-visible:text-[color:var(--glow)] dark:focus-visible:[text-shadow:0_0_8px_var(--glow),0_0_18px_var(--glow)]'
