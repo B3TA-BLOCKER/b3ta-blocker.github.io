@@ -2,8 +2,9 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useEffect, useState } from 'react'
+import { DIFF_COLOR, NEUTRAL_COLOR, type Difficulty } from '@/lib/difficulty'
 
-export type Difficulty = 'veryeasy' | 'easy' | 'medium' | 'hard' | 'insane'
+export type { Difficulty }
 
 export interface BadgeInfo {
   name: string
@@ -72,21 +73,12 @@ export interface BoxInfoCardProps {
   rootBlood?: BloodInfo
 }
 
-const NEUTRAL_COLOR = '#6fb8e8'
-
 /** Keep only characters that can appear in an HTB machine name (drops stray backticks, quotes, spaces). */
 function cleanMachine(v: string) {
   return v.replace(/[^A-Za-z0-9_-]/g, '')
 }
 
-/** Difficulty colours; used for the pill, the icon border and the hover glow. Edit freely. */
-const DIFF_COLOR: Record<Difficulty, string> = {
-  veryeasy: '#a56cff', // purple
-  easy: '#5fd778', // green
-  medium: '#e0a526', // orange / yellow
-  hard: '#e05c5c', // red
-  insane: '#cfc6e6', // silver
-}
+/** Difficulty colours (pill, icon border, hover glow) live in lib/difficulty.ts — edit them there. */
 
 const DIFF_LABEL: Record<Difficulty, string> = {
   veryeasy: 'Very Easy',

@@ -9,6 +9,7 @@ import Tag from '@/components/Tag'
 import PostMeta from '@/components/PostMeta'
 import siteMetadata from '@/data/siteMetadata'
 import Image from 'next/image'
+import { glowColorForTags, ICON_GLOW_CLASS } from '@/lib/difficulty'
 
 interface PaginationProps {
   totalPages: number
@@ -89,14 +90,19 @@ export default function ListLayoutWithTags({
                 <article className="flex items-center gap-4">
                   {images?.[0] && (
                     <div className="shrink-0">
-                      <Link href={`/${path}`}>
-                        <div className="relative h-30 w-30 overflow-hidden rounded-full">
-                          <Image src={images[0]} alt={title} fill className="object-cover" />
-                          {locked && (
-                            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
-                              <span className="text-sm">🔒</span>
-                            </div>
-                          )}
+                      <Link href={`/${path}`} className="group block rounded-full">
+                        <div
+                          className={`rounded-full ${ICON_GLOW_CLASS}`}
+                          style={{ '--glow': glowColorForTags(tags) } as React.CSSProperties}
+                        >
+                          <div className="relative h-30 w-30 overflow-hidden rounded-full">
+                            <Image src={images[0]} alt={title} fill className="object-cover" />
+                            {locked && (
+                              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
+                                <span className="text-sm">🔒</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </Link>
                     </div>

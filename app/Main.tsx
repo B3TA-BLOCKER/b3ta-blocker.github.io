@@ -4,6 +4,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
 import Image from 'next/image'
 import NewsletterForm from '@/components/NewsletterForm'
+import { glowColorForTags, ICON_GLOW_CLASS } from '@/lib/difficulty'
 
 const MAX_DISPLAY = 3
 
@@ -63,25 +64,25 @@ export default function Home({ posts }) {
               <li key={slug} className="py-12">
                 <article>
                   <div className="flex items-start gap-6">
-                    <Link href={`/blog/${slug}`} className="shrink-0">
-                      <div className="relative h-36 w-36 overflow-hidden rounded-xl">
-                        {images?.[0] ? (
-                          <Image
-                            src={images[0]}
-                            alt={title}
-                            fill
-                            className="object-cover transition-transform duration-300 hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-gray-800 text-sm text-gray-400">
-                            No image
-                          </div>
-                        )}
-                        {locked && (
-                          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60">
-                            <span className="text-2xl">🔒</span>
-                          </div>
-                        )}
+                    <Link href={`/blog/${slug}`} className="group shrink-0">
+                      <div
+                        className={`rounded-xl ${ICON_GLOW_CLASS}`}
+                        style={{ '--glow': glowColorForTags(tags) } as React.CSSProperties}
+                      >
+                        <div className="relative h-36 w-36 overflow-hidden rounded-xl">
+                          {images?.[0] ? (
+                            <Image src={images[0]} alt={title} fill className="object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-gray-800 text-sm text-gray-400">
+                              No image
+                            </div>
+                          )}
+                          {locked && (
+                            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60">
+                              <span className="text-2xl">🔒</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="mt-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
