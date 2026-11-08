@@ -15,9 +15,12 @@ permissions:
   pages: write
   id-token: write
 
+# Never cancel a run that is mid-deployment: cancelling deploy-pages while GitHub
+# is still publishing can leave a stuck Pages deployment that makes the next
+# runs time out. Newer queued runs still replace older queued ones.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -55,3 +58,5 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 1200000 # wait up to 20 min for Pages to publish (default is 10)
