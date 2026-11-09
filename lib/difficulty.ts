@@ -33,40 +33,53 @@ export function difficultyFromTags(tags: string[] | undefined): Difficulty | nul
   return null
 }
 
-/** Glow colour for a post's icon. */
+/** A HackTheBox machine: its icon ring is already drawn in the difficulty colour. */
+export function isHtbMachine(tags: string[] | undefined): boolean {
+  const t = (tags ?? []).map((x) => x.toLowerCase())
+  return t.includes('machine') && t.includes('hackthebox')
+}
+
+/** Difficulty-based glow colour (also the first-paint fallback for HTB machine icons). */
 export function glowColorForTags(tags: string[] | undefined): string {
   const d = difficultyFromTags(tags)
   return d ? DIFF_COLOR[d] : NEUTRAL_COLOR
 }
 
-/**
- * Hover/focus glow for a post icon: the icon's outline lights up in the
- * difficulty colour (read from the --glow CSS variable). Nothing moves or
- * scales. drop-shadow follows the artwork's own shape, so a round icon gets a
- * round glow. Put `group` on the surrounding link and set --glow on this element.
- */
-export const ICON_GLOW_CLASS =
-  'transition-[filter] duration-200 [filter:drop-shadow(0_0_0_transparent)_drop-shadow(0_0_0_transparent)] hover:[filter:drop-shadow(0_0_3px_var(--glow))_drop-shadow(0_0_12px_var(--glow))] group-focus-visible:[filter:drop-shadow(0_0_3px_var(--glow))_drop-shadow(0_0_12px_var(--glow))]'
-
-/**
- * Hover/focus glow for a post title: the text takes the difficulty colour (read
- * from the --glow CSS variable) with a soft halo of the same colour. Set --glow
- * on the same element.
- *
- * Dark mode: the exact difficulty colour with a faint, tight halo, so the
- * letters stay sharp and the glow doesn't bleed onto the tags underneath.
- * Light mode: the palette colours are tuned for dark backgrounds (silver or
- * light green on white would be unreadable, and a pale halo alone is invisible),
- * so the text turns a deepened shade of the difficulty colour (60% colour, 40%
- * black — 4.3:1 to 8:1 contrast on white for every difficulty) and the halo is
- * slightly wider and stronger.
- */
-// NOTE: keep these class names as complete literal strings. Tailwind finds
+// NOTE: keep every class below as a complete literal string. Tailwind finds
 // classes by scanning the source text, so building them from pieces
 // (`hover:${x}`) would silently generate no CSS.
+//
+// The classes read three CSS variables that a <GlowScope> sets from the icon's
+// edge colour: --glow (for dark pages), --glow-light (for white pages) and
+// --glow-text (title colour on dark pages).
+
+/**
+ * Hover/focus glow for a post icon: the icon's outline lights up in the icon's
+ * own edge colour. Nothing moves or scales. drop-shadow follows the artwork's
+ * shape, so a round icon gets a round glow. Put `group` on the surrounding link
+ * so keyboard focus lights it up too. White pages get a slightly wider glow in a
+ * deeper colour so it stays visible.
+ */
+export const ICON_GLOW_CLASS =
+  'transition-[filter] duration-200 ' +
+  '[filter:drop-shadow(0_0_0_transparent)_drop-shadow(0_0_0_transparent)] ' +
+  'hover:[filter:drop-shadow(0_0_4px_var(--glow-light))_drop-shadow(0_0_14px_var(--glow-light))] ' +
+  'group-focus-visible:[filter:drop-shadow(0_0_4px_var(--glow-light))_drop-shadow(0_0_14px_var(--glow-light))] ' +
+  'dark:hover:[filter:drop-shadow(0_0_3px_var(--glow))_drop-shadow(0_0_12px_var(--glow))] ' +
+  'dark:group-focus-visible:[filter:drop-shadow(0_0_3px_var(--glow))_drop-shadow(0_0_12px_var(--glow))]'
+
+/**
+ * Hover/focus glow for a post title, in the same colour as the post's icon.
+ *
+ * Dark mode: the title turns the glow colour with a faint, tight halo, so the
+ * letters stay sharp and the glow doesn't bleed onto the tags underneath.
+ * Light mode: pale colours are unreadable as text on white, so the title turns a
+ * deepened shade of the glow colour (70% colour, 30% black — at least 4.3:1
+ * contrast for every colour the icons produce) with a stronger halo.
+ */
 export const TITLE_GLOW_CLASS =
   'transition-[color,text-shadow] duration-200 ' +
-  'hover:text-[color:color-mix(in_srgb,var(--glow)_60%,black)] focus-visible:text-[color:color-mix(in_srgb,var(--glow)_60%,black)] ' +
-  'hover:[text-shadow:0_0_10px_color-mix(in_srgb,var(--glow)_55%,transparent)] focus-visible:[text-shadow:0_0_10px_color-mix(in_srgb,var(--glow)_55%,transparent)] ' +
-  'dark:hover:text-[color:var(--glow)] dark:focus-visible:text-[color:var(--glow)] ' +
+  'hover:text-[color:color-mix(in_srgb,var(--glow-light)_70%,black)] focus-visible:text-[color:color-mix(in_srgb,var(--glow-light)_70%,black)] ' +
+  'hover:[text-shadow:0_0_10px_color-mix(in_srgb,var(--glow-light)_55%,transparent)] focus-visible:[text-shadow:0_0_10px_color-mix(in_srgb,var(--glow-light)_55%,transparent)] ' +
+  'dark:hover:text-[color:var(--glow-text)] dark:focus-visible:text-[color:var(--glow-text)] ' +
   'dark:hover:[text-shadow:0_0_8px_color-mix(in_srgb,var(--glow)_40%,transparent)] dark:focus-visible:[text-shadow:0_0_8px_color-mix(in_srgb,var(--glow)_40%,transparent)]'

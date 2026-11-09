@@ -8,8 +8,9 @@ import Link from '@/components/Link'
 import Tag from '@/components/Tag'
 import PostMeta from '@/components/PostMeta'
 import siteMetadata from '@/data/siteMetadata'
-import Image from 'next/image'
-import { glowColorForTags, ICON_GLOW_CLASS, TITLE_GLOW_CLASS } from '@/lib/difficulty'
+import PostIcon from '@/components/PostIcon'
+import GlowScope from '@/components/GlowScope'
+import { TITLE_GLOW_CLASS } from '@/lib/difficulty'
 
 interface PaginationProps {
   totalPages: number
@@ -88,75 +89,70 @@ export default function ListLayoutWithTags({
             return (
               <li key={path} className="py-5">
                 <article className="flex items-center gap-4">
-                  {images?.[0] && (
-                    <div className="shrink-0">
-                      <Link href={`/${path}`} className="group block rounded-full">
-                        <div
-                          className={`rounded-full ${ICON_GLOW_CLASS}`}
-                          style={{ '--glow': glowColorForTags(tags) } as React.CSSProperties}
+                  <GlowScope tags={tags}>
+                    {images?.[0] && (
+                      <div className="shrink-0">
+                        <Link href={`/${path}`} className="group block rounded-full">
+                          <PostIcon
+                            src={images[0]}
+                            alt={title}
+                            locked={locked}
+                            size="h-30 w-30"
+                            shape="full"
+                          />
+                        </Link>
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-3">
+                        <time
+                          dateTime={date}
+                          className="text-sm font-medium text-gray-500 dark:text-gray-400"
                         >
-                          <div className="relative h-30 w-30 overflow-hidden rounded-full">
-                            <Image src={images[0]} alt={title} fill className="object-cover" />
-                            {locked && (
-                              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60">
-                                <span className="text-sm">🔒</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-                  )}
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-3">
-                      <time
-                        dateTime={date}
-                        className="text-sm font-medium text-gray-500 dark:text-gray-400"
-                      >
-                        {formatDate(date, siteMetadata.locale)}
-                      </time>
-                    </div>
-                    <h2 className="flex items-center gap-2 text-xl leading-8 font-bold tracking-tight">
+                          {formatDate(date, siteMetadata.locale)}
+                        </time>
+                      </div>
+                      <h2 className="flex items-center gap-2 text-xl leading-8 font-bold tracking-tight">
+                        <Link
+                          href={`/${path}`}
+                          className={`text-gray-900 dark:text-gray-100 ${TITLE_GLOW_CLASS}`}
+                        >
+                          {title}
+                        </Link>
+                        {locked && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontFamily: 'monospace',
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: '#e53e3e',
+                              border: '1px solid rgba(229,62,62,0.4)',
+                              borderRadius: '4px',
+                              padding: '2px 8px',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Active
+                          </span>
+                        )}
+                      </h2>
+                      <div className="flex flex-wrap gap-2">
+                        {tags?.map((tag) => (
+                          <Tag key={tag} text={tag} />
+                        ))}
+                      </div>
+                      <p className="prose max-w-none text-gray-500 dark:text-gray-400">{summary}</p>
+                      <PostMeta slug={path} minutes={readingTime?.minutes} />
                       <Link
                         href={`/${path}`}
-                        className={`text-gray-900 dark:text-gray-100 ${TITLE_GLOW_CLASS}`}
-                        style={{ '--glow': glowColorForTags(tags) } as React.CSSProperties}
+                        className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 inline-block pt-1 text-sm font-medium"
+                        aria-label={`Read more: "${title}"`}
                       >
-                        {title}
+                        {locked ? 'View details →' : 'Read more →'}
                       </Link>
-                      {locked && (
-                        <span
-                          style={{
-                            fontSize: '10px',
-                            fontFamily: 'monospace',
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            color: '#e53e3e',
-                            border: '1px solid rgba(229,62,62,0.4)',
-                            borderRadius: '4px',
-                            padding: '2px 8px',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Active
-                        </span>
-                      )}
-                    </h2>
-                    <div className="flex flex-wrap gap-2">
-                      {tags?.map((tag) => (
-                        <Tag key={tag} text={tag} />
-                      ))}
                     </div>
-                    <p className="prose max-w-none text-gray-500 dark:text-gray-400">{summary}</p>
-                    <PostMeta slug={path} minutes={readingTime?.minutes} />
-                    <Link
-                      href={`/${path}`}
-                      className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400 inline-block pt-1 text-sm font-medium"
-                      aria-label={`Read more: "${title}"`}
-                    >
-                      {locked ? 'View details →' : 'Read more →'}
-                    </Link>
-                  </div>
+                  </GlowScope>
                 </article>
               </li>
             )

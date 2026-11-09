@@ -2,9 +2,10 @@ import Link from '@/components/Link'
 import Tag from '@/components/Tag'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
-import Image from 'next/image'
 import NewsletterForm from '@/components/NewsletterForm'
-import { glowColorForTags, ICON_GLOW_CLASS, TITLE_GLOW_CLASS } from '@/lib/difficulty'
+import PostIcon from '@/components/PostIcon'
+import GlowScope from '@/components/GlowScope'
+import { TITLE_GLOW_CLASS } from '@/lib/difficulty'
 
 const MAX_DISPLAY = 3
 
@@ -63,79 +64,74 @@ export default function Home({ posts }) {
             return (
               <li key={slug} className="py-12">
                 <article>
-                  <div className="flex items-start gap-6">
-                    <Link href={`/blog/${slug}`} className="group shrink-0">
-                      <div
-                        className={`rounded-xl ${ICON_GLOW_CLASS}`}
-                        style={{ '--glow': glowColorForTags(tags) } as React.CSSProperties}
-                      >
-                        <div className="relative h-36 w-36 overflow-hidden rounded-xl">
-                          {images?.[0] ? (
-                            <Image src={images[0]} alt={title} fill className="object-cover" />
-                          ) : (
+                  <GlowScope tags={tags}>
+                    <div className="flex items-start gap-6">
+                      <Link href={`/blog/${slug}`} className="group shrink-0">
+                        <PostIcon
+                          src={images?.[0]}
+                          alt={title}
+                          locked={locked}
+                          size="h-36 w-36"
+                          shape="xl"
+                          lockTextClass="text-2xl"
+                          fallback={
                             <div className="flex h-full w-full items-center justify-center bg-gray-800 text-sm text-gray-400">
                               No image
                             </div>
-                          )}
-                          {locked && (
-                            <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60">
-                              <span className="text-2xl">🔒</span>
-                            </div>
-                          )}
+                          }
+                        />
+                        <div className="mt-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+                          <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                         </div>
-                      </div>
-                      <div className="mt-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-                        <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
-                      </div>
-                    </Link>
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <h2 className="flex items-center gap-2 text-2xl leading-8 font-bold tracking-tight">
+                      </Link>
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h2 className="flex items-center gap-2 text-2xl leading-8 font-bold tracking-tight">
+                            <Link
+                              href={`/blog/${slug}`}
+                              className={`text-gray-900 dark:text-gray-100 ${TITLE_GLOW_CLASS}`}
+                            >
+                              {title}
+                            </Link>
+                            {locked && (
+                              <span
+                                style={{
+                                  fontSize: '10px',
+                                  fontFamily: 'monospace',
+                                  letterSpacing: '0.08em',
+                                  textTransform: 'uppercase',
+                                  color: '#e53e3e',
+                                  border: '1px solid rgba(229,62,62,0.4)',
+                                  borderRadius: '4px',
+                                  padding: '2px 8px',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                Active
+                              </span>
+                            )}
+                          </h2>
+                          <div className="flex flex-wrap">
+                            {tags.map((tag) => (
+                              <Tag key={tag} text={tag} />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="prose max-w-none text-gray-500 dark:text-gray-400">
+                          {summary}
+                        </div>
+                        <div className="text-base leading-6 font-medium">
                           <Link
                             href={`/blog/${slug}`}
-                            className={`text-gray-900 dark:text-gray-100 ${TITLE_GLOW_CLASS}`}
-                            style={{ '--glow': glowColorForTags(tags) } as React.CSSProperties}
+                            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                            aria-label={`Read more: "${title}"`}
                           >
-                            {title}
+                            {locked ? 'View details →' : 'Read more →'}
                           </Link>
-                          {locked && (
-                            <span
-                              style={{
-                                fontSize: '10px',
-                                fontFamily: 'monospace',
-                                letterSpacing: '0.08em',
-                                textTransform: 'uppercase',
-                                color: '#e53e3e',
-                                border: '1px solid rgba(229,62,62,0.4)',
-                                borderRadius: '4px',
-                                padding: '2px 8px',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              Active
-                            </span>
-                          )}
-                        </h2>
-                        <div className="flex flex-wrap">
-                          {tags.map((tag) => (
-                            <Tag key={tag} text={tag} />
-                          ))}
                         </div>
                       </div>
-                      <div className="prose max-w-none text-gray-500 dark:text-gray-400">
-                        {summary}
-                      </div>
-                      <div className="text-base leading-6 font-medium">
-                        <Link
-                          href={`/blog/${slug}`}
-                          className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-                          aria-label={`Read more: "${title}"`}
-                        >
-                          {locked ? 'View details →' : 'Read more →'}
-                        </Link>
-                      </div>
                     </div>
-                  </div>
+                  </GlowScope>
                 </article>
               </li>
             )
