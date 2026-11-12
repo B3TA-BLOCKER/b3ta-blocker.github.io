@@ -367,3 +367,41 @@ mark.search-hit.search-hit-active {
   background-color: rgb(248 81 73 / 0.7);
   color: #fff;
 }
+
+/* ------------------------------------------------------------------
+   About hero — avatar with text wrapping around its circular outline.
+
+   From md up the avatar floats left with `shape-outside: circle`, so every
+   line of text keeps the same distance (--hero-gap) from the avatar's
+   circumference instead of sitting in a straight column. The gap is built
+   with padding so the circle's radius is exactly avatar/2 + gap.
+
+   --hero-offset (40px) equals the 40px grid cell in AuthorLayout, which puts
+   the avatar's left edge on a grid line, clear of the clipped edge.
+   ------------------------------------------------------------------ */
+.hero-flow {
+  --hero-avatar: 190px;
+  --hero-gap: 28px;
+  --hero-offset: 40px;
+  --hero-top: 34px;
+}
+@media (min-width: 768px) {
+  .hero-avatar-float {
+    float: left;
+    box-sizing: content-box;
+    width: var(--hero-avatar);
+    height: var(--hero-avatar);
+    padding: var(--hero-gap);
+    margin: var(--hero-top) 0 0 calc(var(--hero-offset) - var(--hero-gap));
+    shape-outside: circle(closest-side) border-box;
+  }
+  .hero-socials-float {
+    float: left;
+    clear: left;
+    justify-content: center;
+    width: var(--hero-avatar);
+    /* Tucked 10px under the circle; small right margin keeps the text hugging
+       the curve; bottom margin keeps the last prompt line in the text column. */
+    margin: calc(var(--hero-gap) * -1 + 10px) 0 28px var(--hero-offset);
+  }
+}

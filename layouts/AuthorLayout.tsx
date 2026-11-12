@@ -37,25 +37,32 @@ export default function AuthorLayout({ content }: Props) {
             Cybersecurity Graduate.
           </div>
 
-          <div className="flex flex-col items-center gap-8 md:flex-row md:items-center md:gap-10">
-            {/* Left — avatar + socials */}
-            <div className="flex w-full shrink-0 flex-col items-center gap-3 md:w-auto">
+          {/* On mobile this is a centered column. From md up it becomes a normal
+              block (flow-root) and the avatar/socials float left, so the text
+              wraps around the avatar's circular outline (see .hero-flow in
+              css/tailwind.css). */}
+          <div className="hero-flow flex flex-col items-center gap-8 md:flow-root">
+            {/* Left — avatar + socials (`md:contents` lets the children float
+                directly inside the hero block on desktop) */}
+            <div className="flex w-full shrink-0 flex-col items-center gap-3 md:contents">
               {avatar && (
-                <div className="relative">
-                  <Image
-                    src={avatar}
-                    alt="avatar"
-                    width={160}
-                    height={160}
-                    className="h-[160px] w-[160px] rounded-full border-2 border-green-500/30 md:h-[190px] md:w-[190px]"
-                  />
-                  <div
-                    className="absolute inset-[-5px] rounded-full border border-green-500/40"
-                    style={{ animation: 'blink 3s ease infinite' }}
-                  />
+                <div className="hero-avatar-float">
+                  <div className="relative">
+                    <Image
+                      src={avatar}
+                      alt="avatar"
+                      width={160}
+                      height={160}
+                      className="h-[160px] w-[160px] rounded-full border-2 border-green-500/30 md:h-[190px] md:w-[190px]"
+                    />
+                    <div
+                      className="absolute inset-[-5px] rounded-full border border-green-500/40"
+                      style={{ animation: 'blink 3s ease infinite' }}
+                    />
+                  </div>
                 </div>
               )}
-              <div className="flex space-x-2">
+              <div className="hero-socials-float flex space-x-2">
                 <div className="scale-75">
                   <SocialIcon kind="mail" href={`mailto:${email}`} />
                 </div>
@@ -74,8 +81,8 @@ export default function AuthorLayout({ content }: Props) {
               </div>
             </div>
 
-            {/* Right — text */}
-            <div className="w-full flex-1 text-center md:text-left">
+            {/* Right — text (wraps around the avatar's circle on md+) */}
+            <div className="w-full text-center md:text-left">
               <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
                 Hassaan Ali <span className="text-red-500">Bukhari</span>
                 <span
