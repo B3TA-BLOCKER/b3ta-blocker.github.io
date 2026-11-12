@@ -37,42 +37,55 @@ function Tag({
   )
 }
 
-function TimelineItem({
-  date,
-  role,
-  org,
-  href,
-  note,
-  bullets,
-}: {
+type TimelineEntry = {
   date: string
   role: string
   org?: string
   href?: string
   note?: string
   bullets?: string[]
-}) {
+}
+
+// A role counts as the current one when its date range ends in "Present".
+const isCurrent = (date: string) => /\bpresent\b/i.test(date)
+
+// Timeline dot: solid green for the current role, hollow ring for past ones.
+function TimelineDot({ current, className }: { current: boolean; className: string }) {
   return (
-    <div className="relative border-l border-gray-300 pl-6 dark:border-gray-800">
-      <span className="absolute top-1.5 -left-[5px] h-2.5 w-2.5 rounded-full bg-green-500" />
-      <div className="mb-1 font-mono text-sm text-gray-500">{date}</div>
-      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-        {role}
-        {org &&
-          (href ? (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-normal text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
-            >
-              {' '}
-              · {org}
-            </a>
-          ) : (
-            <span className="font-normal text-gray-600 dark:text-gray-400"> · {org}</span>
-          ))}
-      </h3>
+    <span
+      className={`absolute h-2.5 w-2.5 rounded-full ${className} ${
+        current ? 'bg-green-500' : 'border-2 border-green-500 bg-white dark:bg-gray-950'
+      }`}
+    />
+  )
+}
+
+// "Role · Company" — the company (when given) is a grey link, like on every other entry.
+function RoleHeading({ role, org, href }: { role: string; org?: string; href?: string }) {
+  return (
+    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+      {role}
+      {org &&
+        (href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-normal text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+          >
+            {' '}
+            · {org}
+          </a>
+        ) : (
+          <span className="font-normal text-gray-600 dark:text-gray-400"> · {org}</span>
+        ))}
+    </h3>
+  )
+}
+
+function RoleDetails({ note, bullets }: { note?: string; bullets?: string[] }) {
+  return (
+    <>
       {note && <p className="mt-1 text-base text-gray-600 dark:text-gray-500">{note}</p>}
       {bullets && (
         <ul className="mt-3 space-y-1.5">
@@ -87,6 +100,66 @@ function TimelineItem({
           ))}
         </ul>
       )}
+    </>
+  )
+}
+
+function TimelineItem({
+  date,
+  role,
+  org,
+  href,
+  note,
+  bullets,
+  current = true,
+}: TimelineEntry & { current?: boolean }) {
+  return (
+    <div className="relative border-l border-gray-300 pl-6 dark:border-gray-800">
+      <TimelineDot current={current} className="top-1.5 -left-[5px]" />
+      <div className="mb-1 font-mono text-sm text-gray-500">{date}</div>
+      <RoleHeading role={role} org={org} href={href} />
+      <RoleDetails note={note} bullets={bullets} />
+    </div>
+  )
+}
+
+// LinkedIn-style grouping: consecutive entries at the same organisation are merged
+// into one connected timeline. Entries with no org, or a different org, stay separate.
+function groupByOrg(entries: TimelineEntry[]) {
+  const groups: { org?: string; href?: string; roles: TimelineEntry[] }[] = []
+  for (const e of entries) {
+    const last = groups[groups.length - 1]
+    if (last && e.org && last.org === e.org) {
+      last.roles.push(e)
+      last.href = last.href ?? e.href
+    } else {
+      groups.push({ org: e.org, href: e.href, roles: [e] })
+    }
+  }
+  return groups
+}
+
+// Several roles at one company: one continuous line, tighter spacing, and the company
+// name is shown only on the first (newest) role.
+function GroupedTimelineItem({
+  org,
+  href,
+  roles,
+}: {
+  org: string
+  href?: string
+  roles: TimelineEntry[]
+}) {
+  return (
+    <div className="relative space-y-7 border-l border-gray-300 pl-6 dark:border-gray-800">
+      {roles.map((r, i) => (
+        <div key={i} className="relative">
+          <TimelineDot current={isCurrent(r.date)} className="top-1.5 -left-[29px]" />
+          <div className="mb-1 font-mono text-sm text-gray-500">{r.date}</div>
+          <RoleHeading role={r.role} org={i === 0 ? org : undefined} href={href} />
+          <RoleDetails note={r.note} bullets={r.bullets} />
+        </div>
+      ))}
     </div>
   )
 }
@@ -138,9 +211,13 @@ export function AboutMiddleContent() {
       <section className="mb-14">
         <SectionHeading>Experience</SectionHeading>
         <div className="space-y-10">
-          {experience.map((e, i) => (
-            <TimelineItem key={i} {...e} />
-          ))}
+          {groupByOrg(experience as TimelineEntry[]).map((g, i) =>
+            g.roles.length > 1 && g.org ? (
+              <GroupedTimelineItem key={i} org={g.org} href={g.href} roles={g.roles} />
+            ) : (
+              <TimelineItem key={i} {...g.roles[0]} current={isCurrent(g.roles[0].date)} />
+            )
+          )}
         </div>
       </section>
 

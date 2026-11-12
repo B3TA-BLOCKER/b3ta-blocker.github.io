@@ -11,7 +11,19 @@ export const skills = {
 
 export const experience = [
   {
-    date: '2025',
+    date: 'Nov 2026 — Present · Remote',
+    role: 'Information Security Intern',
+    org: 'SECISYS',
+    href: 'https://secisys.com/',
+  },
+  {
+    date: 'Oct 2026 — Present · Onsite',
+    role: 'Information Technology Intern',
+    org: 'PTCL',
+    href: 'https://ptcl.com.pk',
+  },
+  {
+    date: 'Jul 2025 — Sep 2025 · 2 months · Onsite',
     role: 'Penetration Tester Intern',
     org: 'VisionX',
     href: 'https://visionx.io',
