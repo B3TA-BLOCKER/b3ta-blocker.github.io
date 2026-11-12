@@ -69,17 +69,20 @@ export const ICON_GLOW_CLASS =
   'dark:group-focus-visible:[filter:drop-shadow(0_0_3px_var(--glow))_drop-shadow(0_0_12px_var(--glow))]'
 
 /**
- * Hover/focus glow for a post title, in the same colour as the post's icon.
+ * Hover/focus effect for a post title, in the same colour as the post's icon.
  *
- * Dark mode: the title turns the glow colour with a faint, tight halo, so the
- * letters stay sharp and the glow doesn't bleed onto the tags underneath.
- * Light mode: pale colours are unreadable as text on white, so the title turns a
- * deepened shade of the glow colour (70% colour, 30% black — at least 4.3:1
- * contrast for every colour the icons produce) with a stronger halo.
+ * Dark mode: a neon glow. The title turns the light glow colour and sits on a
+ * halo in the *deeper* shade of that colour (--glow-light), so the letters stay
+ * the brightest thing on screen. Icons with no colour of their own (black and
+ * white art) use the blue accent, so the glow is always a visible colour.
+ *
+ * Light mode: NO blur and no underline. A soft halo around dark text on a white
+ * page just makes the text look out of focus, so the title simply turns a
+ * deepened shade of the colour (70% colour, 30% black — at least 4.3:1 contrast
+ * on white). Sharp and readable.
  */
 export const TITLE_GLOW_CLASS =
   'transition-[color,text-shadow] duration-200 ' +
   'hover:text-[color:color-mix(in_srgb,var(--glow-light)_70%,black)] focus-visible:text-[color:color-mix(in_srgb,var(--glow-light)_70%,black)] ' +
-  'hover:[text-shadow:0_0_10px_color-mix(in_srgb,var(--glow-light)_55%,transparent)] focus-visible:[text-shadow:0_0_10px_color-mix(in_srgb,var(--glow-light)_55%,transparent)] ' +
   'dark:hover:text-[color:var(--glow-text)] dark:focus-visible:text-[color:var(--glow-text)] ' +
-  'dark:hover:[text-shadow:0_0_8px_color-mix(in_srgb,var(--glow)_40%,transparent)] dark:focus-visible:[text-shadow:0_0_8px_color-mix(in_srgb,var(--glow)_40%,transparent)]'
+  'dark:hover:[text-shadow:0_0_10px_color-mix(in_srgb,var(--glow-light)_70%,transparent)] dark:focus-visible:[text-shadow:0_0_10px_color-mix(in_srgb,var(--glow-light)_70%,transparent)]'

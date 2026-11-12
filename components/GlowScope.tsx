@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { glowColorForTags, isHtbMachine } from '@/lib/difficulty'
-import { NEUTRAL_GLOW, type GlowColors } from '@/lib/iconColor'
+import { ACCENT_GLOW, type GlowColors } from '@/lib/iconColor'
 
 // Wraps one post row. It owns the row's glow colour as CSS variables
 // (--glow, --glow-light, --glow-text), so the icon and the title — which are
@@ -17,7 +17,7 @@ export const useSetGlow = () => useContext(SetGlow)
 
 /** Colour used until the icon has been read: HTB machines show their difficulty colour. */
 function initialGlow(tags?: string[]): GlowColors {
-  if (!isHtbMachine(tags)) return NEUTRAL_GLOW
+  if (!isHtbMachine(tags)) return ACCENT_GLOW
   const c = glowColorForTags(tags)
   return { dark: c, light: c, text: c }
 }

@@ -14,15 +14,27 @@ export interface GlowColors {
   text: string
 }
 
-export const SILVER_GLOW = 'hsl(215 12% 68%)'
-/** Silver is invisible on white, so light mode uses a deeper blue-grey slate. */
-export const SLATE_GLOW = 'hsl(215 42% 44%)'
+/**
+ * Used when an icon has no colour to take a glow from (a black-and-white photo)
+ * and for the first paint before an icon has been read. A white or silver glow
+ * would be invisible on a dark page and a hovered title could not stand out from
+ * it, so this is a clear cyber-blue that suits the site and shows on both themes.
+ */
+export const ACCENT_GLOW: GlowColors = {
+  dark: 'hsl(205 100% 62%)',
+  light: 'hsl(208 90% 40%)',
+  text: 'hsl(205 100% 76%)',
+}
 
-/** Used for monochrome icons and when an icon can't be sampled (cross-origin image…). */
-export const NEUTRAL_GLOW: GlowColors = {
-  dark: SILVER_GLOW,
-  light: SLATE_GLOW,
-  text: 'hsl(215 25% 88%)', // near-white, so a hovered title doesn't dim
+/** The three glow colours for a hue (0-360) and saturation (0-1). */
+function colorsFromHue(hue: number, sat: number): GlowColors {
+  const h = Math.round(hue)
+  const dark = `hsl(${h} ${Math.round(sat * 100)}% 58%)`
+  return {
+    dark,
+    light: `hsl(${h} ${Math.round(Math.min(0.9, sat + 0.05) * 100)}% 46%)`,
+    text: dark,
+  }
 }
 
 type RGB = [number, number, number]
@@ -42,6 +54,42 @@ function toHsl([r, g, b]: RGB): { h: number; s: number; l: number } {
   else if (max === G) h = (B - R) / d + 2
   else h = (R - G) / d + 4
   return { h: (h * 60 + 360) % 360, s, l }
+}
+
+/**
+ * Most vivid hue anywhere inside the circular crop of the icon, or null if the
+ * artwork is essentially colourless (needs at least ~1.2% clearly coloured pixels).
+ */
+function accentFromWholeIcon(data: ArrayLike<number>, size: number): GlowColors | null {
+  const c = (size - 1) / 2
+  const bins = new Array(18).fill(0)
+  const sums = new Array(18).fill(0).map(() => ({ x: 0, y: 0, s: 0, n: 0 }))
+  let total = 0
+  let vivid = 0
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (Math.hypot(x - c, y - c) > 0.5 * size) continue
+      const p = (y * size + x) * 4
+      if (data[p + 3] < 200) continue
+      total++
+      const { h, s, l } = toHsl([data[p], data[p + 1], data[p + 2]])
+      if (s < 0.4 || l < 0.22 || l > 0.85) continue
+      vivid++
+      const w = s * (1 - Math.abs(2 * l - 1))
+      const b = Math.floor(h / 20) % 18
+      bins[b] += w
+      sums[b].x += Math.cos((h * Math.PI) / 180) * w
+      sums[b].y += Math.sin((h * Math.PI) / 180) * w
+      sums[b].s += s
+      sums[b].n++
+    }
+  }
+  if (total === 0 || vivid / total < 0.012) return null
+  const best = bins.indexOf(Math.max(...bins))
+  const { x, y, s, n } = sums[best]
+  if (n === 0) return null
+  const hue = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
+  return colorsFromHue(hue, Math.min(0.9, Math.max(0.6, (s / n) * 1.2)))
 }
 
 /**
@@ -78,8 +126,9 @@ export function edgeGlowFromPixels(data: ArrayLike<number>, size: number): GlowC
   const avgWeight = inBin.reduce((n, s) => n + weight(s), 0) / samples.length
 
   if (avgWeight < 0.07) {
-    // Essentially monochrome edge (black/white/grey): soft silver (slate on white).
-    return NEUTRAL_GLOW
+    // Monochrome edge (black/white/grey): borrow the most vivid colour found
+    // anywhere in the artwork (a neon lock, orange terminal text…), or the accent.
+    return accentFromWholeIcon(data, size) ?? ACCENT_GLOW
   }
 
   // Circular mean of the dominant hue, weighted by how coloured each pixel is.
@@ -95,13 +144,7 @@ export function edgeGlowFromPixels(data: ArrayLike<number>, size: number): GlowC
   const hue = ((Math.atan2(sy, sx) * 180) / Math.PI + 360) % 360
   // Lift to a lightness that reads as a glow on both dark and white pages.
   const s = Math.min(0.85, Math.max(0.4, (sat / inBin.length) * 1.25))
-  const h = Math.round(hue)
-  const dark = `hsl(${h} ${Math.round(s * 100)}% 58%)`
-  return {
-    dark,
-    light: `hsl(${h} ${Math.round(Math.min(0.9, s + 0.05) * 100)}% 46%)`,
-    text: dark,
-  }
+  return colorsFromHue(hue, s)
 }
 
 /** Draws the loaded <img> into a small canvas and returns its edge glow colours. */
