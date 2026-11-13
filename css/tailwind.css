@@ -329,6 +329,17 @@ h6 {
   border-radius: 6px;
 }
 
+/* Centre standalone post images, so small screenshots sit in the middle of the column
+   instead of hugging the left edge (large ones already span the full width).
+   Only an image that is the sole child of its wrapper is affected: inline images and
+   linked/card icons keep their normal layout. */
+.prose > div > img:only-child,
+.prose > p > img:only-child {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ============================================
    SEARCH HITS (post page, opened from the search modal)
    ============================================ */
