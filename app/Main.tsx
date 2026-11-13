@@ -43,7 +43,7 @@ export default function Home({ posts }) {
             <div className="mt-0.5 ml-4 grid grid-cols-3 gap-x-6 gap-y-0.5 font-bold text-green-700 dark:text-green-400">
               <span>htb-machines/</span>
               <span>challenges/</span>
-              <span>dev-notes/</span>
+              <span>notes/</span>
             </div>
             {/* Idle terminal cursor — a static decorative touch, kept
                 separate from the removed intro reveal animation. */}
