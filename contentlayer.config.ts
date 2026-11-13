@@ -40,6 +40,27 @@ const icon = fromHtmlIsomorphic(
   { fragment: true }
 )
 
+// Markdown image paths are often URL-encoded (e.g. "image%201.png"). remarkImgToJsx looks the
+// file up on disk to read its real width/height, and can't find "image%201.png", so every such
+// image fell back to a fake 800x500 size and small screenshots got stretched to the full column.
+// Decoding local paths first lets it find the file and use the true dimensions.
+type MdNode = { type?: string; url?: string; children?: MdNode[] }
+function remarkDecodeLocalImageUrls() {
+  return (tree: MdNode) => {
+    const walk = (node: MdNode) => {
+      if (node.type === 'image' && node.url?.startsWith('/')) {
+        try {
+          node.url = decodeURIComponent(node.url)
+        } catch {
+          // malformed escape sequence: leave the path as written
+        }
+      }
+      node.children?.forEach(walk)
+    }
+    walk(tree)
+  }
+}
+
 const computedFields: ComputedFields = {
   readingTime: { type: 'json', resolve: (doc) => readingTime(doc.body.raw) },
   slug: {
@@ -172,6 +193,7 @@ export default makeSource({
       remarkGfm,
       remarkCodeTitles,
       remarkMath,
+      remarkDecodeLocalImageUrls,
       remarkImgToJsx,
       remarkAlert,
     ],
