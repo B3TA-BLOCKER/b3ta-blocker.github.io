@@ -259,7 +259,7 @@ export default function PostLayout({
             <div className="divide-y divide-gray-800 xl:pb-0 dark:divide-gray-700">
               <div
                 data-search-root
-                className="prose dark:prose-invert max-w-none pt-8 pb-8 [&>:first-child]:mt-0 [&>:first-child>:first-child]:mt-0"
+                className="prose dark:prose-invert max-w-none pt-8 pb-6 [&>:first-child]:mt-0 [&>:first-child>:first-child]:mt-0 [&>:last-child]:mb-0! [&>:last-child>:last-child]:mb-0!"
               >
                 {children}
               </div>
@@ -268,42 +268,52 @@ export default function PostLayout({
                   <Link
                     href={getReplyUrl(twitterUrl)}
                     rel="nofollow"
-                    className="group hover:border-primary-500 dark:hover:border-primary-400 relative flex items-center justify-between gap-4 overflow-hidden rounded-xl border border-gray-300 bg-gray-50 px-5 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50"
+                    className="group hover:border-primary-500/60 relative isolate flex flex-col gap-5 overflow-hidden rounded-2xl border border-gray-300 bg-gradient-to-br from-gray-50 to-white p-6 transition-all duration-300 hover:shadow-xl sm:flex-row sm:items-center sm:justify-between sm:gap-8 dark:border-gray-700 dark:from-gray-900 dark:to-gray-950"
                   >
-                    <div className="flex items-center gap-4">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-white transition-transform duration-200 group-hover:scale-110 dark:bg-white dark:text-black">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          className="h-5 w-5 fill-current"
-                        >
-                          <path d="M18.9 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-                        </svg>
-                      </span>
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">
-                          Think I missed an angle? Tell me on X.
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Reply with your own approach, a sharper exploit path, or just roast the
-                          writeup.
-                        </p>
-                      </div>
+                    {/* Soft red glow in the corner, brightens on hover */}
+                    <div
+                      aria-hidden="true"
+                      className="bg-primary-500/15 group-hover:bg-primary-500/30 pointer-events-none absolute -top-20 -right-20 -z-10 h-56 w-56 rounded-full blur-3xl transition-colors duration-300"
+                    />
+                    <div className="min-w-0 space-y-1.5">
+                      <p className="text-primary-600 dark:text-primary-400 flex items-center gap-2 font-mono text-xs font-bold tracking-widest uppercase">
+                        <span className="bg-primary-500 h-1.5 w-1.5 rounded-full" />
+                        Join the discussion
+                      </p>
+                      <p className="text-lg leading-snug font-bold text-gray-900 dark:text-gray-100">
+                        Think I missed an angle? Tell me on X.
+                      </p>
+                      <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                        Reply with your own approach, a sharper exploit path, or just roast the
+                        writeup.
+                      </p>
                     </div>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      className="group-hover:text-primary-500 h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 group-hover:translate-x-1"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13 5l7 7-7 7M5 12h14"
-                      />
-                    </svg>
+                    <span className="group-hover:bg-primary-500 dark:group-hover:bg-primary-500 inline-flex shrink-0 items-center justify-center gap-2.5 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all duration-300 group-hover:text-white group-hover:shadow-lg sm:w-auto dark:bg-white dark:text-gray-900">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4 fill-current"
+                        aria-hidden="true"
+                      >
+                        <path d="M18.9 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                      </svg>
+                      Reply on X
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                        className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 12h14M13 6l6 6-6 6"
+                        />
+                      </svg>
+                    </span>
                   </Link>
                 </div>
               )}
