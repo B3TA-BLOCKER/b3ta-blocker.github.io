@@ -395,6 +395,25 @@ mark.search-hit.search-hit-active {
   --hero-gap: 28px;
   --hero-offset: 40px;
   --hero-top: 34px;
+  --hero-socials-bottom: 28px;
+}
+/* Bigger avatar on wider screens so its curve spans the whole text block (about 317px
+   tall: name through the last prompt line). --hero-top centres the circle on that block,
+   which also lines the social icons up with the last line. */
+@media (min-width: 1024px) {
+  .hero-flow {
+    --hero-avatar: 215px;
+    --hero-top: 22px;
+    /* the role line can wrap here, making the text taller: keep the last prompt line beside the photo */
+    --hero-socials-bottom: 40px;
+  }
+}
+@media (min-width: 1280px) {
+  .hero-flow {
+    --hero-avatar: 240px;
+    --hero-top: 10px;
+    --hero-socials-bottom: 8px;
+  }
 }
 @media (min-width: 768px) {
   .hero-avatar-float {
@@ -412,7 +431,7 @@ mark.search-hit.search-hit-active {
     justify-content: center;
     width: var(--hero-avatar);
     /* Tucked 10px under the circle; small right margin keeps the text hugging
-       the curve; bottom margin keeps the last prompt line in the text column. */
-    margin: calc(var(--hero-gap) * -1 + 10px) 0 28px var(--hero-offset);
+       the curve; the small bottom margin keeps the last prompt line in the text column. */
+    margin: calc(var(--hero-gap) * -1 + 10px) 0 var(--hero-socials-bottom) var(--hero-offset);
   }
 }

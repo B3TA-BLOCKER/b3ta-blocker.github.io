@@ -51,9 +51,9 @@ export default function AuthorLayout({ content }: Props) {
                     <Image
                       src={avatar}
                       alt="avatar"
-                      width={160}
-                      height={160}
-                      className="h-[160px] w-[160px] rounded-full border-2 border-green-500/30 md:h-[190px] md:w-[190px]"
+                      width={480}
+                      height={480}
+                      className="h-[160px] w-[160px] rounded-full border-2 border-green-500/30 md:h-[var(--hero-avatar)] md:w-[var(--hero-avatar)]"
                     />
                     <div
                       className="absolute inset-[-5px] rounded-full border border-green-500/40"

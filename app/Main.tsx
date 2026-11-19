@@ -7,7 +7,7 @@ import PostIcon from '@/components/PostIcon'
 import GlowScope from '@/components/GlowScope'
 import { TITLE_GLOW_CLASS } from '@/lib/difficulty'
 
-const MAX_DISPLAY = 5
+const MAX_DISPLAY = 3
 
 export default function Home({ posts }) {
   return (
