@@ -1,0 +1,188 @@
+---
+title: 'Access Control - PortSwigger Labs'
+bannerTitle: 'PortSwigger Labs - Access Control'
+date: '2026-11-17'
+draft: false
+locked: false
+tags:
+  [
+    'portswigger',
+    'web-security-academy',
+    'access-control',
+    'broken-access-control',
+    'idor',
+    'privilege-escalation',
+    'parameter-tampering',
+    'burp-suite',
+    'writeup',
+  ]
+summary: 'Step-by-step solutions to the PortSwigger Web Security Academy access control labs: unprotected admin panels, parameter-based role and user ID control, IDOR, and URL, method and referer bypasses, with the Burp requests used in each.'
+images: ['/static/images/access_control/logo.png']
+twitterUrl: https://x.com/B3TA_BLOCKER/status/2115779026124202076
+---
+
+This blog contains step-by-step solutions to the PortSwigger Web Security Academy access control labs. The labs cover a range of access control vulnerabilities, including unprotected admin panels, parameter-based role and user ID control, IDOR, and URL, method and referer bypasses. Each solution includes the Burp requests used to exploit the vulnerability.
+
+# Basic Overview
+
+## What is Access Control?
+
+Access control is a security mechanism that restricts access to resources based on the identity and permissions of the user. It ensures that only authorized users can access certain functionalities or data within an application.
+Broken access control occurs when an application fails to enforce these restrictions properly, allowing unauthorized users to access sensitive information or perform actions they shouldn't be able to.
+Preventing broken access control is crucial for maintaining the security and integrity of web applications. It involves implementing proper authentication and authorization mechanisms, validating user input, and regularly testing for vulnerabilities.
+
+# APPRENTICE
+
+## Lab: Unprotected admin functionality
+
+This lab has an unprotected admin panel.
+
+Solve the lab by deleting the user `carlos`.
+
+### Solution:
+
+---
+
+## Lab: Unprotected admin functionality with unpredictable URL
+
+This lab has an unprotected admin panel. It's located at an unpredictable location, but the location is disclosed somewhere in the application.
+
+Solve the lab by accessing the admin panel, and using it to delete the user `carlos`.
+
+### Solution:
+
+---
+
+## Lab: User role controlled by request parameter
+
+This lab has an admin panel at `/admin`, which identifies administrators using a forgeable cookie.
+
+Solve the lab by accessing the admin panel and using it to delete the user `carlos`.
+
+You can log in to your own account using the following credentials: `wiener:peter`
+
+### Solution:
+
+---
+
+## Lab: User role can be modified in user profile
+
+This lab has an admin panel at` /admin`. It's only accessible to logged-in users with a roleid of 2.
+
+Solve the lab by accessing the admin panel and using it to delete the user `carlos`.
+
+You can log in to your own account using the following credentials: `wiener:peter`
+
+### Solution:
+
+---
+
+## Lab: User ID controlled by request parameter
+
+This lab has a horizontal privilege escalation vulnerability on the user account page.
+
+To solve the lab, obtain the API key for the user `carlos` and submit it as the solution.
+
+You can log in to your own account using the following credentials: `wiener:peter`
+
+### Solution:
+
+---
+
+## Lab: User role can be modified in user profile
+
+This lab has an admin panel at `/admin`. It's only accessible to logged-in users with a roleid of 2.
+
+Solve the lab by accessing the admin panel and using it to delete the user `carlos`.
+
+You can log in to your own account using the following credentials: `wiener:peter`
+
+### Solution:
+
+---
+
+## Lab: User ID controlled by request parameter, with unpredictable user IDs
+
+This lab has a horizontal privilege escalation vulnerability on the user account page, but identifies users with GUIDs.
+
+To solve the lab, find the GUID for `carlos`, then submit his API key as the solution.
+
+You can log in to your own account using the following credentials: `wiener:peter`
+
+### Solution:
+
+---
+
+## Lab: User ID controlled by request parameter with data leakage in redirect
+
+This lab contains an access control vulnerability where sensitive information is leaked in the body of a redirect response.
+
+To solve the lab, obtain the API key for the user `carlos` and submit it as the solution.
+
+You can log in to your own account using the following credentials: `wiener:peter`
+
+### Solution:
+
+---
+
+## Lab: User ID controlled by request parameter with password disclosure
+
+This lab has user account page that contains the current user's existing password, prefilled in a masked input.
+
+To solve the lab, retrieve the administrator's password, then use it to delete the user `carlos`.
+
+You can log in to your own account using the following credentials: `wiener:peter`
+
+### Solution:
+
+---
+
+## Lab: Insecure direct object references
+
+This lab stores user chat logs directly on the server's file system, and retrieves them using static URLs.
+
+Solve the lab by finding the password for the user `carlos`, and logging into their account.
+
+### Solution:
+
+---
+
+# PRACTITIONER
+
+## Lab: URL-based access control can be circumvented
+
+This website has an unauthenticated admin panel at `/admin`, but a front-end system has been configured to block external access to that path. However, the back-end application is built on a framework that supports the `X-Original-URL` header.
+
+To solve the lab, access the admin panel and delete the user `carlos`.
+
+### Solution:
+
+---
+
+## Lab: Method-based access control can be circumvented
+
+This lab implements access controls based partly on the HTTP method of requests. You can familiarize yourself with the admin panel by logging in using the credentials `administrator:admin`.
+
+To solve the lab, log in using the credentials `wiener:peter` and exploit the flawed access controls to promote yourself to become an administrator.
+
+### Solution:
+
+---
+
+## Lab: Multi-step process with no access control on one step
+
+This lab has an admin panel with a flawed multi-step process for changing a user's role. You can familiarize yourself with the admin panel by logging in using the credentials `administrator:admin`.
+
+To solve the lab, log in using the credentials `wiener:peter` and exploit the flawed access controls to promote yourself to become an administrator.
+
+### Solution:
+
+---
+
+## Lab: Referer-based access control
+
+This lab controls access to certain admin functionality based on the Referer header. You can familiarize yourself with the admin panel by logging in using the credentials `administrator:admin`.
+
+To solve the lab, log in using the credentials `wiener:peter` and exploit the flawed access controls to promote yourself to become an administrator.
+
+### Solution:
