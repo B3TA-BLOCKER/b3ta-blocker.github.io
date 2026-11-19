@@ -53,12 +53,9 @@ export default function AuthorLayout({ content }: Props) {
                       alt="avatar"
                       width={480}
                       height={480}
-                      className="h-[160px] w-[160px] rounded-full border-2 border-green-500/30 md:h-[var(--hero-avatar)] md:w-[var(--hero-avatar)]"
+                      className="h-[160px] w-[160px] rounded-full border-2 border-[color-mix(in_srgb,var(--hero-ring)_55%,transparent)] md:h-[var(--hero-avatar)] md:w-[var(--hero-avatar)]"
                     />
-                    <div
-                      className="absolute inset-[-5px] rounded-full border border-green-500/40"
-                      style={{ animation: 'blink 3s ease infinite' }}
-                    />
+                    <div className="hero-ring pointer-events-none absolute inset-[-6px] rounded-full border-2 border-[var(--hero-ring)]" />
                   </div>
                 </div>
               )}

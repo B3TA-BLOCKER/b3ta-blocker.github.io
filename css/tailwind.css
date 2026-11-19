@@ -205,6 +205,27 @@ input:-webkit-autofill:focus {
     animation: none;
   }
 }
+/* Glowing ring around the About avatar: breathes between a dim but clearly visible ring
+   and a bright halo. (Not tied to prefers-reduced-motion: it is a slow, soft fade.) */
+.hero-ring {
+  animation: hero-ring-glow 2.8s ease-in-out infinite;
+}
+@keyframes hero-ring-glow {
+  0%,
+  100% {
+    opacity: 0.45;
+    box-shadow:
+      0 0 4px 0 color-mix(in srgb, var(--hero-ring) 30%, transparent),
+      inset 0 0 0 0 color-mix(in srgb, var(--hero-ring) 0%, transparent);
+  }
+  50% {
+    opacity: 1;
+    box-shadow:
+      0 0 22px 5px color-mix(in srgb, var(--hero-ring) 55%, transparent),
+      inset 0 0 14px 2px color-mix(in srgb, var(--hero-ring) 30%, transparent);
+  }
+}
+
 @keyframes blink {
   0%,
   100% {
@@ -391,6 +412,7 @@ mark.search-hit.search-hit-active {
    the avatar's left edge on a grid line, clear of the clipped edge.
    ------------------------------------------------------------------ */
 .hero-flow {
+  --hero-ring: #1fc8dc; /* turquoise blue: avatar border + glowing ring */
   --hero-avatar: 190px;
   --hero-gap: 28px;
   --hero-offset: 40px;
