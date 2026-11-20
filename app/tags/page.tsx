@@ -37,19 +37,7 @@ const HIDDEN_TAGS = new Set(['machine', 'challenge'])
 const CATEGORIES: Category[] = [
   {
     label: 'platform & type',
-    tags: [
-      'linux',
-      'windows',
-      'active-directory',
-      'coding',
-      'pwn',
-      'crypto',
-      'forensics',
-      'reverse-engineering',
-      'steganography',
-      'osint',
-      'misc',
-    ],
+    tags: ['linux', 'windows', 'active-directory', 'challenge'],
   },
   {
     label: 'source',
