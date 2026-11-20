@@ -159,8 +159,8 @@ export function layoutWeb(sections: { label: string; tags: string[] }[]): WebLay
           const bcx = (b.l + b.r) / 2
           const acy = (a.t + a.b) / 2
           const bcy = (b.t + b.b) / 2
-          const ox = (a.r - a.l + (b.r - b.l)) / 2 - Math.abs(acx - bcx)
-          const oy = (a.b - a.t + (b.b - b.t)) / 2 - Math.abs(acy - bcy)
+          const ox = ((a.r - a.l) + (b.r - b.l)) / 2 - Math.abs(acx - bcx)
+          const oy = ((a.b - a.t) + (b.b - b.t)) / 2 - Math.abs(acy - bcy)
           if (ox > 0 && oy > 0) {
             if (ox < oy) {
               const s = bcx >= acx ? 1 : -1
@@ -209,12 +209,7 @@ export function layoutWeb(sections: { label: string; tags: string[] }[]): WebLay
 
   return {
     clusters,
-    viewBox: [
-      Math.floor(minX - M),
-      Math.floor(minY - M),
-      Math.ceil(maxX - minX + 2 * M),
-      Math.ceil(maxY - minY + 2 * M),
-    ],
+    viewBox: [Math.floor(minX - M), Math.floor(minY - M), Math.ceil(maxX - minX + 2 * M), Math.ceil(maxY - minY + 2 * M)],
   }
 }
 
@@ -234,4 +229,46 @@ export function wrapTag(tag: string, max = 13): string[] {
   if (line) lines.push(line)
   if (lines.length > 2) return [lines[0], lines.slice(1).join('')]
   return lines
+}
+
+// --- Pan / zoom -------------------------------------------------------------
+// The picture is drawn inside one <g> with transform = translate(x y) scale(k),
+// in the same units as the viewBox. These helpers are pure so they can be tested.
+
+export interface View {
+  k: number
+  x: number
+  y: number
+}
+
+export const K_MIN = 0.6
+export const K_MAX = 5
+
+type ViewBox = [number, number, number, number]
+
+/** Keep the picture inside the viewport (and k inside its limits). */
+export function clampView(v: View, vb: ViewBox): View {
+  const [vx, , vw] = vb
+  const [, vy, , vh] = vb
+  const k = Math.min(K_MAX, Math.max(K_MIN, v.k))
+  const clampAxis = (t: number, origin: number, size: number) => {
+    const a = origin - k * origin
+    const b = origin + size - k * (origin + size)
+    return Math.min(Math.max(t, Math.min(a, b)), Math.max(a, b))
+  }
+  return { k, x: clampAxis(v.x, vx, vw), y: clampAxis(v.y, vy, vh) }
+}
+
+/** Zoom by `factor` keeping the point (sx, sy) of the viewport fixed. */
+export function zoomAbout(v: View, factor: number, sx: number, sy: number, vb: ViewBox): View {
+  const k = Math.min(K_MAX, Math.max(K_MIN, v.k * factor))
+  const f = k / v.k
+  return clampView({ k, x: sx - f * (sx - v.x), y: sy - f * (sy - v.y) }, vb)
+}
+
+/** A view of zoom k with the world point (px, py) in the middle of the viewport. */
+export function focusOn(px: number, py: number, k: number, vb: ViewBox): View {
+  const cx = vb[0] + vb[2] / 2
+  const cy = vb[1] + vb[3] / 2
+  return clampView({ k, x: cx - k * px, y: cy - k * py }, vb)
 }

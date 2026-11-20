@@ -37,7 +37,19 @@ const HIDDEN_TAGS = new Set(['machine', 'challenge'])
 const CATEGORIES: Category[] = [
   {
     label: 'platform & type',
-    tags: ['linux', 'windows', 'active-directory', 'challenge'],
+    tags: [
+      'linux',
+      'windows',
+      'active-directory',
+      'coding',
+      'pwn',
+      'crypto',
+      'forensics',
+      'reverse-engineering',
+      'steganography',
+      'osint',
+      'misc',
+    ],
   },
   {
     label: 'source',
@@ -159,25 +171,9 @@ function categorizeTags(tagKeys: string[], tagCounts: Record<string, number>) {
   return result
 }
 
-// Sections that describe *what kind of post* it is rather than *what it covers*.
-// They are left out of the "most written about" leaderboard.
-const META_SECTIONS = new Set(['platform & type', 'source', 'difficulty'])
-
 export default async function Page() {
   const tagCounts = tagData as Record<string, number>
   const sections = categorizeTags(Object.keys(tagCounts), tagCounts)
 
-  const top = sections
-    .filter((s) => !META_SECTIONS.has(s.label))
-    .flatMap((s) => s.tags)
-    .sort((a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b))
-    .slice(0, 6)
-
-  return (
-    <TagExplorer
-      sections={sections.map(({ label, tags }) => ({ label, tags }))}
-      counts={tagCounts}
-      top={top}
-    />
-  )
+  return <TagExplorer sections={sections.map(({ label, tags }) => ({ label, tags }))} counts={tagCounts} />
 }
