@@ -159,8 +159,8 @@ export function layoutWeb(sections: { label: string; tags: string[] }[]): WebLay
           const bcx = (b.l + b.r) / 2
           const acy = (a.t + a.b) / 2
           const bcy = (b.t + b.b) / 2
-          const ox = ((a.r - a.l) + (b.r - b.l)) / 2 - Math.abs(acx - bcx)
-          const oy = ((a.b - a.t) + (b.b - b.t)) / 2 - Math.abs(acy - bcy)
+          const ox = (a.r - a.l + (b.r - b.l)) / 2 - Math.abs(acx - bcx)
+          const oy = (a.b - a.t + (b.b - b.t)) / 2 - Math.abs(acy - bcy)
           if (ox > 0 && oy > 0) {
             if (ox < oy) {
               const s = bcx >= acx ? 1 : -1
@@ -209,7 +209,12 @@ export function layoutWeb(sections: { label: string; tags: string[] }[]): WebLay
 
   return {
     clusters,
-    viewBox: [Math.floor(minX - M), Math.floor(minY - M), Math.ceil(maxX - minX + 2 * M), Math.ceil(maxY - minY + 2 * M)],
+    viewBox: [
+      Math.floor(minX - M),
+      Math.floor(minY - M),
+      Math.ceil(maxX - minX + 2 * M),
+      Math.ceil(maxY - minY + 2 * M),
+    ],
   }
 }
 

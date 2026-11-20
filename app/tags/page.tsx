@@ -175,5 +175,10 @@ export default async function Page() {
   const tagCounts = tagData as Record<string, number>
   const sections = categorizeTags(Object.keys(tagCounts), tagCounts)
 
-  return <TagExplorer sections={sections.map(({ label, tags }) => ({ label, tags }))} counts={tagCounts} />
+  return (
+    <TagExplorer
+      sections={sections.map(({ label, tags }) => ({ label, tags }))}
+      counts={tagCounts}
+    />
+  )
 }
