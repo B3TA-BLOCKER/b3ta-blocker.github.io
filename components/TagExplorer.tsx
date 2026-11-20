@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { slug } from 'github-slugger'
 import Link from '@/components/Link'
+import TagWeb from '@/components/TagWeb'
 
 type Section = { label: string; tags: string[] }
 
@@ -161,6 +162,9 @@ export default function TagExplorer({ sections, counts, top }: Props) {
     [sections, q, qLabel]
   )
 
+  // Tags that match the live filter (null = no filter). The web dims everything else.
+  const matches = useMemo(() => (q ? new Set(visible.flatMap((s) => s.tags)) : null), [q, visible])
+
   const shown = visible.reduce((n, s) => n + s.tags.length, 0)
   const maxCount = top.length > 0 ? counts[top[0]] : 1
   const showTop = !q && top.length > 0
@@ -296,9 +300,28 @@ export default function TagExplorer({ sections, counts, top }: Props) {
         </div>
       )}
 
-      {/* Category index: one compact window, one row per category */}
+      {/* Tag web (lg and up): core node, one honeycomb per category, every tag a hex */}
+      {totalTags > 0 && (
+        <Window
+          title="index.web"
+          meta={`${sections.length} categories`}
+          className="mb-5 hidden lg:block"
+        >
+          <p className="mb-3 font-mono text-sm font-bold">
+            <span className="mr-2 text-red-600 dark:text-red-500">$</span>
+            <span className="text-gray-900 dark:text-gray-100">tags --graph --by-category</span>
+          </p>
+          <div className="overflow-x-auto">
+            <div className="min-w-[1100px]">
+              <TagWeb sections={sections} counts={counts} heatOf={heatOf} matches={matches} />
+            </div>
+          </div>
+        </Window>
+      )}
+
+      {/* Category index (below lg): compact list, one row per category */}
       {visible.length > 0 && (
-        <Window title="index.tags" meta={`${visible.length} categories`}>
+        <Window title="index.tags" meta={`${visible.length} categories`} className="lg:hidden">
           <p className="mb-4 font-mono text-sm font-bold">
             <span className="mr-2 text-red-600 dark:text-red-500">$</span>
             <span className="text-gray-900 dark:text-gray-100">tags --by-category</span>
