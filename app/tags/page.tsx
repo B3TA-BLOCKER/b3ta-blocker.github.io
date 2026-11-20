@@ -8,7 +8,18 @@ export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I 
 // Tags are matched against these lists (exact match on the slugified tag key
 // from tag-data.json, e.g. "Remote Code Execution" -> remote-code-execution).
 // Anything that doesn't match a list, and doesn't match the CVE regex below,
-// falls into "other" — if a tag lands there, add it to the right list here.
+// falls into "other" and prints a warning at build time — add it to the right
+// list here.
+//
+// Tagging rules these lists assume (keep posts to ~5-8 tags):
+//   - lowercase, short community shorthand (rce, lpe), one tag per concept
+//   - tag the TARGET (platform, product), the OUTCOME (rce, auth bypass) and
+//     the core bug class / technique (sudo-misconfiguration, idor)
+//   - the exact CVE ID is its own tag (matched by CVE_PATTERN, no generic "cve")
+//   - no tool, step or format tags (metasploit, linpeas, hash-cracking, writeup)
+// Lists therefore hold only the tags that follow those rules; "rce" is the
+// canonical spelling (not remote-code-execution), "file-upload" (not
+// unrestricted-file-upload).
 //
 // Section order on the page: sections with the most tags come first, smaller
 // sections last ("other" is always last). Ties keep the order of this array.
@@ -20,7 +31,7 @@ type Category = { label: string; tags: string[]; order?: boolean }
 const CATEGORIES: Category[] = [
   {
     label: 'content type',
-    tags: ['machine', 'challenge', 'room'],
+    tags: ['machine', 'challenge'],
   },
   {
     label: 'challenge category',
@@ -37,7 +48,7 @@ const CATEGORIES: Category[] = [
   },
   {
     label: 'source',
-    tags: ['hackthebox', 'vulnhub'],
+    tags: ['hackthebox', 'vulnhub', 'portswigger'],
   },
   {
     label: 'difficulty',
@@ -52,28 +63,20 @@ const CATEGORIES: Category[] = [
     label: 'web exploitation',
     tags: [
       'authentication-bypass',
+      'access-control',
+      'idor',
+      'parameter-tampering',
       'file-upload',
-      'unrestricted-file-upload',
       'local-file-inclusion',
       'path-traversal',
       'sql-injection',
-      'idor',
-      'filter-bypass',
       'virtual-host-routing',
       'git-dump',
     ],
   },
   {
     label: 'code execution',
-    tags: [
-      'remote-code-execution',
-      'rce',
-      'php-reverse-shell',
-      'reverse-shell',
-      'buffer-overflow',
-      'sandbox-escape',
-      'groovy-script',
-    ],
+    tags: ['rce', 'sandbox-escape', 'buffer-overflow', 'deserialization'],
   },
   {
     label: 'privilege escalation',
@@ -82,41 +85,34 @@ const CATEGORIES: Category[] = [
       'sudo-misconfiguration',
       'suid',
       'linux-capabilities',
-      'cap_setuid',
       'incron',
       'cron-job',
       'systemd-timer',
       'unquoted-service-path',
-      'gtfobins',
     ],
   },
   {
-    label: 'credentials & cracking',
+    label: 'credentials',
     tags: [
-      'hash-cracking',
-      'zip-crack',
       'weak-credentials',
       'hardcoded-credentials',
       'plaintext-credentials',
-      'password-reuse',
       'credential-leak',
-      'environment-file-leak',
-      'ssh-key',
       'anonymous-login',
     ],
   },
   {
     label: 'active directory attacks',
-    tags: ['kerberoasting', 'ntlm', 'adcs', 'esc16', 'shadow-credentials'],
+    tags: ['shadow-credentials', 'esc16', 'adcs', 'kerberoasting', 'ntlm'],
   },
   {
     label: 'cves & named exploits',
     tags: ['ms17-010', 'eternalblue', 'trans2open'],
   },
   {
-    label: 'cms & web apps',
+    // The vulnerable product / component a post is about
+    label: 'products & targets',
     tags: [
-      'cms',
       'craft-cms',
       'backdrop-cms',
       'navigate-cms',
@@ -126,53 +122,18 @@ const CATEGORIES: Category[] = [
       'krayin-crm',
       'freepbx',
       'jenkins',
-      'jupyter',
-      'gitea',
       'crushftp',
-      'flask',
       'mcp-inspector',
       'backrest',
-      'python-code-editor',
-      'backysh',
     ],
   },
   {
     label: 'services & protocols',
-    tags: [
-      'ftp',
-      'smb',
-      'samba',
-      'nfs',
-      'telnet',
-      'websocket',
-      'mysql',
-      'sqlite',
-      'port-forwarding',
-    ],
+    tags: ['smb', 'samba', 'nfs', 'telnet', 'ftp', 'websocket'],
   },
   {
-    label: 'tools',
-    tags: [
-      'metasploit',
-      'msfvenom',
-      'linpeas',
-      'winpeas',
-      'pspy',
-      'bloodhound',
-      'evil-winrm',
-      'pcap-analysis',
-      'restic',
-      'npbackup-cli',
-      'git-dumper',
-    ],
-  },
-  {
-    label: 'ai / ml',
-    tags: ['machine-learning', 'tensorflow', 'keras-model-rce', 'pickle-deserialization'],
-  },
-  {
-    label: 'languages & runtimes',
-    tags: ['cpp', 'javascript', 'js2py', 'erlang', 'eshell'],
+    label: 'languages & libraries',
+    tags: ['cpp', 'erlang', 'js2py', 'tensorflow', 'javascript'],
   },
 ]
 
@@ -208,6 +169,10 @@ function categorizeTags(tagKeys: string[], tagCounts: Record<string, number>) {
     .sort((a, b) => b.tags.length - a.tags.length)
 
   if (remaining.size > 0) {
+    // Surfaces in `next build` / dev logs so new tags get a category on purpose
+    console.warn(
+      `[tags] ${remaining.size} tag(s) have no category and fall into "other": ${Array.from(remaining).join(', ')}`
+    )
     const other = Array.from(remaining).sort(
       (a, b) => tagCounts[b] - tagCounts[a] || a.localeCompare(b)
     )

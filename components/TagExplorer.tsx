@@ -15,8 +15,8 @@ interface Props {
 // --- Heat tiers ------------------------------------------------------------
 // A tag's "heat" is how many posts use it. Change the two thresholds to
 // re-tier the whole page (chips, leaderboard bars and the legend follow).
-const HOT_MIN = 10
-const WARM_MIN = 3
+const HOT_MIN = 5
+const WARM_MIN = 2
 
 type Heat = 'hot' | 'warm' | 'cool'
 
