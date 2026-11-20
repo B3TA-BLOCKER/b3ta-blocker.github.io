@@ -7,18 +7,14 @@ locked: false
 lockedMessage: 'This machine is currently active on HackTheBox. The full writeup will be published once it retires.'
 tags:
   [
-    'Linux',
-    'Machine',
-    'Medium',
-    'HackTheBox',
-    'MCP-Inspector',
-    'CVE-2026-23744',
-    'Remote Code Execution',
-    'Jupyter',
-    'WebSocket',
-    'Flask',
-    'Hardcoded-Credentials',
-    'SSH Key',
+    'linux',
+    'machine',
+    'medium',
+    'hackthebox',
+    'mcp-inspector',
+    'cve-2026-23744',
+    'rce',
+    'hardcoded-credentials',
   ]
 summary: 'DevHub is a Linux machine compromised via CVE-2026-23744, an unauthenticated RCE in MCPJam v1.4.2, followed by lateral movement through an exposed Jupyter Lab instance with a plaintext token, and privilege escalation via a hardcoded API key in an internal Flask service running as root.'
 images: ['/static/images/devhub/devhub.png']
