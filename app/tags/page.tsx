@@ -7,19 +7,19 @@ export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I 
 // --- Category definitions -------------------------------------------------
 // Tags are matched against these lists (exact match on the slugified tag key
 // from tag-data.json, e.g. "Remote Code Execution" -> remote-code-execution).
-// Anything that doesn't match a list, and doesn't match the CVE regex below,
-// falls into "other" and prints a warning at build time — add it to the right
-// list here.
+// Anything that doesn't match a list, isn't hidden and doesn't match the CVE
+// regex below falls into "other" and prints a warning at build time — add it
+// to the right list here.
 //
 // Tagging rules these lists assume (keep posts to ~5-8 tags):
 //   - lowercase, short community shorthand (rce, lpe), one tag per concept
 //   - tag the TARGET (platform, product), the OUTCOME (rce, auth bypass) and
 //     the core bug class / technique (sudo-misconfiguration, idor)
 //   - the exact CVE ID is its own tag (matched by CVE_PATTERN, no generic "cve")
-//   - no tool, step or format tags (metasploit, linpeas, hash-cracking, writeup)
-// Lists therefore hold only the tags that follow those rules; "rce" is the
-// canonical spelling (not remote-code-execution), "file-upload" (not
-// unrestricted-file-upload).
+//   - no tool, recon-step or format tags (metasploit, linpeas, git-dump, writeup)
+//   - merged on purpose: credential-leak (plaintext / hardcoded / leaked
+//     credentials), cron (cron, incron, systemd timers), rce, file-upload,
+//     ms17-010 (not also "eternalblue")
 //
 // Section order on the page: sections with the most tags come first, smaller
 // sections last ("other" is always last). Ties keep the order of this array.
@@ -28,14 +28,19 @@ export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I 
 
 type Category = { label: string; tags: string[]; order?: boolean }
 
+// Structural tags. They stay on the posts because the site reads them (e.g.
+// lib/difficulty.ts uses `machine` + `hackthebox` to decide which post icons
+// get the difficulty-coloured glow), but they are not useful as a filter
+// (`machine` is on almost every post), so the tags page doesn't list them.
+const HIDDEN_TAGS = new Set(['machine', 'challenge'])
+
 const CATEGORIES: Category[] = [
   {
-    label: 'content type',
-    tags: ['machine', 'challenge'],
-  },
-  {
-    label: 'challenge category',
+    label: 'platform & type',
     tags: [
+      'linux',
+      'windows',
+      'active-directory',
       'coding',
       'pwn',
       'crypto',
@@ -56,62 +61,43 @@ const CATEGORIES: Category[] = [
     order: true, // keep this exact order, not count-based
   },
   {
-    label: 'os & environment',
-    tags: ['linux', 'windows', 'active-directory'],
-  },
-  {
-    label: 'web exploitation',
+    // What went wrong in the target: bug classes, misconfigurations, AD attacks
+    label: 'vulnerabilities',
     tags: [
-      'authentication-bypass',
-      'access-control',
-      'idor',
-      'parameter-tampering',
+      'rce',
+      'sandbox-escape',
+      'buffer-overflow',
+      'deserialization',
       'file-upload',
       'local-file-inclusion',
       'path-traversal',
       'sql-injection',
-      'virtual-host-routing',
-      'git-dump',
+      'authentication-bypass',
+      'access-control',
+      'idor',
+      'parameter-tampering',
+      'credential-leak',
+      'weak-credentials',
+      'anonymous-login',
+      'shadow-credentials',
+      'esc16',
+      'adcs',
+      'kerberoasting',
+      'ntlm',
     ],
-  },
-  {
-    label: 'code execution',
-    tags: ['rce', 'sandbox-escape', 'buffer-overflow', 'deserialization'],
   },
   {
     label: 'privilege escalation',
-    tags: [
-      'privilege-escalation',
-      'sudo-misconfiguration',
-      'suid',
-      'linux-capabilities',
-      'incron',
-      'cron-job',
-      'systemd-timer',
-      'unquoted-service-path',
-    ],
+    tags: ['sudo-misconfiguration', 'suid', 'linux-capabilities', 'cron', 'unquoted-service-path'],
   },
   {
-    label: 'credentials',
-    tags: [
-      'weak-credentials',
-      'hardcoded-credentials',
-      'plaintext-credentials',
-      'credential-leak',
-      'anonymous-login',
-    ],
+    // Exact CVE IDs are picked up by CVE_PATTERN below
+    label: 'cves & exploits',
+    tags: ['ms17-010', 'trans2open'],
   },
   {
-    label: 'active directory attacks',
-    tags: ['shadow-credentials', 'esc16', 'adcs', 'kerberoasting', 'ntlm'],
-  },
-  {
-    label: 'cves & named exploits',
-    tags: ['ms17-010', 'eternalblue', 'trans2open'],
-  },
-  {
-    // The vulnerable product / component a post is about
-    label: 'products & targets',
+    // The vulnerable product, service or library a post is about
+    label: 'targets',
     tags: [
       'craft-cms',
       'backdrop-cms',
@@ -125,23 +111,26 @@ const CATEGORIES: Category[] = [
       'crushftp',
       'mcp-inspector',
       'backrest',
+      'smb',
+      'samba',
+      'nfs',
+      'telnet',
+      'ftp',
+      'websocket',
+      'tensorflow',
+      'js2py',
+      'cpp',
+      'erlang',
+      'javascript',
     ],
-  },
-  {
-    label: 'services & protocols',
-    tags: ['smb', 'samba', 'nfs', 'telnet', 'ftp', 'websocket'],
-  },
-  {
-    label: 'languages & libraries',
-    tags: ['cpp', 'erlang', 'js2py', 'tensorflow', 'javascript'],
   },
 ]
 
 const CVE_PATTERN = /^cve-\d{4}-\d+$/i
-const CVE_LABEL = 'cves & named exploits'
+const CVE_LABEL = 'cves & exploits'
 
 function categorizeTags(tagKeys: string[], tagCounts: Record<string, number>) {
-  const remaining = new Set(tagKeys)
+  const remaining = new Set(tagKeys.filter((t) => !HIDDEN_TAGS.has(t)))
   const sections: { label: string; tags: string[]; order?: boolean }[] = []
 
   for (const category of CATEGORIES) {
@@ -184,13 +173,7 @@ function categorizeTags(tagKeys: string[], tagCounts: Record<string, number>) {
 
 // Sections that describe *what kind of post* it is rather than *what it covers*.
 // They are left out of the "most written about" leaderboard.
-const META_SECTIONS = new Set([
-  'content type',
-  'challenge category',
-  'source',
-  'difficulty',
-  'os & environment',
-])
+const META_SECTIONS = new Set(['platform & type', 'source', 'difficulty'])
 
 export default async function Page() {
   const tagCounts = tagData as Record<string, number>
