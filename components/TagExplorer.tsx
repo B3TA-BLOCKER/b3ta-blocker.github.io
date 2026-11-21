@@ -64,20 +64,14 @@ function Chip({ tag, count }: { tag: string; count: number }) {
   )
 }
 
-function Hero({ compact = false }: { compact?: boolean }) {
+function Hero() {
   return (
     <div>
-      <h1
-        className={`font-sans leading-tight font-bold tracking-tight text-gray-900 dark:text-gray-100 ${
-          compact ? 'mb-2 text-4xl' : 'mb-5 text-5xl md:text-6xl'
-        }`}
-      >
+      <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
         <span>Tag </span>
         <span className="text-red-500">Index</span>
       </h1>
-      <div
-        className={`font-mono text-gray-900 dark:text-gray-400 ${compact ? 'text-sm leading-relaxed' : 'text-lg leading-loose'}`}
-      >
+      <div className="font-mono text-lg leading-loose text-gray-900 dark:text-gray-400">
         <p className="text-gray-600 dark:text-gray-400/60">
           # Everything I write about, indexed. The hotter the tag, the more posts.
         </p>
@@ -105,11 +99,9 @@ export default function TagExplorer({ sections, counts }: Props) {
 
   return (
     <>
-      {/* md and up: the map owns the screen below the header; the title sits in its top-left corner */}
+      {/* md and up: the map owns the screen below the header */}
       <div className="hidden md:block">
-        <TagWeb sections={sections} counts={counts} heatOf={heatOf} ranges={RANGES}>
-          <Hero compact />
-        </TagWeb>
+        <TagWeb sections={sections} counts={counts} heatOf={heatOf} ranges={RANGES} />
       </div>
 
       {/* phones: plain list, one row per category */}
