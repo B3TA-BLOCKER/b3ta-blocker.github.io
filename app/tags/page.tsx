@@ -11,12 +11,14 @@ export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I 
 // regex below falls into "other" and prints a warning at build time — add it
 // to the right list here.
 //
-// Tagging rules these lists assume (keep posts to ~5-8 tags):
-//   - lowercase, short community shorthand (rce, lpe), one tag per concept
-//   - tag the TARGET (platform, product), the OUTCOME (rce, auth bypass) and
-//     the core bug class / technique (sudo-misconfiguration, idor)
+// Tagging rules these lists assume (a post gets at most ~4 content tags):
+//   - lowercase, short community shorthand (rce, sudo, auth-bypass), one tag per
+//     concept. Keep tags short: they have to fit inside a hexagon on the web.
+//   - tag the TARGET (platform, product), the OUTCOME (rce, auth-bypass) and
+//     the core bug class / technique (sudo, idor)
 //   - the exact CVE ID is its own tag (matched by CVE_PATTERN, no generic "cve")
-//   - no tool, recon-step or format tags (metasploit, linpeas, git-dump, writeup)
+//   - no tool, recon-step or implied-service tags (metasploit, smb, nfs, telnet,
+//     git-dump, writeup): if another tag on the post already implies it, drop it
 //   - merged on purpose: credential-leak (plaintext / hardcoded / leaked
 //     credentials), cron (cron, incron, systemd timers), rce, file-upload,
 //     ms17-010 (not also "eternalblue")
@@ -29,14 +31,24 @@ export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I 
 type Category = { label: string; tags: string[]; order?: boolean }
 
 // Structural tags. They stay on the posts because the site reads them (e.g.
-// lib/difficulty.ts uses `machine` + `hackthebox` to decide which post icons
-// get the difficulty-coloured glow), but they are not useful as a filter
-// (`machine` is on almost every post), so the tags page doesn't list them.
-const HIDDEN_TAGS = new Set(['machine', 'challenge'])
+// lib/difficulty.ts uses `machine` + `hackthebox` + the difficulty tag to draw
+// the difficulty-coloured glow on post icons), but they are not useful as a
+// filter (`machine` / `easy` are on almost every post), so the tags page
+// doesn't list them.
+const HIDDEN_TAGS = new Set([
+  'machine',
+  'challenge',
+  'very-easy',
+  'easy',
+  'medium',
+  'hard',
+  'insane',
+])
 
 const CATEGORIES: Category[] = [
   {
-    label: 'platform & type',
+    // Where the post lives: the OS / domain it is about and where the box or lab comes from
+    label: 'platform & source',
     tags: [
       'linux',
       'windows',
@@ -49,16 +61,10 @@ const CATEGORIES: Category[] = [
       'steganography',
       'osint',
       'misc',
+      'hackthebox',
+      'vulnhub',
+      'portswigger',
     ],
-  },
-  {
-    label: 'source',
-    tags: ['hackthebox', 'vulnhub', 'portswigger'],
-  },
-  {
-    label: 'difficulty',
-    tags: ['very-easy', 'easy', 'medium', 'hard', 'insane'],
-    order: true, // keep this exact order, not count-based
   },
   {
     // What went wrong in the target: bug classes, misconfigurations, AD attacks
@@ -70,16 +76,13 @@ const CATEGORIES: Category[] = [
       'deserialization',
       'file-upload',
       'local-file-inclusion',
-      'path-traversal',
       'sql-injection',
-      'authentication-bypass',
+      'auth-bypass',
       'access-control',
       'idor',
-      'parameter-tampering',
       'credential-leak',
       'weak-credentials',
       'anonymous-login',
-      'shadow-credentials',
       'esc16',
       'adcs',
       'kerberoasting',
@@ -88,7 +91,7 @@ const CATEGORIES: Category[] = [
   },
   {
     label: 'privilege escalation',
-    tags: ['sudo-misconfiguration', 'suid', 'linux-capabilities', 'cron', 'unquoted-service-path'],
+    tags: ['sudo', 'suid', 'linux-capabilities', 'cron', 'unquoted-service-path'],
   },
   {
     // Exact CVE IDs are picked up by CVE_PATTERN below
@@ -110,17 +113,11 @@ const CATEGORIES: Category[] = [
       'jenkins',
       'crushftp',
       'mcp-inspector',
-      'backrest',
-      'smb',
       'samba',
-      'nfs',
-      'telnet',
       'ftp',
       'websocket',
       'tensorflow',
       'js2py',
-      'cpp',
-      'erlang',
       'javascript',
     ],
   },

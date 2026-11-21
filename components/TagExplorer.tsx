@@ -41,9 +41,9 @@ const CHIP: Record<Heat, { chip: string; count: string; dot: string }> = {
     dot: 'bg-amber-500',
   },
   cool: {
-    chip: 'border-gray-300 hover:border-sky-500/60 hover:text-sky-700 dark:border-gray-800 dark:hover:text-sky-400',
+    chip: 'border-gray-300 hover:border-red-500/50 hover:text-red-700 dark:border-gray-800 dark:hover:text-red-400',
     count: 'text-gray-500',
-    dot: 'bg-sky-500/60',
+    dot: 'bg-slate-400',
   },
 }
 
@@ -64,51 +64,60 @@ function Chip({ tag, count }: { tag: string; count: number }) {
   )
 }
 
+function Hero({ compact = false }: { compact?: boolean }) {
+  return (
+    <div>
+      <h1
+        className={`font-sans leading-tight font-bold tracking-tight text-gray-900 dark:text-gray-100 ${
+          compact ? 'mb-2 text-4xl' : 'mb-5 text-5xl md:text-6xl'
+        }`}
+      >
+        <span>Tag </span>
+        <span className="text-red-500">Index</span>
+      </h1>
+      <div
+        className={`font-mono text-gray-900 dark:text-gray-400 ${compact ? 'text-sm leading-relaxed' : 'text-lg leading-loose'}`}
+      >
+        <p className="text-gray-600 dark:text-gray-400/60">
+          # Everything I write about, indexed. The hotter the tag, the more posts.
+        </p>
+        <p className="mt-1 font-bold">
+          <span className="mr-2 text-red-600 dark:text-red-500">$</span>
+          <span className="text-gray-900 dark:text-gray-100">ls ~/archive/tags</span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function TagExplorer({ sections, counts }: Props) {
   const [open, setOpen] = useState<Record<string, boolean>>({})
   const totalTags = sections.reduce((n, s) => n + s.tags.length, 0)
 
+  if (totalTags === 0) {
+    return (
+      <div className="pt-10 pb-16">
+        <Hero />
+        <p className="mt-6 font-mono text-gray-500">$ no tags found.</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="pb-16">
-      {/* Hero: mirrors the home page hero (grid backdrop, h1, terminal) */}
-      <div className="relative overflow-hidden pt-10 pb-8">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }}
-        />
-
-        <h1 className="mb-5 font-sans text-5xl leading-tight font-bold tracking-tight text-gray-900 md:text-6xl dark:text-gray-100">
-          <span>Tag </span>
-          <span className="text-red-500">Index</span>
-        </h1>
-
-        <div className="font-mono text-lg leading-loose text-gray-900 dark:text-gray-400">
-          <p className="text-lg text-gray-600 dark:text-gray-400/60">
-            # Everything I write about, indexed. The hotter the tag, the more posts.
-          </p>
-          <p className="mt-1 font-bold">
-            <span className="mr-2 text-red-600 dark:text-red-500">$</span>
-            <span className="text-gray-900 dark:text-gray-100">ls ~/archive/tags</span>
-          </p>
-        </div>
+    <>
+      {/* md and up: the map owns the screen below the header; the title sits in its top-left corner */}
+      <div className="hidden md:block">
+        <TagWeb sections={sections} counts={counts} heatOf={heatOf} ranges={RANGES}>
+          <Hero compact />
+        </TagWeb>
       </div>
 
-      {totalTags === 0 && <p className="font-mono text-gray-500">$ no tags found.</p>}
-
-      {/* Tag web (md and up): core node, one honeycomb per category, every tag a hex */}
-      {totalTags > 0 && (
-        <div className="hidden md:block">
-          <TagWeb sections={sections} counts={counts} heatOf={heatOf} ranges={RANGES} />
+      {/* phones: plain list, one row per category */}
+      <div className="pb-16 md:hidden">
+        <div className="relative overflow-hidden pt-10 pb-8">
+          <Hero />
         </div>
-      )}
-
-      {/* Phones: plain list, one row per category */}
-      {totalTags > 0 && (
-        <div className="divide-y divide-gray-200 md:hidden dark:divide-gray-800/70">
+        <div className="divide-y divide-gray-200 dark:divide-gray-800/70">
           {sections.map((section) => {
             const expanded = !!open[section.label]
             const list = expanded ? section.tags : section.tags.slice(0, ROW_LIMIT)
@@ -138,7 +147,7 @@ export default function TagExplorer({ sections, counts }: Props) {
             )
           })}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   )
 }

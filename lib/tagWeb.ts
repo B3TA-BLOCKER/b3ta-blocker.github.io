@@ -1,17 +1,20 @@
 // Layout engine for the tag web on /tags.
 //
-// One central node, one honeycomb cluster per category, each tag a hexagon.
-// Everything here is plain arithmetic (no Math.sin/cos/sqrt) on purpose: the
-// page is server-rendered and then hydrated, and trig can differ in the last
-// digit between Node and the browser, which would cause hydration warnings.
+// One central node, one honeycomb cluster per category, each tag a regular
+// pointy-top hexagon (like the Hextree map). Everything here is plain
+// arithmetic (no Math.sin/cos/sqrt) on purpose: the page is server-rendered and
+// then hydrated, and trig can differ in the last digit between Node and the
+// browser, which would cause hydration warnings.
 
-export const HEX_W = 148 // corner to corner (flat-top hexagon, stretched wide for labels)
-export const HEX_H = 78
-export const LABEL_H = 52 // room above each cluster for the category title
-export const CORE_R = 92 // radius of the central hexagon
+export const HEX_R = 44 // circumradius of one tile
+export const HEX_W = 76.2 // tile width  = sqrt(3) * HEX_R (pointy-top)
+export const HEX_H = 88 // tile height = 2 * HEX_R
+const ROW = 66 // vertical pitch = 0.75 * HEX_H
+export const LABEL_H = 50 // room above each cluster for the category title
+export const CORE_R = 66 // radius of the central hexagon
 
-const PAD = 9 // breathing room around a cluster when packing
-const CORE_BOX = CORE_R + 34 // half-size of the keep-out square around the core
+const PAD = 10 // breathing room around a cluster when packing
+const CORE_BOX = CORE_R + 30 // half-size of the keep-out square around the core
 
 export interface WebCell {
   tag: string
@@ -36,15 +39,27 @@ export interface WebLayout {
   viewBox: [number, number, number, number]
 }
 
-// Axial hex directions (Red Blob Games convention)
-const DIRS: [number, number][] = [
-  [1, 0],
-  [1, -1],
-  [0, -1],
-  [-1, 0],
-  [-1, 1],
-  [0, 1],
+/**
+ * Parts of the screen the page draws over the map (title top-left, controls
+ * bottom-right). The packer keeps clusters out of these corners so nothing is
+ * ever covered. Sizes are in map units, which is about 1 screen pixel at fit.
+ */
+export interface Keepout {
+  corner: 'tl' | 'tr' | 'bl' | 'br'
+  w: number
+  h: number
+}
+export const DEFAULT_KEEPOUTS: Keepout[] = [
+  { corner: 'tl', w: 380, h: 150 },
+  { corner: 'br', w: 250, h: 270 },
 ]
+
+interface Rect {
+  l: number
+  r: number
+  t: number
+  b: number
+}
 
 // 10 fixed directions around an ellipse, clockwise from the top
 const SLOTS: [number, number][] = [
@@ -60,33 +75,37 @@ const SLOTS: [number, number][] = [
   [-0.588, -0.809],
 ]
 
-/** First n cells of a hex spiral: centre, then ring 1, ring 2, ... */
-function spiral(n: number): [number, number][] {
-  const out: [number, number][] = [[0, 0]]
-  for (let k = 1; out.length < n; k++) {
-    let q = -k
-    let r = k
-    for (let i = 0; i < 6; i++) {
-      for (let j = 0; j < k; j++) {
-        out.push([q, r])
-        q += DIRS[i][0]
-        r += DIRS[i][1]
-      }
+/**
+ * The n tiles closest to the centre, in order of distance (centre first).
+ * Taking the nearest tiles, instead of walking a spiral, keeps a half-filled
+ * outer ring symmetrical, so every cluster comes out as a round blob.
+ */
+function nearest(n: number): [number, number][] {
+  let rings = 0
+  while (1 + 3 * rings * (rings + 1) < n) rings++
+  const cells: { q: number; r: number; d: number; i: number }[] = []
+  for (let q = -rings; q <= rings; q++) {
+    for (let r = -rings; r <= rings; r++) {
+      if (Math.abs(q + r) > rings) continue // stay inside the hexagonal disc
+      const x = HEX_W * (q + r / 2)
+      const y = ROW * r
+      cells.push({ q, r, d: Math.round(x * x + y * y), i: cells.length })
     }
   }
-  return out.slice(0, n)
+  cells.sort((a, b) => a.d - b.d || a.i - b.i)
+  return cells.slice(0, n).map((c) => [c.q, c.r])
 }
 
 function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b)
 }
 
-type Measured = Omit<WebCluster, 'slot' | 'x' | 'y' | 'link'>
+type Measured = Omit<WebCluster, 'slot' | 'x' | 'y' | 'link'> & { boxW: number }
 
 function measure(label: string, tags: string[]): Measured {
-  const raw = spiral(tags.length).map(([q, r]) => ({
-    x: 0.75 * HEX_W * q,
-    y: HEX_H * (r + q / 2),
+  const raw = nearest(tags.length).map(([q, r]) => ({
+    x: HEX_W * (q + r / 2), // pointy-top: every other row is shifted half a tile
+    y: ROW * r,
   }))
   const minX = Math.min(...raw.map((p) => p.x)) - HEX_W / 2
   const maxX = Math.max(...raw.map((p) => p.x)) + HEX_W / 2
@@ -100,55 +119,50 @@ function measure(label: string, tags: string[]): Measured {
     cells: raw.map((p, i) => ({ tag: tags[i], x: Math.round(p.x - cx), y: Math.round(p.y - cy) })),
     bodyW: maxX - minX,
     bodyH: maxY - minY,
+    boxW: Math.max(maxX - minX, label.length * 13.4 + 50), // the title can be wider than the hexes
   }
 }
 
 type Placed = Measured & { slot: number; x: number; y: number }
 
-const box = (c: Placed) => ({
-  l: c.x - c.bodyW / 2 - PAD,
-  r: c.x + c.bodyW / 2 + PAD,
+const box = (c: Placed): Rect => ({
+  l: c.x - c.boxW / 2 - PAD,
+  r: c.x + c.boxW / 2 + PAD,
   t: c.y - c.bodyH / 2 - LABEL_H - PAD,
   b: c.y + c.bodyH / 2 + PAD,
 })
 
-export function layoutWeb(sections: { label: string; tags: string[] }[]): WebLayout {
-  const measured = sections.filter((s) => s.tags.length > 0).map((s) => measure(s.label, s.tags))
-  const n = measured.length
-  if (n === 0) return { clusters: [], viewBox: [-200, -200, 400, 400] }
-
-  // Biggest clusters first, then spread them around the core so large and small
-  // categories alternate instead of the big ones bunching up on one side.
-  const order = measured
-    .map((c, i) => ({ c, i }))
-    .sort((a, b) => b.c.tags.length - a.c.tags.length || a.i - b.i)
-  const step = [3, 2, 1].find((s) => gcd(s, n) === 1) as number
-
-  const placed: Placed[] = order.map(({ c }, i) => {
-    const slot = (i * step) % n
-    const idx = Math.floor((slot * 10) / n)
-    const ring = 1 + Math.floor(idx / 10)
-    const [ux, uy] = SLOTS[idx % 10]
-    return { ...c, slot, x: ux * 640 * ring, y: uy * 400 * ring }
-  })
-
-  // Pack: pull everything toward the core, then push overlapping boxes apart.
-  // Deterministic, so the same tags always give the same picture.
-  for (let it = 0; it < 900; it++) {
+/**
+ * Pull every cluster toward the core, then push overlapping boxes apart.
+ * Deterministic, so the same tags always give the same picture.
+ */
+function relax(
+  placed: Placed[],
+  statics: Rect[],
+  iterations: number,
+  pullX: number,
+  pullY: number
+) {
+  const n = placed.length
+  for (let it = 0; it < iterations; it++) {
     for (const c of placed) {
-      c.x -= c.x * 0.012
-      c.y -= c.y * 0.02
+      c.x -= c.x * pullX
+      c.y -= c.y * pullY
     }
     for (let pass = 0; pass < 3; pass++) {
       for (const c of placed) {
-        const b = box(c)
-        const cx = (b.l + b.r) / 2
-        const cy = (b.t + b.b) / 2
-        const ox = CORE_BOX + (b.r - b.l) / 2 - Math.abs(cx)
-        const oy = CORE_BOX + (b.b - b.t) / 2 - Math.abs(cy)
-        if (ox > 0 && oy > 0) {
-          if (ox < oy) c.x += (cx >= 0 ? 1 : -1) * ox
-          else c.y += (cy >= 0 ? 1 : -1) * oy
+        for (const w of statics) {
+          const b = box(c)
+          const cx = (b.l + b.r) / 2
+          const cy = (b.t + b.b) / 2
+          const wx = (w.l + w.r) / 2
+          const wy = (w.t + w.b) / 2
+          const ox = (b.r - b.l + (w.r - w.l)) / 2 - Math.abs(cx - wx)
+          const oy = (b.b - b.t + (w.b - w.t)) / 2 - Math.abs(cy - wy)
+          if (ox > 0 && oy > 0) {
+            if (ox < oy) c.x += (cx >= wx ? 1 : -1) * ox
+            else c.y += (cy >= wy ? 1 : -1) * oy
+          }
         }
       }
       for (let i = 0; i < n; i++) {
@@ -176,6 +190,64 @@ export function layoutWeb(sections: { label: string; tags: string[] }[]): WebLay
       }
     }
   }
+}
+
+function bounds(rects: Rect[]): Rect {
+  return {
+    l: Math.min(...rects.map((r) => r.l)),
+    r: Math.max(...rects.map((r) => r.r)),
+    t: Math.min(...rects.map((r) => r.t)),
+    b: Math.max(...rects.map((r) => r.b)),
+  }
+}
+
+/** Packing knobs: starting ellipse and how hard clusters are pulled in on each axis. */
+export interface Tune {
+  rx: number
+  ry: number
+  pullX: number
+  pullY: number
+}
+export const DEFAULT_TUNE: Tune = { rx: 1200, ry: 250, pullX: 0.02, pullY: 0.05 }
+
+export function layoutWeb(
+  sections: { label: string; tags: string[] }[],
+  keepouts: Keepout[] = DEFAULT_KEEPOUTS,
+  tune: Tune = DEFAULT_TUNE
+): WebLayout {
+  const measured = sections.filter((s) => s.tags.length > 0).map((s) => measure(s.label, s.tags))
+  const n = measured.length
+  if (n === 0) return { clusters: [], viewBox: [-200, -200, 400, 400] }
+
+  // Biggest clusters first, then spread them around the core so large and small
+  // categories alternate instead of the big ones bunching up on one side.
+  const order = measured
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => b.c.tags.length - a.c.tags.length || a.i - b.i)
+  const step = [3, 2, 1].find((s) => gcd(s, n) === 1) as number
+
+  const placed: Placed[] = order.map(({ c }, i) => {
+    const slot = (i * step) % n
+    const idx = Math.floor((slot * 10) / n)
+    const ring = 1 + Math.floor(idx / 10)
+    const [ux, uy] = SLOTS[idx % 10]
+    return { ...c, slot, x: ux * tune.rx * ring, y: uy * tune.ry * ring }
+  })
+
+  const core: Rect = { l: -CORE_BOX, r: CORE_BOX, t: -CORE_BOX, b: CORE_BOX }
+
+  // Pass 1: pack around the core only, to learn how big the picture is.
+  relax(placed, [core], 700, tune.pullX, tune.pullY)
+  const b1 = bounds([core, ...placed.map(box)])
+
+  // Pass 2: reserve the corners the page draws over (title, controls) and pack again.
+  const reserved: Rect[] = keepouts.map((k) => ({
+    l: k.corner === 'tl' || k.corner === 'bl' ? b1.l : b1.r - k.w,
+    r: k.corner === 'tl' || k.corner === 'bl' ? b1.l + k.w : b1.r,
+    t: k.corner === 'tl' || k.corner === 'tr' ? b1.t : b1.b - k.h,
+    b: k.corner === 'tl' || k.corner === 'tr' ? b1.t + k.h : b1.b,
+  }))
+  relax(placed, [core, ...reserved], 500, tune.pullX, tune.pullY)
 
   const clusters: WebCluster[] = placed.map((c) => {
     const x = Math.round(c.x)
@@ -191,49 +263,53 @@ export function layoutWeb(sections: { label: string; tags: string[] }[]): WebLay
         link = { x: ax, y: ay }
       }
     }
-    return { ...c, x, y, link }
+    return {
+      label: c.label,
+      tags: c.tags,
+      cells: c.cells,
+      bodyW: c.bodyW,
+      bodyH: c.bodyH,
+      slot: c.slot,
+      x,
+      y,
+      link,
+    }
   })
 
-  const M = 28
-  let minX = -CORE_BOX
-  let maxX = CORE_BOX
-  let minY = -CORE_BOX
-  let maxY = CORE_BOX
-  for (const c of clusters) {
-    const b = box(c)
-    minX = Math.min(minX, b.l)
-    maxX = Math.max(maxX, b.r)
-    minY = Math.min(minY, b.t)
-    maxY = Math.max(maxY, b.b)
-  }
-
+  const M = 24
+  const all = bounds([core, ...reserved, ...placed.map(box)])
   return {
     clusters,
     viewBox: [
-      Math.floor(minX - M),
-      Math.floor(minY - M),
-      Math.ceil(maxX - minX + 2 * M),
-      Math.ceil(maxY - minY + 2 * M),
+      Math.floor(all.l - M),
+      Math.floor(all.t - M),
+      Math.ceil(all.r - all.l + 2 * M),
+      Math.ceil(all.b - all.t + 2 * M),
     ],
   }
 }
 
-/** Split a tag into at most two short lines, breaking after hyphens. */
-export function wrapTag(tag: string, max = 13): string[] {
+/**
+ * Split a tag into at most three short lines, breaking after hyphens.
+ * Prefers narrow lines (they fit a hexagon) and only widens when it must.
+ */
+export function wrapTag(tag: string): string[] {
   const parts = tag.match(/[^-]+-?/g) ?? [tag]
-  const lines: string[] = []
-  let line = ''
-  for (const p of parts) {
-    if (line && (line + p).length > max) {
-      lines.push(line)
-      line = p
-    } else {
-      line += p
+  for (const max of [9, 12, 16, 99]) {
+    const lines: string[] = []
+    let line = ''
+    for (const p of parts) {
+      if (line && (line + p).length > max) {
+        lines.push(line)
+        line = p
+      } else {
+        line += p
+      }
     }
+    if (line) lines.push(line)
+    if (lines.length <= 3) return lines
   }
-  if (line) lines.push(line)
-  if (lines.length > 2) return [lines[0], lines.slice(1).join('')]
-  return lines
+  return [tag]
 }
 
 // --- Pan / zoom -------------------------------------------------------------
