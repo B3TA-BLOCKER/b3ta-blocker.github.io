@@ -49,7 +49,7 @@ const CATEGORIES: Category[] = [
   {
     // Where the box or lab comes from
     label: 'source',
-    tags: ['hackthebox', 'vulnhub', 'portswigger'],
+    tags: ['hackthebox', 'vulnhub', 'portswigger', 'tryhackme'],
   },
   {
     // The kind of challenge, for the non-machine posts (HTB challenge categories)
@@ -63,6 +63,8 @@ const CATEGORIES: Category[] = [
       'steganography',
       'osint',
       'misc',
+      'ai',
+      'iot',
     ],
   },
   {
@@ -86,6 +88,8 @@ const CATEGORIES: Category[] = [
       'adcs',
       'kerberoasting',
       'ntlm',
+      'sudo-misconfiguration',
+      'authentication-bypass',
     ],
   },
   {
