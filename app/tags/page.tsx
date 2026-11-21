@@ -14,7 +14,7 @@ export const metadata = genPageMetadata({ title: 'Tags', description: 'Things I 
 // Tagging rules these lists assume (a post gets at most ~4 content tags):
 //   - lowercase, short community shorthand (rce, sudo, auth-bypass), one tag per
 //     concept. Keep tags short: they have to fit inside a hexagon on the web.
-//   - tag the TARGET (platform, product), the OUTCOME (rce, auth-bypass) and
+//   - tag the TARGET (OS / domain, product), the OUTCOME (rce, auth-bypass) and
 //     the core bug class / technique (sudo, idor)
 //   - the exact CVE ID is its own tag (matched by CVE_PATTERN, no generic "cve")
 //   - no tool, recon-step or implied-service tags (metasploit, smb, nfs, telnet,
@@ -47,12 +47,14 @@ const HIDDEN_TAGS = new Set([
 
 const CATEGORIES: Category[] = [
   {
-    // Where the post lives: the OS / domain it is about and where the box or lab comes from
-    label: 'platform & source',
+    // Where the box or lab comes from
+    label: 'source',
+    tags: ['hackthebox', 'vulnhub', 'portswigger'],
+  },
+  {
+    // The kind of challenge, for the non-machine posts (HTB challenge categories)
+    label: 'challenge category',
     tags: [
-      'linux',
-      'windows',
-      'active-directory',
       'coding',
       'pwn',
       'crypto',
@@ -61,9 +63,6 @@ const CATEGORIES: Category[] = [
       'steganography',
       'osint',
       'misc',
-      'hackthebox',
-      'vulnhub',
-      'portswigger',
     ],
   },
   {
@@ -99,9 +98,12 @@ const CATEGORIES: Category[] = [
     tags: ['ms17-010', 'trans2open'],
   },
   {
-    // The vulnerable product, service or library a post is about
+    // What was attacked: the OS / domain, and the vulnerable product, service or library
     label: 'targets',
     tags: [
+      'linux',
+      'windows',
+      'active-directory',
       'craft-cms',
       'backdrop-cms',
       'navigate-cms',
