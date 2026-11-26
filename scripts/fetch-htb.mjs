@@ -27,6 +27,10 @@ const ORIGIN = "https://labs.hackthebox.com";
 const API = ORIGIN + "/api/v4";
 const token = process.env.HTB_APP_TOKEN;
 if (!token) {
+  if (process.env.CI) {
+    console.error("HTB_APP_TOKEN is empty in CI. Put it in Settings > Secrets and variables > Actions > Secrets (a Variable is not read as a secret).");
+    process.exit(1);
+  }
   console.warn("HTB_APP_TOKEN not set - skipping HTB fetch (cards use their static props).");
   process.exit(0);
 }
