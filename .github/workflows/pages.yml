@@ -37,7 +37,7 @@ jobs:
       - name: Fetch HTB data
         run: node scripts/fetch-htb.mjs
         env:
-          HTB_APP_TOKEN: ${{ secrets.HTB_APP_TOKEN }}
+          HTB_APP_TOKEN: ${{ secrets.HTB_APP_TOKEN || vars.HTB_APP_TOKEN }}
 
       - name: Build
         run: yarn build
